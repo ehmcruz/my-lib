@@ -123,7 +123,7 @@ public:
 
 	~datablock_alloc_t ();
 
-	void* alloc (uint32_t size)
+	inline void* alloc (uint32_t size)
 	{
 		void *p;
 
@@ -140,13 +140,13 @@ public:
 	// it is safer to explic set the type
 	// although here it doesn't even compile if you don't
 	template <typename T>
-	T* alloc ()
+	inline T* alloc ()
 	{
 		//std::cout << "alloc type size " << sizeof(T) << std::endl;
 		return static_cast<T*>( this->alloc(sizeof(T)) );
 	}
 
-	void release (void *p, uint32_t size)
+	inline void release (void *p, uint32_t size)
 	{
 		if (blikely(size <= this->max_size))
 			this->allocators_index[size]->release(p);
@@ -156,7 +156,7 @@ public:
 
 	// it is safer to explic set the type
 	template <typename T>
-	void release (T *p)
+	inline void release (T *p)
 	{
 		//std::cout << "free type size " << sizeof(T) << std::endl;
 		this->release(static_cast<void*>(p), sizeof(T));
