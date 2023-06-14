@@ -56,7 +56,9 @@ void test_core ()
 
 void test_general ()
 {
-	datablock_alloc_t factory;
+	datablock_alloc_t factory( { 10, 1, 14, 20, 9, 8 } );
+	//datablock_alloc_t factory(34, 8);
+//exit(1);
 	uint32_t i, correct;
 	uint32_t **v, **p;
 

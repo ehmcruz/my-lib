@@ -13,6 +13,9 @@
 */
 
 #include <iostream>
+#include <initializer_list>
+#include <vector>
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -38,16 +41,18 @@ private:
 		chunk_t *next_chunk;
 	};
 
-	uint32_t type_size;
 	uint32_t blocks_per_chunk;
 	chunk_t *chunks;
 	block_t *free_blocks;
+
+	OO_ENCAPSULATE_READONLY(uint32_t, type_size)
+	OO_ENCAPSULATE_READONLY(uint32_t, block_size)
 
 public:
 	datablock_alloc_core_t(uint32_t type_size, uint32_t blocks_per_chunk=1024);
 	~datablock_alloc_core_t ();
 
-	// allocates one element of size type_size
+	// allocates one element of size block_size
 	inline void* alloc ()
 	{
 		void *free_block;
@@ -61,8 +66,13 @@ public:
 		return free_block;
 	}
 
-	// free one element of size type_size
+	// free one element of size block_size
 	void release (void *p);
+
+	inline static uint32_t lowest_block_size ()
+	{
+		return sizeof(void*);
+	}
 
 private:
 	void alloc_new_chunk ();	
@@ -93,42 +103,32 @@ public:
 
 // ---------------------------------------------------
 
-template <int max_size=4096, int step_size=8, int size_min_blocks=1024, int size_max_blocks=16>
 class datablock_alloc_t
 {
 private:
-	datablock_alloc_core_t *allocators[max_size+1];
+	// Maximum type_size handled by the allocator.
+	// Any size greater than it will be directly forwarded to malloc/free.
+	uint32_t max_size;
+	
+	std::vector<datablock_alloc_core_t*> allocators;
+	std::vector<datablock_alloc_core_t*> allocators_index;
+
+	void load (std::vector<uint32_t>& list_sizes, uint32_t max_chunk_size);
 
 public:
-	datablock_alloc_t ()
-	{
-		uint32_t blocks_per_chunk;
+	// max_chunk_size: max amount of memory to be allocated per malloc
+	datablock_alloc_t (std::vector<uint32_t>& list_sizes, uint32_t max_chunk_size=(1024*16));
+	datablock_alloc_t (std::initializer_list<uint32_t> list_sizes, uint32_t max_chunk_size=(1024*16));
+	datablock_alloc_t (uint32_t max_size, uint32_t step_size, uint32_t max_chunk_size=(1024*16));
 
-		// allocator for zero bytes does not make sense
-		this->allocators[0] = nullptr;
-
-		blocks_per_chunk = 1024;
-
-		for (uint32_t size=step_size; size<=max_size; size+=step_size) {
-			this->allocators[size] = new datablock_alloc_core_t(size, blocks_per_chunk);
-
-			for (uint32_t sub_size=size-(step_size-1); sub_size<size; sub_size++)
-				this->allocators[sub_size] = this->allocators[size];
-		}
-	}
-
-	~datablock_alloc_t ()
-	{
-		for (uint32_t size=step_size; size<=max_size; size+=step_size)
-			delete this->allocators[size];
-	}
+	~datablock_alloc_t ();
 
 	void* alloc (uint32_t size)
 	{
 		void *p;
 
-		if (blikely(size <= max_size))
-			p = this->allocators[size]->alloc();
+		if (blikely(size <= this->max_size))
+			p = this->allocators_index[size]->alloc();
 		else {
 			p = malloc(size);
 			assert(p != nullptr);
@@ -148,8 +148,8 @@ public:
 
 	void release (void *p, uint32_t size)
 	{
-		if (blikely(size <= max_size))
-			this->allocators[size]->release(p);
+		if (blikely(size <= this->max_size))
+			this->allocators_index[size]->release(p);
 		else
 			free(p);
 	}
