@@ -163,4 +163,79 @@ public:
 	}
 };
 
+// ---------------------------------------------------
+
+class datablock_general_alloc_t
+{
+public:
+	using size_t = std::size_t;
+
+private:
+	enum class block_status_t {
+		free,
+		occupied
+	};
+
+	/*
+		This class handle blocks differently from datablock_alloc_core_t.
+		In datablock_alloc_core_t, the pre-allocated blocks:
+			- when a block is free, it stores a linked list of free blocks;
+			- when a blodk is occupied, it is 100% used (except when
+			  element size < sizeof(void*)) to store the payload.
+		Therefore, when a block is occupied, no memory is "wasted".
+		The block and payload occupies the same address.
+
+		However, this class (datablock_general_alloc_t) can't work like that,
+		because I decided to keep a permanent double-linked list for each chunk's blocks.
+		The reason is that I want to be abl to merge consecutive free blocks into one
+		when a deallocation is performed, in order to reduce fragmentation.
+		Therefore, each block first contains its metadata (block_t), followed by the payload.
+	*/
+
+	struct chunk_t;
+
+	struct block_t {
+		chunk_t *chunk;
+		block_t *left;
+		block_t *right;
+		block_t *previous_free_block;
+		block_t *next_free_block;
+		size_t payload_capacity;
+		block_status_t status;
+	};
+
+	struct chunk_t {
+		block_t *blocks;
+		chunk_t *next_chunk;
+		uint32_t chunk_size; // chunk_size can be higher than target_chunk_size to allow large allocations
+	};
+
+	chunk_t *chunks;
+	block_t *free_blocks;
+
+	OO_ENCAPSULATE_READONLY(size_t, target_chunk_size)
+
+public:
+	datablock_general_alloc_t (size_t target_chunk_size=(1024*128));
+	~datablock_general_alloc_t ();
+
+	void* alloc (size_t size);
+	void release (void *p);
+
+private:
+	block_t* alloc_new_chunk (size_t payload_size);
+	block_t* find_free_block (size_t payload_size);
+	block_t* split_block (block_t *block, size_t payload_size);
+
+	constexpr size_t calculate_required_space (size_t payload_size)
+	{
+		return payload_size + sizeof(block_t);
+	}
+
+	constexpr size_t calculate_payload_size (size_t allocated_capacity)
+	{
+		return allocated_capacity - sizeof(block_t);
+	}
+};
+
 #endif

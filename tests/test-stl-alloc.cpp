@@ -87,9 +87,49 @@ struct data_t_ {
 
 using data_t = int;
 
-my_allocator_t<data_t> my_allocator;
-std::list<data_t, my_allocator_t<data_t>> list;
-std::deque<data_t, my_allocator_t<data_t>> list2;
+//my_allocator_t<data_t> my_allocator;
+
+void test_list ()
+{
+	std::cout << std::endl;
+
+	std::list<data_t, my_allocator_t<data_t>> list;
+
+	list.push_back(5);
+	list.push_back(10);
+
+	for (auto v: list) {
+		std::cout << "list value " << v << std::endl;
+	}
+}
+
+void test_deque ()
+{
+	std::cout << std::endl;
+
+	std::deque<data_t, my_allocator_t<data_t>> list;
+
+	list.push_back(5);
+	list.push_back(10);
+
+	for (auto v: list) {
+		std::cout << "deque value " << v << std::endl;
+	}
+}
+
+void test_vector ()
+{
+	std::cout << std::endl;
+
+	std::vector<data_t, my_allocator_t<data_t>> list;
+
+	list.push_back(5);
+	list.push_back(10);
+
+	for (auto v: list) {
+		std::cout << "vector value " << v << std::endl;
+	}
+}
 
 int main ()
 {
@@ -108,21 +148,9 @@ int main ()
 
 	std::cout << std::endl;
 
-	list.push_back(5);
-	list.push_back(10);
-
-	for (auto v: list) {
-		std::cout << "list value " << v << std::endl;
-	}
-
-	std::cout << std::endl;
-
-	list2.push_back(5);
-	list2.push_back(10);
-
-	for (auto v: list2) {
-		std::cout << "list2 value " << v << std::endl;
-	}
+	test_list();
+	test_deque();
+	test_vector();
 
 	return 0;
 }
