@@ -31,12 +31,26 @@ public:
 //#endif
 */
 
-	constexpr my_allocator_t () noexcept { }
+	constexpr my_allocator_t () noexcept
+	{
+		std::cout << "called constructor for type " << typeid(*this).name() << " size=" << sizeof(T) << std::endl;
+	}
 
-	constexpr my_allocator_t (const my_allocator_t&) noexcept { }
+	constexpr my_allocator_t (const my_allocator_t& other) noexcept
+	{
+		std::cout << "called COPY constructor for type " << typeid(T).name() << " size=" << sizeof(T) << std::endl;
+	}
 
 	template<typename _T>
-	constexpr my_allocator_t (const my_allocator_t<_T>&) noexcept { }
+	constexpr my_allocator_t (const my_allocator_t<_T>& other) noexcept
+	{
+		std::cout << "called COPY constructor from OTHER type " << typeid(other).name() << " size=" << sizeof(_T) << " MY type " << typeid(T).name() << " size=" << sizeof(T) << std::endl;
+	}
+
+/*	constexpr my_allocator_t (const my_allocator_t&& other) noexcept
+	{
+		std::cout << "called MOVE constructor for type " << typeid(T).name() << " size=" << sizeof(T) << std::endl;
+	}*/
 
 	[[nodiscard]] T* allocate (size_type n, const void* = static_cast<const void*>(0))
 	{
@@ -92,34 +106,47 @@ using data_t = int;
 void test_list ()
 {
 	std::cout << std::endl;
+	std::cout << "--------------------- LIST ----------------------" << std::endl;
 
 	std::list<data_t, my_allocator_t<data_t>> list;
 
 	list.push_back(5);
 	list.push_back(10);
 
+	for (int i=0; i<64; i++)
+		list.push_back(i);
+
 	for (auto v: list) {
-		std::cout << "list value " << v << std::endl;
+//		std::cout << "list value " << v << std::endl;
 	}
+
+	std::cout << "destroying..." << std::endl;
 }
 
 void test_deque ()
 {
 	std::cout << std::endl;
+	std::cout << "--------------------- DEQUE ----------------------" << std::endl;
 
 	std::deque<data_t, my_allocator_t<data_t>> list;
 
 	list.push_back(5);
 	list.push_back(10);
 
+	for (int i=0; i<1024*4; i++)
+		list.push_back(i);
+
 	for (auto v: list) {
-		std::cout << "deque value " << v << std::endl;
+//		std::cout << "deque value " << v << std::endl;
 	}
+
+	std::cout << "destroying..." << std::endl;
 }
 
 void test_vector ()
 {
 	std::cout << std::endl;
+	std::cout << "--------------------- VECTOR ----------------------" << std::endl;
 
 	std::vector<data_t, my_allocator_t<data_t>> list;
 
@@ -129,6 +156,8 @@ void test_vector ()
 	for (auto v: list) {
 		std::cout << "vector value " << v << std::endl;
 	}
+
+	std::cout << "destroying..." << std::endl;
 }
 
 int main ()
@@ -148,9 +177,9 @@ int main ()
 
 	std::cout << std::endl;
 
+	test_vector();
 	test_list();
 	test_deque();
-	test_vector();
 
 	return 0;
 }
