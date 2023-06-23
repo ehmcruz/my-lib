@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include "timer.h"
+#include <my-lib/timer.h>
 
-my_libs::timer_t<uint32_t> timer;
+Mylib::timer_t<uint32_t> timer;
 
 class test_t
 {

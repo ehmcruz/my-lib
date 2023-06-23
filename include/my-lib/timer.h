@@ -9,9 +9,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "macros.h"
+#include <my-lib/macros.h>
 
-namespace my_libs {
+namespace Mylib
+{
 
 // ---------------------------------------------------
 

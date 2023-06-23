@@ -1,14 +1,14 @@
 #include <iostream>
 #include <assert.h>
 
-#include "datablock-alloc.h"
+#include <my-lib/pool-alloc.h>
 
 #define n 10000000
 //#define n 10
 
 void test_core ()
 {
-	datablock_alloc_same_type_t<uint32_t> factory;
+	Mylib::Alloc::Pool::SameType<uint32_t> factory(1024);
 	uint32_t i, correct;
 	uint32_t **v, **p;
 
@@ -56,7 +56,7 @@ void test_core ()
 
 void test_general ()
 {
-	datablock_alloc_t factory( { 10, 1, 14, 20, 9, 8 } );
+	Mylib::Alloc::Pool::Manager factory( { 10, 1, 14, 20, 9, 8 } );
 	//datablock_alloc_t factory(34, 8);
 //exit(1);
 	uint32_t i, correct;
