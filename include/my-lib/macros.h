@@ -30,7 +30,7 @@
 		inline void set_##VAR (TYPE VAR) { \
 			this->VAR = VAR; \
 		} \
-		inline TYPE get_##VAR () { \
+		inline TYPE get_##VAR () const { \
 			return this->VAR; \
 		} \
 	protected:
@@ -39,7 +39,7 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline TYPE get_##VAR () { \
+		inline TYPE get_##VAR () const { \
 			return this->VAR; \
 		} \
 	protected:
@@ -51,7 +51,7 @@
 		inline void set_##VAR (TYPE& VAR) { \
 			this->VAR = VAR; \
 		} \
-		inline TYPE& get_##VAR () { \
+		inline TYPE& get_##VAR () const { \
 			return this->VAR; \
 		} \
 	protected:
@@ -60,7 +60,7 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline TYPE& get_##VAR () { \
+		inline TYPE& get_##VAR () const { \
 			return this->VAR; \
 		} \
 	protected:

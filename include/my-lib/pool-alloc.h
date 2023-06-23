@@ -5,11 +5,12 @@
 #include <initializer_list>
 #include <vector>
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cassert>
 
 #include <my-lib/macros.h>
+#include <my-lib/std.h>
 
 namespace Mylib
 {
@@ -30,7 +31,7 @@ namespace Pool
 
 // ---------------------------------------------------
 
-inline const std::size_t default_block_size = 16 * 1024; // 16KB
+inline const size_t default_block_size = 16 * 1024; // 16KB
 
 // ---------------------------------------------------
 
@@ -55,11 +56,11 @@ private:
 	Block *blocks;
 	Chunk *free_chunks;
 
-	OO_ENCAPSULATE_READONLY(std::size_t, type_size)
-	OO_ENCAPSULATE_READONLY(std::size_t, chunk_size)
+	OO_ENCAPSULATE_READONLY(size_t, type_size)
+	OO_ENCAPSULATE_READONLY(size_t, chunk_size)
 
 public:
-	Core (std::size_t type_size, uint32_t chunks_per_block);
+	Core (size_t type_size, uint32_t chunks_per_block);
 	~Core ();
 
 	// allocates one element of size chunk_size
@@ -79,7 +80,7 @@ public:
 	// free one element of size chunk_size
 	void release (void *p);
 
-	static constexpr std::size_t lowest_chunk_size ()
+	static constexpr size_t lowest_chunk_size ()
 	{
 		return sizeof(void*);
 	}
@@ -118,22 +119,22 @@ class Manager
 private:
 	// Maximum type_size handled by the allocator.
 	// Any size greater than it will be directly forwarded to malloc/free.
-	std::size_t max_size;
+	size_t max_size;
 	
 	std::vector<Core*> allocators;
 	std::vector<Core*> allocators_index;
 
-	void load (std::vector<std::size_t>& list_sizes, std::size_t max_block_size);
+	void load (std::vector<size_t>& list_sizes, size_t max_block_size);
 
 public:
 	// max_block_size: max amount of memory to be allocated per malloc
-	Manager (std::vector<std::size_t>& list_sizes, std::size_t max_block_size=default_block_size);
-	Manager (std::initializer_list<std::size_t> list_sizes, std::size_t max_block_size=default_block_size);
-	Manager (std::size_t max_size, std::size_t step_size, std::size_t max_block_size=default_block_size);
+	Manager (std::vector<size_t>& list_sizes, size_t max_block_size=default_block_size);
+	Manager (std::initializer_list<size_t> list_sizes, size_t max_block_size=default_block_size);
+	Manager (size_t max_size, size_t step_size, size_t max_block_size=default_block_size);
 
 	~Manager ();
 
-	inline void* alloc (std::size_t size)
+	inline void* alloc (size_t size)
 	{
 		void *p;
 
@@ -157,7 +158,7 @@ public:
 	}
 
 	// size here is the size of the allocated type
-	inline void release (void *p, std::size_t size)
+	inline void release (void *p, size_t size)
 	{
 		if (blikely(size <= this->max_size))
 			this->allocators_index[size]->release(p);
@@ -182,7 +183,7 @@ public:
 class datablock_general_alloc_t
 {
 public:
-	using size_t = std::size_t;
+	using size_t = size_t;
 
 private:
 	enum class block_status_t {

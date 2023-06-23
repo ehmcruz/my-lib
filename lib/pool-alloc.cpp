@@ -11,7 +11,7 @@ namespace Pool
 
 // ---------------------------------------------------
 
-Core::Core (std::size_t type_size, uint32_t chunks_per_block)
+Core::Core (size_t type_size, uint32_t chunks_per_block)
 {
 	this->type_size = type_size;
 
@@ -91,24 +91,24 @@ void Core::release (void *p)
 
 // ---------------------------------------------------
 
-Manager::Manager (std::vector<std::size_t>& list_sizes, std::size_t max_block_size)
+Manager::Manager (std::vector<size_t>& list_sizes, size_t max_block_size)
 {
 	this->load(list_sizes, max_block_size);
 }
 
-Manager::Manager (std::initializer_list<std::size_t> list_sizes, std::size_t max_block_size)
+Manager::Manager (std::initializer_list<size_t> list_sizes, size_t max_block_size)
 {
-	std::vector<std::size_t> v = list_sizes;
+	std::vector<size_t> v = list_sizes;
 	this->load(v, max_block_size);
 }
 
-Manager::Manager (std::size_t max_size, std::size_t step_size, std::size_t max_block_size)
+Manager::Manager (size_t max_size, size_t step_size, size_t max_block_size)
 {
-	std::vector<std::size_t> list_sizes;
+	std::vector<size_t> list_sizes;
 
 	list_sizes.reserve(max_size / step_size + 5); // 1...2...5... whatever
 
-	for (std::size_t size=step_size; size<max_size; size+=step_size)
+	for (size_t size=step_size; size<max_size; size+=step_size)
 		list_sizes.push_back(size);
 	list_sizes.push_back(max_size);
 	
@@ -121,11 +121,11 @@ Manager::~Manager ()
 		delete allocator;
 }
 
-void Manager::load (std::vector<std::size_t>& list_sizes, std::size_t max_block_size)
+void Manager::load (std::vector<size_t>& list_sizes, size_t max_block_size)
 {
 	// we remove values lower than the minimum
 	std::for_each(list_sizes.begin(), list_sizes.end(),
-		[] (std::size_t& v) -> void {
+		[] (size_t& v) -> void {
 			if (v < Core::lowest_chunk_size())
 				v = Core::lowest_chunk_size();
 		}
@@ -133,7 +133,7 @@ void Manager::load (std::vector<std::size_t>& list_sizes, std::size_t max_block_
 
 	// we need the allocators to be sorted in order to create the index
 	std::sort(list_sizes.begin(), list_sizes.end(),
-		[] (std::size_t a, std::size_t b) -> bool {
+		[] (size_t a, size_t b) -> bool {
 			return (a < b);
 		}
 	);
@@ -144,8 +144,8 @@ void Manager::load (std::vector<std::size_t>& list_sizes, std::size_t max_block_
 
 	this->allocators.reserve( list_sizes.size() );
 
-	for (std::size_t size: list_sizes) {
-		std::size_t chunks_per_block = max_block_size / size;
+	for (size_t size: list_sizes) {
+		size_t chunks_per_block = max_block_size / size;
 		Core *allocator = new Core(size, chunks_per_block);
 		this->allocators.push_back(allocator);
 	}
@@ -162,7 +162,7 @@ void Manager::load (std::vector<std::size_t>& list_sizes, std::size_t max_block_
 
 	this->allocators_index.resize(this->max_size + 1, nullptr);
 
-	std::size_t size = 1;
+	size_t size = 1;
 	for (Core *allocator: this->allocators) {
 		while (size <= allocator->get_chunk_size()) {
 			this->allocators_index[size] = allocator;
@@ -171,8 +171,8 @@ void Manager::load (std::vector<std::size_t>& list_sizes, std::size_t max_block_
 	}
 
 #if 0
-	for std::size_t i=0; i<this->allocators_index.size(); i++) {
-		std::size_t s = (this->allocators_index[i] == nullptr) ? 0 : this->allocators_index[i]->get_chunk_size();
+	for size_t i=0; i<this->allocators_index.size(); i++) {
+		size_t s = (this->allocators_index[i] == nullptr) ? 0 : this->allocators_index[i]->get_chunk_size();
 		std::cout << "index " << i << " size " << s << std::endl;
 	}
 #endif

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 #include <my-lib/pool-alloc.h>
 
