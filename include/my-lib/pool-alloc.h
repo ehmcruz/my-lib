@@ -68,7 +68,7 @@ public:
 	{
 		void *free_chunk;
 
-		if (bunlikely(this->free_chunks == nullptr))
+		if (this->free_chunks == nullptr) [[unlikely]]
 			this->alloc_new_block();
 
 		free_chunk = this->free_chunks;
@@ -138,7 +138,7 @@ public:
 	{
 		void *p;
 
-		if (blikely(size <= this->max_size))
+		if (size <= this->max_size) [[likely]]
 			p = this->allocators_index[size]->alloc();
 		else {
 			p = malloc(size);
@@ -160,7 +160,7 @@ public:
 	// size here is the size of the allocated type
 	inline void release (void *p, size_t size)
 	{
-		if (blikely(size <= this->max_size))
+		if (size <= this->max_size) [[likely]]
 			this->allocators_index[size]->release(p);
 		else
 			free(p);

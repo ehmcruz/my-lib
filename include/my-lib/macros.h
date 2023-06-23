@@ -10,11 +10,6 @@
 
 // ---------------------------------------------------
 
-#define blikely(x)       __builtin_expect((x),1)
-#define bunlikely(x)     __builtin_expect((x),0)
-
-// ---------------------------------------------------
-
 #ifdef DEBUG
 	#define dprint(STR) { std::cout << STR; }
 #else

@@ -208,7 +208,7 @@ void* datablock_general_alloc_t::alloc (size_t size)
 {
 	Chunk *block;
 
-	if (bunlikely(this->free_chunks == nullptr))
+	if (this->free_chunks == nullptr) [[unlikely]]
 		block = this->alloc_new_chunk(size);
 	else {
 		block = this->find_free_block(size);
