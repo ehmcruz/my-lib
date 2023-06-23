@@ -63,7 +63,7 @@
 #define ASSERT(V) ASSERT_PRINT(V, "bye!\n")
 
 #define ASSERT_PRINT(V, STR) \
-	if (bunlikely(!(V))) { \
+	if (!(V)) [[unlikely]] { \
 		std::string assert_str_ = (STR); \
 		std::cout << "sanity error!" << std::endl << "file " << __FILE__ << " at line " << __LINE__ << " assertion failed!" << std::endl << #V << std::endl; \
 		std::cout << assert_str_ << std::endl; \
