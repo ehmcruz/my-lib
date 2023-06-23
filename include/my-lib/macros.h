@@ -18,18 +18,6 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE(TYPE, VAR) \
-	protected: \
-		TYPE VAR; \
-	public: \
-		inline void set_##VAR (TYPE VAR) { \
-			this->VAR = VAR; \
-		} \
-		inline TYPE get_##VAR () const { \
-			return this->VAR; \
-		} \
-	protected:
-
 #define OO_ENCAPSULATE_READONLY(TYPE, VAR) \
 	protected: \
 		TYPE VAR; \
@@ -39,15 +27,11 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_REFERENCE(TYPE, VAR) \
-	protected: \
-		TYPE VAR; \
+#define OO_ENCAPSULATE(TYPE, VAR) \
+	OO_ENCAPSULATE_READONLY(TYPE, VAR) \
 	public: \
-		inline void set_##VAR (TYPE& VAR) { \
+		inline void set_##VAR (TYPE VAR) { \
 			this->VAR = VAR; \
-		} \
-		inline TYPE& get_##VAR () const { \
-			return this->VAR; \
 		} \
 	protected:
 
@@ -55,8 +39,16 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline TYPE& get_##VAR () const { \
+		inline TYPE& get_##VAR () { \
 			return this->VAR; \
+		} \
+	protected:
+
+#define OO_ENCAPSULATE_REFERENCE(TYPE, VAR) \
+	OO_ENCAPSULATE_REFERENCE_READONLY(TYPE, VAR) \
+	public: \
+		inline void set_##VAR (TYPE& VAR) { \
+			this->VAR = VAR; \
 		} \
 	protected:
 
