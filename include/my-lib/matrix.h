@@ -71,7 +71,12 @@ public:
 		return this->storage;
 	}
 
-	inline T& operator() (uint32_t row, uint32_t col)
+	inline const T* get_raw_const () const
+	{
+		return this->storage;
+	}
+
+	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
 		return this->storage[row*ncols + col];
 	}
@@ -87,7 +92,7 @@ private:
 	OO_ENCAPSULATE_READONLY(uint32_t, nrows)
 	OO_ENCAPSULATE_READONLY(uint32_t, ncols)
 
-	void alloc (uint32_t nrows, uint32_t ncols)
+	void alloc (const uint32_t nrows, const uint32_t ncols)
 	{
 		if (this->storage != nullptr && (this->nrows != nrows || this->ncols != ncols))
 			delete[] this->storage;
@@ -119,10 +124,10 @@ public:
 		this->storage = nullptr;
 	}
 
-	Matrix (uint32_t nrows, uint32_t ncols)
+	Matrix (const uint32_t nrows_, const uint32_t ncols_)
 	{
 		this->storage = nullptr;
-		this->alloc(nrows, ncols);
+		this->alloc(nrows_, ncols_);
 	}
 
 	~Matrix ()
@@ -164,14 +169,14 @@ public:
 		return this->storage;
 	}
 
-	inline T& get (uint32_t row, uint32_t col)
+	inline const T* get_raw_const () const
 	{
-		return this->storage[row*this->ncols + col];
+		return this->storage;
 	}
 
-	inline T& operator() (uint32_t row, uint32_t col)
+	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
-		return this->get(row, col);
+		return this->storage[row*this->ncols + col];
 	}
 };
 

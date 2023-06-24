@@ -47,7 +47,7 @@
 #define OO_ENCAPSULATE_REFERENCE(TYPE, VAR) \
 	OO_ENCAPSULATE_REFERENCE_READONLY(TYPE, VAR) \
 	public: \
-		inline void set_##VAR (TYPE& VAR) { \
+		inline void set_##VAR (const TYPE& VAR) { \
 			this->VAR = VAR; \
 		} \
 	protected:
