@@ -42,6 +42,9 @@
 		inline TYPE& get_##VAR () { \
 			return this->VAR; \
 		} \
+		inline const TYPE& get_##VAR () const { \
+			return this->VAR; \
+		} \
 	protected:
 
 #define OO_ENCAPSULATE_REFERENCE(TYPE, VAR) \
