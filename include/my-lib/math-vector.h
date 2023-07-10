@@ -82,6 +82,16 @@ public:
 		//uint64_t ivalue;
 	};
 
+	inline float* get_raw ()
+	{
+		return this->data;
+	}
+
+	inline const float* get_raw () const
+	{
+		return this->data;
+	}
+
 	// ------------------------ Constructors
 
 	Vector () = default;
@@ -148,7 +158,7 @@ public:
 		return *this;
 	}
 
-	inline float length ()
+	inline float length () const
 	{
 		return std::sqrt(this->x * this->x + this->y * this->y);
 	}
@@ -205,6 +215,16 @@ public:
 
 		//uint64_t ivalue[2];
 	};
+
+	inline float* get_raw ()
+	{
+		return this->data;
+	}
+
+	inline const float* get_raw () const
+	{
+		return this->data;
+	}
 
 	// ------------------------ Constructors
 

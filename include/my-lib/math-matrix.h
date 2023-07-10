@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include <my-lib/std.h>
+#include <my-lib/macros.h>
 #include <my-lib/matrix.h>
 #include <my-lib/math-vector.h>
 

@@ -2,6 +2,7 @@
 #define __MY_LIBS_MATRIX_HEADER_H__
 
 #include <cstdlib>
+#include <cstring>
 
 #include <my-lib/std.h>
 
@@ -71,10 +72,15 @@ public:
 		return this->storage;
 	}
 
-	inline const T* get_raw_const () const
+	inline const T* get_raw () const
 	{
 		return this->storage;
 	}
+
+/*	inline const T* get_raw_const () const
+	{
+		return this->storage;
+	}*/
 
 	inline T& operator() (const uint32_t row, const uint32_t col)
 	{

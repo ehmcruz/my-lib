@@ -1,4 +1,4 @@
-#include <algorithm>
+#include <iostream>
 
 #include <my-lib/math-matrix.h>
 
@@ -23,7 +23,8 @@ Matrix4d operator* (const Matrix4d& a_, const Matrix4d& b_)
 {
 	Matrix4d r_;
 	uint32_t i;
-	float *a, *b, *r;
+	const float *a, *b;
+	float *r;
 
 	a = a_.get_raw();
 	b = b_.get_raw();
@@ -46,10 +47,11 @@ Matrix4d operator* (const Matrix4d& a_, const Matrix4d& b_)
 Vector4d operator* (const Matrix4d& m_, const Vector4d& v_)
 {
 	Vector4d r_;
-	float *m, *v, *r;
+	const float *m, *v;
+	float *r;
 
 	m = m_.get_raw();
-	v = r_.get_raw();
+	v = v_.get_raw();
 	r = r_.get_raw();
 
 	for (uint32_t i=0; i<4; i++) {
