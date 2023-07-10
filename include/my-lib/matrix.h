@@ -56,12 +56,12 @@ public:
 		return *this;
 	}
 
-	consteval uint32_t get_nrows ()
+	consteval static uint32_t get_nrows ()
 	{
 		return nrows;
 	}
 
-	consteval uint32_t get_ncols ()
+	consteval static uint32_t get_ncols ()
 	{
 		return ncols;
 	}
