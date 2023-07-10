@@ -53,6 +53,9 @@
 		inline void set_##VAR (const TYPE& VAR) { \
 			this->VAR = VAR; \
 		} \
+		inline void set_##VAR (const TYPE&& VAR) { \
+			this->VAR = VAR; \
+		} \
 	protected:
 
 #define ASSERT(V) ASSERT_PRINT(V, "bye!\n")
