@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <my-lib/math-matrix.h>
+#include <my-lib/math-vector.h>
 
 namespace Mylib
 {
@@ -9,7 +10,19 @@ namespace Math
 
 // ---------------------------------------------------
 
-void Matrix4d::print ()
+void Vector2d::println () const
+{
+	std::cout << "[" << this->x << ", " << this->y << "]" << std::endl;
+}
+
+void Vector4d::println () const
+{
+	std::cout << "[" << this->x << ", " << this->y << ", " << this->z << ", " << this->w << "]" << std::endl;
+}
+
+// ---------------------------------------------------
+
+void Matrix4d::println () const
 {
 	auto& m = *this;
 	for (uint32_t i=0; i<get_nrows(); i++) {

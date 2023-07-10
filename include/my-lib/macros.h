@@ -12,8 +12,10 @@
 
 #ifdef DEBUG
 	#define dprint(STR) { std::cout << STR; }
+	#define dprintln(STR) { std::cout << STR << std::endl; }
 #else
 	#define dprint(STR)
+	#define dprintln(STR)
 #endif
 
 // ---------------------------------------------------

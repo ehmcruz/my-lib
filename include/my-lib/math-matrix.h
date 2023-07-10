@@ -36,17 +36,55 @@ public:
 		r[3*4 + 3] = 1.0f;
 	}
 
-	void set_translate (const Vector2d& v)
+	void set_scale (const Vector2d& v)
 	{
 		float *r = this->get_raw();
 		for (uint32_t i=0; i<16; i++)
 			r[i] = 0.0f;
+		r[0*4 + 0] = v.x;
+		r[1*4 + 1] = v.y;
+		r[2*4 + 2] = 1.0f;
+		r[3*4 + 3] = 1.0f;
+	}
+
+	inline void set_scale (const Vector2d&& v)
+	{
+		this->set_scale(v);
+	}
+
+	void set_scale (const float s)
+	{
+		float *r = this->get_raw();
+		for (uint32_t i=0; i<16; i++)
+			r[i] = 0.0f;
+		r[0*4 + 0] = s;
+		r[1*4 + 1] = s;
+		r[2*4 + 2] = 1.0f;
+		r[3*4 + 3] = 1.0f;
+	}
+
+	void set_translate (const Vector2d& v)
+	{
+		float *r = this->get_raw();
+
+		for (uint32_t i=0; i<16; i++)
+			r[i] = 0.0f;
+
+		r[0*4 + 0] = 1.0f;
+		r[1*4 + 1] = 1.0f;
+		r[2*4 + 2] = 1.0f;
+
 		r[0*4 + 3] = v.x;
 		r[1*4 + 3] = v.y;
 		r[3*4 + 3] = 1.0f;
 	}
 
-	void print ();
+	inline void set_translate (const Vector2d&& v)
+	{
+		this->set_translate(v);
+	}
+
+	void println () const;
 };
 
 Matrix4d operator* (const Matrix4d& a_, const Matrix4d& b_);
@@ -55,11 +93,6 @@ Vector4d operator* (const Matrix4d& m_, const Vector4d& v_);
 inline Vector4d operator* (const Matrix4d& m_, const Vector4d&& v_)
 {
 	return m_ * v_; // forward b r-value as l-value
-}
-
-inline Vector4d operator* (const Matrix4d& m_, const Vector2d& v_)
-{
-	return m_ * Vector4d(v_);
 }
 
 

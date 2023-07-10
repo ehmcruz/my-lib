@@ -10,6 +10,10 @@ namespace Mylib
 namespace Math
 {
 
+#ifdef MYLIB_MATH_VECTOR_BUILD_OPERATOR
+#error nooooooooooo
+#endif
+
 // ---------------------------------------------------
 
 template <uint32_t dim>
@@ -92,6 +96,11 @@ public:
 		return this->data;
 	}
 
+	consteval static uint32_t get_dim ()
+	{
+		return 2;
+	}
+
 	// ------------------------ Constructors
 
 	Vector () = default;
@@ -144,19 +153,31 @@ public:
 		this->y = y;
 	}
 
-	inline Vector& operator += (const Vector& other)
-	{
-		this->data[0] += other.data[0];
-		this->data[1] += other.data[1];
-		return *this;
-	}
-
-	inline Vector& operator *= (const float s)
-	{
-		this->data[0] *= s;
-		this->data[1] *= s;
-		return *this;
-	}
+	#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
+	#define MYLIB_MATH_VECTOR_BUILD_OPERATOR(OP) \
+		inline Vector& operator OP (const Vector& other) \
+		{ \
+			this->data[0] OP other.data[0]; \
+			this->data[1] OP other.data[1]; \
+			return *this; \
+		} \
+		inline Vector& operator OP (const Vector&& other) \
+		{ \
+			this->data[0] OP other.data[0]; \
+			this->data[1] OP other.data[1]; \
+			return *this; \
+		} \
+		inline Vector& operator OP (const float s) \
+		{ \
+			this->data[0] OP s; \
+			this->data[1] OP s; \
+			return *this; \
+		}
+	
+	MYLIB_MATH_VECTOR_BUILD_OPERATOR( += )
+	MYLIB_MATH_VECTOR_BUILD_OPERATOR( -= )
+	MYLIB_MATH_VECTOR_BUILD_OPERATOR( *= )
+	MYLIB_MATH_VECTOR_BUILD_OPERATOR( /= )
 
 	inline float length () const
 	{
@@ -167,6 +188,8 @@ public:
 	{
 		return a.x * b.x + a.y * b.y;
 	}
+
+	void println () const;
 };
 
 using Vector2d = Vector<2>;
@@ -175,21 +198,55 @@ static_assert(sizeof(Vector2d) == (2 * sizeof(float)));
 static_assert(sizeof(Vector2d) == sizeof(uint64_t));
 static_assert(sizeof(Vector2d) == 8);
 
-inline Vector2d operator* (const Vector2d& v, const float s)
-{
-	Vector2d r;
-	r.data[0] = v.data[0] * s;
-	r.data[1] = v.data[1] * s;
-	return r;
-}
+#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
+#define MYLIB_MATH_VECTOR_BUILD_OPERATOR(OP) \
+	inline Vector2d operator OP (const Vector2d& a, const Vector2d& b) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP b.data[0]; \
+		r.data[1] = a.data[1] OP b.data[1]; \
+		return r; \
+	} \
+	inline Vector2d operator OP (const Vector2d&& a, const Vector2d& b) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP b.data[0]; \
+		r.data[1] = a.data[1] OP b.data[1]; \
+		return r; \
+	} \
+	inline Vector2d operator OP (const Vector2d& a, const Vector2d&& b) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP b.data[0]; \
+		r.data[1] = a.data[1] OP b.data[1]; \
+		return r; \
+	} \
+	inline Vector2d operator OP (const Vector2d&& a, const Vector2d&& b) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP b.data[0]; \
+		r.data[1] = a.data[1] OP b.data[1]; \
+		return r; \
+	} \
+	inline Vector2d operator OP (const Vector2d& a, const float s) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP s; \
+		r.data[1] = a.data[1] OP s; \
+		return r; \
+	} \
+	inline Vector2d operator OP (const Vector2d&& a, const float s) \
+	{ \
+		Vector2d r; \
+		r.data[0] = a.data[0] OP s; \
+		r.data[1] = a.data[1] OP s; \
+		return r; \
+	}
 
-inline Vector2d operator- (const Vector2d& a, const Vector2d& b)
-{
-	Vector2d r;
-	r.data[0] = a.data[0] - b.data[0];
-	r.data[1] = a.data[1] - b.data[1];
-	return r;
-}
+MYLIB_MATH_VECTOR_BUILD_OPERATOR( + )
+MYLIB_MATH_VECTOR_BUILD_OPERATOR( - )
+MYLIB_MATH_VECTOR_BUILD_OPERATOR( * )
+MYLIB_MATH_VECTOR_BUILD_OPERATOR( / )
 
 inline float distance (const Vector2d& a, const Vector2d& b)
 {
@@ -237,6 +294,16 @@ public:
 		this->data[2] = 0.0f;
 		this->data[3] = 1.0f;
 	}
+
+	Vector (const Vector2d&& v2d)
+	{
+		this->data[0] = v2d.data[0];
+		this->data[1] = v2d.data[1];
+		this->data[2] = 0.0f;
+		this->data[3] = 1.0f;
+	}
+
+	void println () const;
 };
 
 using Vector4d = Vector<4>;
@@ -246,6 +313,8 @@ static_assert(sizeof(Vector4d) == (2 * sizeof(uint64_t)));
 static_assert(sizeof(Vector4d) == 16);
 
 // ---------------------------------------------------
+
+#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
 
 } // end namespace Math
 } // end namespace Mylib

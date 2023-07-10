@@ -86,6 +86,11 @@ public:
 	{
 		return this->storage[row*ncols + col];
 	}
+
+	inline const T& operator() (const uint32_t row, const uint32_t col) const
+	{
+		return this->storage[row*ncols + col];
+	}
 };
 
 // ---------------------------------------------------
