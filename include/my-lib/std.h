@@ -1,10 +1,22 @@
 #ifndef __MY_LIBS_STD_HEADER_H__
 #define __MY_LIBS_STD_HEADER_H__
 
+#include <concepts>
+#include <type_traits>
+
 #include <cstdint>
 
 namespace Mylib
 {
+
+// ---------------------------------------------------
+
+template<typename T>
+using remove_type_qualifiers = typename std::remove_cv<typename std::remove_reference<T>::type>;
+
+// no idea why the following causes issues
+//template<typename T>
+//using remove_type_qualifierss = typename remove_type_qualifiers<T>::type;
 
 // ---------------------------------------------------
 

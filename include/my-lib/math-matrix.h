@@ -2,6 +2,7 @@
 #define __MY_LIBS_MATH_MATRIX_HEADER_H__
 
 #include <concepts>
+#include <type_traits>
 
 #include <cmath>
 
@@ -123,28 +124,26 @@ public:
 using Matrix4d = Matrix<4, 4>;
 
 template<typename T>
-concept is_matrix_4d = std::same_as<T, Matrix4d> || std::same_as<T, Matrix4d&> || std::same_as<T, Matrix4d&&>;
+concept is_Matrix4d = std::same_as< typename remove_type_qualifiers<T>::type, Matrix4d >;
+
+// ---------------------------------------------------
 
 template<typename T>
-concept is_matrix = is_matrix_4d<T>;
+concept is_Matrix = is_Matrix4d<T>;
 
-template<typename T>
-concept is_vector_4d = std::same_as<T, Vector4d> || std::same_as<T, Vector4d&> || std::same_as<T, Vector4d&&>;
-
-template<typename T>
-concept is_vector = is_vector_4d<T>;
+// ---------------------------------------------------
 
 template <typename Ta, typename Tb>
-requires is_matrix<Ta> && is_matrix<Tb>
+requires is_Matrix<Ta> && is_Matrix<Tb>
 auto operator* (Ta&& a_, Tb&& b_)
 {
-	constexpr uint32_t dim = a_.get_dim();
+	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_dim();
 	Matrix<dim, dim> r_;
 	uint32_t i;
 	const float *a, *b;
 	float *r;
 
-	static_assert(a_.get_dim() == b_.get_dim());
+	static_assert(remove_type_qualifiers<Tb>::type::get_dim() == dim);
 
 	a = a_.get_raw();
 	b = b_.get_raw();
@@ -164,16 +163,18 @@ auto operator* (Ta&& a_, Tb&& b_)
 	return r_;
 }
 
+// ---------------------------------------------------
+
 template <typename Tm, typename Tv>
-requires is_matrix<Tm> && is_vector<Tv>
+requires is_Matrix<Tm> && is_Vector<Tv>
 auto operator* (Tm&& m_, Tv&& v_)
 {
-	constexpr uint32_t dim = v_.get_dim();
+	constexpr uint32_t dim = remove_type_qualifiers<Tv>::type::get_dim();
 	Vector<dim> r_;
 	const float *m, *v;
 	float *r;
 
-	static_assert(m_.get_dim() == v_.get_dim());
+	static_assert(remove_type_qualifiers<Tm>::type::get_dim() == dim);
 
 	m = m_.get_raw();
 	v = v_.get_raw();

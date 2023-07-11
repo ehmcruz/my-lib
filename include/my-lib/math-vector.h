@@ -1,6 +1,9 @@
 #ifndef __MY_LIBS_MATH_VECTOR_HEADER_H__
 #define __MY_LIBS_MATH_VECTOR_HEADER_H__
 
+#include <concepts>
+#include <type_traits>
+
 #include <cmath>
 
 #include <my-lib/std.h>
@@ -10,7 +13,7 @@ namespace Mylib
 namespace Math
 {
 
-#ifdef MYLIB_MATH_VECTOR_BUILD_OPERATOR
+#ifdef MYLIB_MATH_BUILD_OPERATION
 #error nooooooooooo
 #endif
 
@@ -153,8 +156,8 @@ public:
 		this->y = y;
 	}
 
-	#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
-	#define MYLIB_MATH_VECTOR_BUILD_OPERATOR(OP) \
+	#undef MYLIB_MATH_BUILD_OPERATION
+	#define MYLIB_MATH_BUILD_OPERATION(OP) \
 		inline Vector& operator OP (const Vector& other) \
 		{ \
 			this->data[0] OP other.data[0]; \
@@ -174,10 +177,10 @@ public:
 			return *this; \
 		}
 	
-	MYLIB_MATH_VECTOR_BUILD_OPERATOR( += )
-	MYLIB_MATH_VECTOR_BUILD_OPERATOR( -= )
-	MYLIB_MATH_VECTOR_BUILD_OPERATOR( *= )
-	MYLIB_MATH_VECTOR_BUILD_OPERATOR( /= )
+	MYLIB_MATH_BUILD_OPERATION( += )
+	MYLIB_MATH_BUILD_OPERATION( -= )
+	MYLIB_MATH_BUILD_OPERATION( *= )
+	MYLIB_MATH_BUILD_OPERATION( /= )
 
 	inline float length () const
 	{
@@ -198,8 +201,14 @@ static_assert(sizeof(Vector2d) == (2 * sizeof(float)));
 static_assert(sizeof(Vector2d) == sizeof(uint64_t));
 static_assert(sizeof(Vector2d) == 8);
 
-#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
-#define MYLIB_MATH_VECTOR_BUILD_OPERATOR(OP) \
+template<typename T>
+concept is_Vector2d = std::same_as< typename remove_type_qualifiers<T>::type, Vector2d >;
+//concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
+//concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
+//concept is_Vector2d = std::same_as< typename std::remove_reference<T>::type, Vector2d >;
+
+#undef MYLIB_MATH_BUILD_OPERATION
+#define MYLIB_MATH_BUILD_OPERATION(OP) \
 	inline Vector2d operator OP (const Vector2d& a, const Vector2d& b) \
 	{ \
 		Vector2d r; \
@@ -243,16 +252,47 @@ static_assert(sizeof(Vector2d) == 8);
 		return r; \
 	}
 
-MYLIB_MATH_VECTOR_BUILD_OPERATOR( + )
-MYLIB_MATH_VECTOR_BUILD_OPERATOR( - )
-MYLIB_MATH_VECTOR_BUILD_OPERATOR( * )
-MYLIB_MATH_VECTOR_BUILD_OPERATOR( / )
+MYLIB_MATH_BUILD_OPERATION( + )
+MYLIB_MATH_BUILD_OPERATION( - )
+MYLIB_MATH_BUILD_OPERATION( * )
+MYLIB_MATH_BUILD_OPERATION( / )
 
-inline float distance (const Vector2d& a, const Vector2d& b)
+inline Vector2d operator- (const Vector2d& v)
 {
-	Vector2d d = a - b;
-	return d.length();
+	Vector2d r;
+	r.data[0] = -v.data[0];
+	r.data[1] = -v.data[1];
+	return r;
 }
+
+inline Vector2d operator- (const Vector2d&& v)
+{
+	Vector2d r;
+	r.data[0] = -v.data[0];
+	r.data[1] = -v.data[1];
+	return r;
+}
+
+/*#undef MYLIB_MATH_BUILD_OPERATION
+#define MYLIB_MATH_BUILD_OPERATION(NAME, CODE) \
+	inline float NAME (const Vector2d& a, const Vector2d& b) \
+	{ \
+		CODE \
+	} \
+	inline float NAME (const Vector2d&& a, const Vector2d& b) \
+	{ \
+		CODE \
+	} \
+	inline float NAME (const Vector2d& a, const Vector2d&& b) \
+	{ \
+		CODE \
+	} \
+	inline float NAME (const Vector2d&& a, const Vector2d&& b) \
+	{ \
+		CODE \
+	}
+
+MYLIB_MATH_BUILD_OPERATION(distance, Vector2d d = a - b; return d.length();)*/
 
 // ---------------------------------------------------
 
@@ -317,9 +357,28 @@ static_assert(sizeof(Vector4d) == (4 * sizeof(float)));
 static_assert(sizeof(Vector4d) == (2 * sizeof(uint64_t)));
 static_assert(sizeof(Vector4d) == 16);
 
+template<typename T>
+concept is_Vector4d = std::same_as< typename remove_type_qualifiers<T>::type, Vector4d >;
+
 // ---------------------------------------------------
 
-#undef MYLIB_MATH_VECTOR_BUILD_OPERATOR
+template<typename T>
+concept is_Vector = is_Vector2d<T> || is_Vector4d<T>;
+
+// ---------------------------------------------------
+
+template <typename Ta, typename Tb>
+requires is_Vector<Ta> && is_Vector<Tb>
+inline float distance (Ta&& a, Tb&& b)
+{
+	static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
+	Vector2d d = a - b;
+	return d.length();
+}
+
+// ---------------------------------------------------
+
+#undef MYLIB_MATH_BUILD_OPERATION
 
 } // end namespace Math
 } // end namespace Mylib
