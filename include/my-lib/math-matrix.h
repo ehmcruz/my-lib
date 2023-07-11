@@ -1,6 +1,8 @@
 #ifndef __MY_LIBS_MATH_MATRIX_HEADER_H__
 #define __MY_LIBS_MATH_MATRIX_HEADER_H__
 
+#include <concepts>
+
 #include <cmath>
 
 #include <my-lib/std.h>
@@ -18,6 +20,11 @@ namespace Math
 class Matrix4d : public StaticMatrix<float, 4, 4>
 {
 public:
+	consteval static uint32_t get_dim ()
+	{
+		return 4;
+	}
+	
 	void set_zero ()
 	{
 		float *r = this->get_raw();
@@ -87,14 +94,71 @@ public:
 	void println () const;
 };
 
-Matrix4d operator* (const Matrix4d& a_, const Matrix4d& b_);
-Vector4d operator* (const Matrix4d& m_, const Vector4d& v_);
+template<typename T>
+concept is_matrix_4d = std::same_as<T, Matrix4d> || std::same_as<T, Matrix4d&> || std::same_as<T, Matrix4d&&>;
 
-inline Vector4d operator* (const Matrix4d& m_, const Vector4d&& v_)
+template<typename T>
+concept is_matrix = is_matrix_4d<T>;
+
+template<typename T>
+concept is_vector_4d = std::same_as<T, Vector4d> || std::same_as<T, Vector4d&> || std::same_as<T, Vector4d&&>;
+
+template<typename T>
+concept is_vector = is_vector_4d<T>;
+
+template <typename Ta, typename Tb>
+requires is_matrix<Ta> && is_matrix<Tb>
+Matrix4d operator* (Ta&& a_, Tb&& b_)
 {
-	return m_ * v_; // forward b r-value as l-value
+	Matrix4d r_;
+	uint32_t i;
+	const float *a, *b;
+	float *r;
+	constexpr uint32_t dim = a_.get_dim();
+
+	static_assert(a_.get_dim() == b_.get_dim());
+
+	a = a_.get_raw();
+	b = b_.get_raw();
+	r = r_.get_raw();
+
+	for (i=0; i<(dim*dim); i++)
+			r[i] = 0.0f;
+
+	for (i=0; i<dim; i++) {
+		for (uint32_t k=0; k<dim; k++) {
+			const float v = a[i*dim + k];
+			for (uint32_t j=0; j<dim; j++)
+				r[i*dim + j] += v * b[k*dim + j];
+		}
+	}
+	
+	return r_;
 }
 
+template <typename Tm, typename Tv>
+requires is_matrix<Tm> && is_vector<Tv>
+Vector4d operator* (Tm&& m_, Tv&& v_)
+{
+	Vector4d r_;
+	const float *m, *v;
+	float *r;
+	constexpr uint32_t dim = v_.get_dim();
+
+	static_assert(m_.get_dim() == v_.get_dim());
+
+	m = m_.get_raw();
+	v = v_.get_raw();
+	r = r_.get_raw();
+
+	for (uint32_t i=0; i<dim; i++) {
+		r[i] = 0.0f;
+		for (uint32_t j=0; j<dim; j++)
+			r[i] += m[i*dim + j] * v[j];
+	}
+	
+	return r_;
+}
 
 // ---------------------------------------------------
 

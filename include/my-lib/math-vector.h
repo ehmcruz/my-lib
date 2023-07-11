@@ -283,6 +283,11 @@ public:
 		return this->data;
 	}
 
+	consteval static uint32_t get_dim ()
+	{
+		return 4;
+	}
+
 	// ------------------------ Constructors
 
 	Vector () = default;
