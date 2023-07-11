@@ -11,7 +11,7 @@ namespace Mylib
 
 // ---------------------------------------------------
 
-template<typename T, int nrows, int ncols>
+template<typename T, uint32_t nrows, uint32_t ncols>
 class StaticMatrix
 {
 private:

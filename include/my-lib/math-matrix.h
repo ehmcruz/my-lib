@@ -17,41 +17,80 @@ namespace Math
 
 // ---------------------------------------------------
 
-class Matrix4d : public StaticMatrix<float, 4, 4>
+template <uint32_t nrows, uint32_t ncols>
+class Matrix
 {
+
+};
+
+// ---------------------------------------------------
+
+template <>
+class Matrix<4, 4>
+{
+private:
+	float data[16];
+
 public:
 	consteval static uint32_t get_dim ()
 	{
 		return 4;
 	}
+
+	consteval static uint32_t get_nrows ()
+	{
+		return get_dim();
+	}
+
+	consteval static uint32_t get_ncols ()
+	{
+		return get_dim();
+	}
+
+	inline float* get_raw ()
+	{
+		return this->data;
+	}
+
+	inline const float* get_raw () const
+	{
+		return this->data;
+	}
+
+	inline float& operator() (const uint32_t row, const uint32_t col)
+	{
+		return this->data[row*get_ncols() + col];
+	}
+
+	inline const float& operator() (const uint32_t row, const uint32_t col) const
+	{
+		return this->data[row*get_ncols() + col];
+	}
 	
 	void set_zero ()
 	{
-		float *r = this->get_raw();
 		for (uint32_t i=0; i<16; i++)
-			r[i] = 0.0f;
+			this->data[i] = 0.0f;
 	}
 
 	void set_identity ()
 	{
-		float *r = this->get_raw();
 		for (uint32_t i=0; i<16; i++)
-			r[i] = 0.0f;
-		r[0*4 + 0] = 1.0f;
-		r[1*4 + 1] = 1.0f;
-		r[2*4 + 2] = 1.0f;
-		r[3*4 + 3] = 1.0f;
+			this->data[i] = 0.0f;
+		this->data[0*4 + 0] = 1.0f;
+		this->data[1*4 + 1] = 1.0f;
+		this->data[2*4 + 2] = 1.0f;
+		this->data[3*4 + 3] = 1.0f;
 	}
 
 	void set_scale (const Vector2d& v)
 	{
-		float *r = this->get_raw();
 		for (uint32_t i=0; i<16; i++)
-			r[i] = 0.0f;
-		r[0*4 + 0] = v.x;
-		r[1*4 + 1] = v.y;
-		r[2*4 + 2] = 1.0f;
-		r[3*4 + 3] = 1.0f;
+			this->data[i] = 0.0f;
+		this->data[0*4 + 0] = v.x;
+		this->data[1*4 + 1] = v.y;
+		this->data[2*4 + 2] = 1.0f;
+		this->data[3*4 + 3] = 1.0f;
 	}
 
 	inline void set_scale (const Vector2d&& v)
@@ -59,31 +98,18 @@ public:
 		this->set_scale(v);
 	}
 
-	void set_scale (const float s)
-	{
-		float *r = this->get_raw();
-		for (uint32_t i=0; i<16; i++)
-			r[i] = 0.0f;
-		r[0*4 + 0] = s;
-		r[1*4 + 1] = s;
-		r[2*4 + 2] = 1.0f;
-		r[3*4 + 3] = 1.0f;
-	}
-
 	void set_translate (const Vector2d& v)
 	{
-		float *r = this->get_raw();
-
 		for (uint32_t i=0; i<16; i++)
-			r[i] = 0.0f;
+			this->data[i] = 0.0f;
 
-		r[0*4 + 0] = 1.0f;
-		r[1*4 + 1] = 1.0f;
-		r[2*4 + 2] = 1.0f;
+		this->data[0*4 + 0] = 1.0f;
+		this->data[1*4 + 1] = 1.0f;
+		this->data[2*4 + 2] = 1.0f;
 
-		r[0*4 + 3] = v.x;
-		r[1*4 + 3] = v.y;
-		r[3*4 + 3] = 1.0f;
+		this->data[0*4 + 3] = v.x;
+		this->data[1*4 + 3] = v.y;
+		this->data[3*4 + 3] = 1.0f;
 	}
 
 	inline void set_translate (const Vector2d&& v)
@@ -93,6 +119,8 @@ public:
 
 	void println () const;
 };
+
+using Matrix4d = Matrix<4, 4>;
 
 template<typename T>
 concept is_matrix_4d = std::same_as<T, Matrix4d> || std::same_as<T, Matrix4d&> || std::same_as<T, Matrix4d&&>;
@@ -108,13 +136,13 @@ concept is_vector = is_vector_4d<T>;
 
 template <typename Ta, typename Tb>
 requires is_matrix<Ta> && is_matrix<Tb>
-Matrix4d operator* (Ta&& a_, Tb&& b_)
+auto operator* (Ta&& a_, Tb&& b_)
 {
-	Matrix4d r_;
+	constexpr uint32_t dim = a_.get_dim();
+	Matrix<dim, dim> r_;
 	uint32_t i;
 	const float *a, *b;
 	float *r;
-	constexpr uint32_t dim = a_.get_dim();
 
 	static_assert(a_.get_dim() == b_.get_dim());
 
@@ -138,12 +166,12 @@ Matrix4d operator* (Ta&& a_, Tb&& b_)
 
 template <typename Tm, typename Tv>
 requires is_matrix<Tm> && is_vector<Tv>
-Vector4d operator* (Tm&& m_, Tv&& v_)
+auto operator* (Tm&& m_, Tv&& v_)
 {
-	Vector4d r_;
+	constexpr uint32_t dim = v_.get_dim();
+	Vector<dim> r_;
 	const float *m, *v;
 	float *r;
-	constexpr uint32_t dim = v_.get_dim();
 
 	static_assert(m_.get_dim() == v_.get_dim());
 
