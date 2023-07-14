@@ -1,5 +1,5 @@
 HEADERS = $(wildcard src/*.h) $(wildcard src/*.h)
-CPPFLAGS = -I./include -Wall -ggdb
+CPPFLAGS = -I./include -Wall -ggdb -std=c++23
 
 all: pool stl timer trigger
 	@echo "My-lib compiled! yes!"

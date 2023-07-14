@@ -12,7 +12,8 @@ namespace Mylib
 // ---------------------------------------------------
 
 template<typename T>
-using remove_type_qualifiers = typename std::remove_cv<typename std::remove_reference<T>::type>;
+using remove_type_qualifiers = typename std::remove_cvref<T>;
+//using remove_type_qualifiers = typename std::remove_cv<typename std::remove_reference<T>::type>;
 
 // no idea why the following causes issues
 //template<typename T>
