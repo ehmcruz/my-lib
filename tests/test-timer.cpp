@@ -6,7 +6,7 @@
 
 #include <my-lib/timer.h>
 
-Mylib::timer_t<uint32_t> timer;
+using Timer = Mylib::timer_t<uint32_t>;
 
 class test_t
 {
@@ -37,7 +37,7 @@ public:
 		std::cout << "oba " << b << std::endl;
 	}
 
-	void callback_1 (int n)
+	void callback_1 (const Timer::Event& event, int n)
 	{
 		std::cout << "uhu " << b << " " << n << std::endl;
 	}
@@ -48,18 +48,14 @@ public:
 	}
 };
 
+Timer timer;
+
 test_t test;
 
 int main ()
 {
 	std::cout << "scheduling object function without params" << std::endl;
-	timer.schedule_event(10, &test, &test_t::callback);
-
-	std::cout << "scheduling object function with 1 param" << std::endl;
-	timer.schedule_event_object(10, &test, &test_t::callback_1, 10);
-
-	std::cout << "scheduling object function with 2 params" << std::endl;
-	timer.schedule_event_object(10, &test, &test_t::callback_2, 5, 3.2);
+	timer.schedule_event(10, Mylib::Trigger::make_callback_object_with_params< Timer::Event >(test, &test_t::callback_1, 10));
 
 	std::cout << "created " << timer.get_n_scheduled_events() << " events" << std::endl;
 
@@ -67,7 +63,7 @@ int main ()
 
 	test.b = 99;
 
-	timer.trigger_events(1);
+	timer.trigger_events(100);
 
 	return 0;
 }

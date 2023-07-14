@@ -51,12 +51,12 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 
 		void operator() (const Tevent& event) override
 		{
-			auto built_params = std::tuple_cat(
+			/*auto built_params = std::tuple_cat(
 				std::forward_as_tuple(this->obj),
 				std::forward_as_tuple(event)
 			);
-			
-			std::apply(this->callback_function, built_params);
+			std::apply(this->callback_function, built_params);*/
+			std::invoke(this->callback_function, this->obj, event);
 		}
 	};
 
@@ -92,13 +92,13 @@ auto make_filter_callback_object (Tfilter_&& filter, Tobj& obj, Tfunc callback)
 		void operator() (const Tevent& event) override
 		{
 			if (this->filter(event)) {
-				auto built_params = std::tuple_cat(
+				/*auto built_params = std::tuple_cat(
 					std::forward_as_tuple(this->obj),
 					std::forward_as_tuple(event),
 					std::forward_as_tuple(this->filter)
 				);
-				
-				std::apply(this->callback_function, built_params);
+				std::apply(this->callback_function, built_params);*/
+				std::invoke(this->callback_function, this->obj, event, this->filter);
 			}
 		}
 	};
@@ -252,7 +252,7 @@ public:
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
 
-	/* When creating the vent listener by r-value ref,
+	/* When creating the event listener by r-value ref,
 	   we allocate internal storage and copy the value to it.
 	*/
 	template <typename Tcallback>

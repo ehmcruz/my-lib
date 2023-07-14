@@ -10,38 +10,49 @@
 #include <stdlib.h>
 
 #include <my-lib/macros.h>
+#include <my-lib/trigger.h>
 
 namespace Mylib
+{
+namespace Trigger
 {
 
 // ---------------------------------------------------
 
 template <typename Ttime>
-class timer_t
+class Timer
 {
 public:
-	class event_t
-	{
-		OO_ENCAPSULATE_READONLY(Ttime, time)
-
-	public:
-		event_t (Ttime time_)
-			: time(time_)
-		{
-		}
-
-		virtual void callback () = 0;
+	using Descriptor = uint64_t;
+	
+	struct Event {
+		Descriptor id;
+		Ttime time;
 	};
 
 private:
-	std::priority_queue< event_t* > events;
+	struct EventFull {
+		Descriptor id; // we identify by ids because priority_queues are not pointer-identifiable
+		Ttime time;
+		Callback<Event>& callback;
+		bool enabled;
+		bool auto_destroy;
+
+		Event to_Event () const
+		{
+			return Event { .id = this->id, .time = this->time };
+		}
+	};
+
+	std::priority_queue<EventFull> events;
 	Ttime current_time;
+	Descriptor next_id;
 
 public:
-	timer_t (Ttime initial_time = 0)
+	Timer (Ttime initial_time = 0)
 		: current_time(initial_time)
 	{
-
+		this->next_id = 0;
 	}
 
 	inline uint32_t get_n_scheduled_events ()
@@ -51,162 +62,52 @@ public:
 
 	void trigger_events (Ttime time)
 	{
-		event_t *event;
-
 		this->current_time = time;
 
 		while (!this->events.empty()) {
-			event = this->events.top();
+			EventFull& event = this->events.top();
 
-			if (event->get_time() >= time) {
-				event->callback();
+			if (event.time >= time) {
+				event.callback( event.to_Event() );
+
+				if (event.auto_destroy)
+					delete &event.callback;
+				
 				this->events.pop();
-
-				delete event;
 			}
 			else
 				break;
 		}
 	}
 
-	void schedule_event (event_t *event)
-	{
-		this->events.push(event);
-	}
-
-	template <typename Tobj, typename Tfunc>
-	void schedule_event (Ttime time, Tobj *obj, Tfunc callback)
-	{
-		class derived_event_t: public event_t
-		{
-		public:
-			Tobj *obj;
-			Tfunc callback_function;
-		
-			using event_t::event_t;
-
-			void callback () override
-			{
-				std::cout << "test" << std::endl;
-				std::invoke(this->callback_function, *(this->obj));
-			}
-		};
-
-		derived_event_t *event = new derived_event_t(time);
-		event->obj = obj;
-		event->callback_function = callback;
-
-		this->schedule_event(event);
-	}
-
-#if 0
-	template <typename Tobj, typename Tfunc>
-	void schedule_event (Ttime time, Tobj *obj, Tfunc callback)
-	{
-		class derived_event_t: public event_t
-		{
-		public:
-			Tobj *obj;
-			Tfunc callback_function;
-		
-			using event_t::event_t;
-
-			void callback () override
-			{
-				std::cout << "test" << std::endl;
-				std::invoke(this->callback_function, *(this->obj));
-			}
-		};
-
-		derived_event_t *event = new derived_event_t(time);
-		event->obj = obj;
-		event->callback_function = callback;
-
-		this->schedule_event(event);
-	}
-#endif
-
-	/*
-		Schedule an event that calls a function of an object with n-parameters.
-		Honestly, I have my doubts if this would be possible.
-		Thankfully, a crazy C++ mix of templates, auto e decltype made it possible.
+	/* When creating the event listener by r-value ref,
+	   we allocate internal storage and copy the value to it.
 	*/
-
-	template <typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
-	void schedule_event_object (Ttime time, Tobj *obj, Tfunc callback, Tfirst_param first_param, Args&&... args)
+	template <typename Tcallback>
+	Descriptor schedule_event (Ttime time, Tcallback&& callback)
+		requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		auto params = std::tuple_cat( std::forward_as_tuple(*obj), // can use std::tie as well
-		                              std::make_tuple(first_param, std::forward<Args>(args)...)
-									);
+		using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
 
-		this->schedule_event_with_params(time, callback, params);
-	}
-
-private:
-	template <typename Tfunc, typename Tparams>
-	void schedule_event_with_params (Ttime time, Tfunc callback, Tparams& params)
-	{
-		class derived_event_t: public event_t
-		{
-		public:
-			Tfunc callback_function;
-			Tparams callback_params;
+		Tc *persistent_callback = new Tc(callback);
 		
-			derived_event_t (Ttime time, Tfunc callback_function_, Tparams callback_params_)
-				: event_t(time), callback_function(callback_function_), callback_params(callback_params_)
-			{
-			}
-
-			void callback () override
-			{
-				std::cout << "test" << std::endl;
-				std::apply(this->callback_function, this->callback_params);
-				//std::invoke(this->callback_function, *(this->obj));
-			}
+		EventFull event {
+			.id = this->next_id++;
+			.time = time;
+			.callback = *persistent_callback,
+			.enabled = true,
+			.auto_destroy = true
 		};
 
-		derived_event_t *event = new derived_event_t(time, callback, params);
-		this->schedule_event(event);
-	}
-
-#if 0
-	template <typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
-	void schedule_event_object (Ttime time, Tobj *obj, Tfunc callback, Tfirst_param first_param, Args&&... args)
-	{
-		auto params = std::make_tuple( first_param, std::forward<Args>(args)... );
-
-		class derived_event_t: public event_t
-		{
-		public:
-			Tobj *obj;
-			Tfunc callback_function;
-			decltype(params) callback_params;
+		this->events.push(event);
 		
-			using event_t::event_t;
-
-			void callback () override
-			{
-				Tobj& o = *(this->obj);
-
-				auto params_with_obj = std::tuple_cat( std::forward_as_tuple(o), this->callback_params );
-				std::cout << "test" << std::endl;
-				std::apply(this->callback_function, params_with_obj);
-				//std::invoke(this->callback_function, *(this->obj));
-			}
-		};
-
-		derived_event_t *event = new derived_event_t(time);
-		event->obj = obj;
-		event->callback_function = callback;
-		event->callback_params = params;
-
-		this->schedule_event(event);
+		return event.id;
 	}
-#endif
 };
 
 // ---------------------------------------------------
 
-} // end namespace
+} // end namespace Trigger
+} // end namespace Mylib
 
 #endif
