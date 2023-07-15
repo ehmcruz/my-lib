@@ -1,5 +1,5 @@
-#ifndef __MY_LIBS_TIMER_HEADER_H__
-#define __MY_LIBS_TIMER_HEADER_H__
+#ifndef __MY_LIBS_TRIGGER_HEADER_H__
+#define __MY_LIBS_TRIGGER_HEADER_H__
 
 #include <iostream>
 #include <list>
@@ -22,7 +22,7 @@ template <typename Tevent>
 class Callback
 {
 public:
-	virtual void operator() (const Tevent& event) = 0;
+	virtual void operator() (Tevent& event) = 0;
 	virtual ~Callback () = default;
 };
 
@@ -49,7 +49,7 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 		{
 		}
 
-		void operator() (const Tevent& event) override
+		void operator() (Tevent& event) override
 		{
 			/*auto built_params = std::tuple_cat(
 				std::forward_as_tuple(this->obj),
@@ -89,7 +89,7 @@ auto make_filter_callback_object (Tfilter_&& filter, Tobj& obj, Tfunc callback)
 		{
 		}
 
-		void operator() (const Tevent& event) override
+		void operator() (Tevent& event) override
 		{
 			if (this->filter(event)) {
 				/*auto built_params = std::tuple_cat(
@@ -137,7 +137,7 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, Tfirst_param f
 		{
 		}
 
-		void operator() (const Tevent& event) override
+		void operator() (Tevent& event) override
 		{
 			auto built_params = std::tuple_cat(
 				std::forward_as_tuple(this->obj), // can use std::tie as well
@@ -188,7 +188,7 @@ auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfun
 		{
 		}
 
-		void operator() (const Tevent& event) override
+		void operator() (Tevent& event) override
 		{
 			if (this->filter(event)) {
 				auto built_params = std::tuple_cat(
@@ -216,7 +216,7 @@ public:
 	using Type = Tevent;
 
 	struct Subscriber {
-		Callback<Tevent>& callback;
+		Callback<Tevent> *callback;
 		bool enabled;
 		bool auto_destroy;
 	};
@@ -233,22 +233,31 @@ public:
 	{
 		for (auto& subscriber : this->subscribers) {
 			if (subscriber.auto_destroy)
-				delete &subscriber.callback;
+				delete subscriber.callback;
 		}
 	}
 
-	void publish (const Tevent& event)
+	// We don't use const Tevent& because we allow the user to manipulate event data.
+	// This is useful for the timer, allowing us to re-schedule events.
+	void publish (Tevent& event)
 	{
 		for (auto& subscriber : this->subscribers) {
-			if (subscriber.enabled)
-				subscriber.callback(event);
+			if (subscriber.enabled) {
+				auto& c = *(subscriber.callback);
+				c(event);
+			}
 		}
+	}
+
+	void publish (Tevent&& event)
+	{
+		this->publish(event);
 	}
 
 	Descriptor subscribe (Callback<Tevent>& callback)
 	{
 		//std::cout << "here lvalue" << std::endl;
-		this->subscribers.push_back( Subscriber { .callback = callback, .enabled = true, .auto_destroy = false } );
+		this->subscribers.push_back( Subscriber { .callback = &callback, .enabled = true, .auto_destroy = false } );
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
 
@@ -265,7 +274,7 @@ public:
 		//Tc *persistent_callback = new Tc( static_cast<Tc&>(callback) );
 		Tc *persistent_callback = new Tc(callback);
 		//std::cout << "persistent " << persistent_callback->filter.myself->get_name() << std::endl;
-		this->subscribers.push_back( Subscriber { .callback = *persistent_callback, .enabled = true, .auto_destroy = true } );
+		this->subscribers.push_back( Subscriber { .callback = persistent_callback, .enabled = true, .auto_destroy = true } );
 		//std::cout << "LIST " << static_cast<Tc*>(this->subscribers.back().callback)->filter.myself->get_name() << std::endl;
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
@@ -277,7 +286,7 @@ public:
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found && subscriber.auto_destroy)
-					delete &subscriber.callback;
+					delete subscriber.callback;
 				
 				return found;
 			}

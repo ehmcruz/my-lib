@@ -6,7 +6,7 @@
 
 #include <my-lib/timer.h>
 
-using Timer = Mylib::timer_t<uint32_t>;
+using Timer = Mylib::Trigger::Timer<uint32_t>;
 
 class test_t
 {
@@ -32,23 +32,23 @@ public:
 		std::cout << "test MOVE constructor" << std::endl;
 	}
 
-	void callback ()
+	void callback (Timer::Event& event)
 	{
-		std::cout << "oba " << b << std::endl;
+		std::cout << "oba " << b  << " time " << event.time << std::endl;
 	}
 
 	void callback_1 (const Timer::Event& event, int n)
 	{
-		std::cout << "uhu " << b << " " << n << std::endl;
+		std::cout << "uhu1 " << b << " time " << event.time << " n " << n << std::endl;
 	}
 
 	void callback_2 (int n, float c)
 	{
-		std::cout << "ueba " << b << " " << n << " - " << c << std::endl;
+		std::cout << "uhu2 " << b << " " << n << " - " << c << std::endl;
 	}
 };
 
-Timer timer;
+Timer timer(0);
 
 test_t test;
 
@@ -56,6 +56,8 @@ int main ()
 {
 	std::cout << "scheduling object function without params" << std::endl;
 	timer.schedule_event(10, Mylib::Trigger::make_callback_object_with_params< Timer::Event >(test, &test_t::callback_1, 10));
+
+	timer.schedule_event(20, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
 
 	std::cout << "created " << timer.get_n_scheduled_events() << " events" << std::endl;
 
