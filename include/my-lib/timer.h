@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <memory>
 
 #include <cstdint>
 #include <cstdlib>
@@ -20,7 +21,7 @@ namespace Trigger
 
 // ---------------------------------------------------
 
-template <typename Ttime>
+template <typename Ttime, typename Talloc=std::allocator<int>>
 class Timer
 {
 public:
@@ -29,9 +30,16 @@ public:
 		bool re_schedule;
 	};
 
+	using TimerCallback = Callback<Event>;
+
+	struct CallbackHandler {
+		virtual void free_memory (TimerCallback *ptr) = 0;
+	};
+
 	struct EventFull {
 		Ttime time;
-		Callback<Event> *callback;
+		TimerCallback *callback;
+		CallbackHandler *callback_handler;
 		bool enabled;
 
 		inline Event to_Event () const
@@ -54,13 +62,26 @@ private:
 		}
 	};
 
-	std::vector<Internal> events;
+	using TallocEventFull = typename std::allocator_traits<Talloc>::rebind_alloc<EventFull>;
+	TallocEventFull allocator;
+	std::vector<Internal> events; // we let the vector use its standard allocator
 	Ttime current_time;
 
 public:
 	Timer (const Ttime& initial_time)
 		: current_time(initial_time)
 	{
+	}
+
+	Timer (const Ttime& initial_time, const Talloc& allocator_)
+		: current_time(initial_time), allocator(allocator_)
+	{
+	}
+
+	~Timer ()
+	{
+		for (auto& data : this->events)
+			this->destroy_event(data.event_full);
 	}
 
 	inline uint32_t get_n_scheduled_events () const
@@ -90,10 +111,8 @@ public:
 					event->time = user_event.time;
 					this->push(event);
 				}
-				else {
-					delete event->callback;
-					delete event;
-				}
+				else
+					this->destroy_event(event);
 			}
 			else
 				break;
@@ -107,14 +126,35 @@ public:
 	Descriptor schedule_event (const Ttime& time, const Tcallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
+		using Tc = Tcallback;
+		using TallocTc = typename std::allocator_traits<TallocEventFull>::rebind_alloc<Tc>;
 
-		Tc *persistent_callback = new Tc(callback);
+		struct MyCallbackHandler : public CallbackHandler {
+			TallocTc allocator;
+
+			MyCallbackHandler (const TallocEventFull& allocator_)
+				: allocator(allocator_)
+			{
+			}
+
+			virtual void free_memory (TimerCallback *ptr) override
+			{
+				this->allocator.deallocate(static_cast<Tc*>(ptr), 1);
+			}
+		};
+
+		static MyCallbackHandler *saved = nullptr;
+
+		if (saved == nullptr)
+			saved = new MyCallbackHandler(this->allocator);
+
+		Tc *persistent_callback = new (saved->allocator.allocate(1)) Tc(callback);
 		
-		EventFull *event = new EventFull {
+		EventFull *event = new (this->allocator.allocate(1)) EventFull {
 			.time = time,
 			.callback = persistent_callback,
-			.enabled = true,
+			.callback_handler = saved,
+			.enabled = true
 		};
 
 		this->push(event);
@@ -139,6 +179,12 @@ private:
 	{
 		std::pop_heap(this->events.begin(), this->events.end());
 		this->events.pop_back();
+	}
+
+	void destroy_event (EventFull *event)
+	{
+		event->callback_handler->free_memory(event->callback);
+		this->allocator.deallocate(event, 1);
 	}
 };
 

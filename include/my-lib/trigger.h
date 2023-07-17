@@ -23,7 +23,7 @@ class Callback
 {
 public:
 	virtual void operator() (Tevent& event) = 0;
-	virtual ~Callback () = default;
+	//virtual ~Callback () = default;
 };
 
 // ---------------------------------------------------
@@ -209,14 +209,20 @@ auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfun
 
 // ---------------------------------------------------
 
-template <typename Tevent>
+template <typename Tevent, typename Talloc=std::allocator<int>>
 class EventHandler
 {
 public:
 	using Type = Tevent;
+	using EventCallback = Callback<Tevent>;
+
+	struct CallbackHandler {
+		virtual void free_memory (EventCallback *ptr) = 0;
+	};
 
 	struct Subscriber {
-		Callback<Tevent> *callback;
+		EventCallback *callback;
+		CallbackHandler *callback_handler;
 		bool enabled;
 	};
 
@@ -225,13 +231,22 @@ public:
 	};
 
 private:
-	std::list<Subscriber> subscribers;
+	using TallocSubscriber = typename std::allocator_traits<Talloc>::rebind_alloc<Subscriber>;
+	TallocSubscriber allocator;
+	std::list<Subscriber, TallocSubscriber> subscribers;
 
 public:
+	EventHandler () = default;
+
+	EventHandler (const Talloc& allocator_)
+		: allocator(allocator_), subscribers(this->allocator)
+	{
+	}
+
 	~EventHandler ()
 	{
 		for (auto& subscriber : this->subscribers)
-			delete subscriber.callback;
+			subscriber.callback_handler->free_memory(subscriber.callback);
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -259,13 +274,38 @@ public:
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		//std::cout << "here R-VALUE " << callback.filter.myself->get_name() << std::endl;
-		using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
+		//using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
+		using Tc = Tcallback;
+		using TallocTc = typename std::allocator_traits<TallocSubscriber>::rebind_alloc<Tc>;
 
-		//Tc *persistent_callback = new Tc( static_cast<Tc&>(callback) );
-		Tc *persistent_callback = new Tc(callback);
-		//std::cout << "persistent " << persistent_callback->filter.myself->get_name() << std::endl;
-		this->subscribers.push_back( Subscriber { .callback = persistent_callback, .enabled = true } );
-		//std::cout << "LIST " << static_cast<Tc*>(this->subscribers.back().callback)->filter.myself->get_name() << std::endl;
+		struct MyCallbackHandler : public CallbackHandler {
+			TallocTc allocator;
+
+			MyCallbackHandler (const TallocSubscriber& allocator_)
+				: allocator(allocator_)
+			{
+			}
+
+			virtual void free_memory (EventCallback *ptr) override
+			{
+				this->allocator.deallocate(static_cast<Tc*>(ptr), 1);
+			}
+		};
+
+		static MyCallbackHandler *saved = nullptr;
+
+		if (saved == nullptr)
+			saved = new MyCallbackHandler(this->allocator);
+
+	
+		Tc *persistent_callback = new (saved->allocator.allocate(1)) Tc(callback);
+		
+		this->subscribers.push_back( Subscriber {
+			.callback = persistent_callback,
+			.callback_handler = saved,
+			.enabled = true
+			} );
+
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
 
@@ -276,7 +316,7 @@ public:
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found)
-					delete subscriber.callback;
+					subscriber.callback_handler->free_memory(subscriber.callback);
 				
 				return found;
 			}
