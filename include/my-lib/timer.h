@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <functional>
+#include <algorithm>
 
 #include <cstdint>
 #include <cstdlib>
@@ -24,42 +24,43 @@ template <typename Ttime>
 class Timer
 {
 public:
-	using Descriptor = uint64_t;
-	
 	struct Event {
-		Descriptor id;
 		Ttime time;
 		bool re_schedule;
 	};
 
-private:
 	struct EventFull {
-		Descriptor id; // we identify by ids because priority_queues are not pointer-identifiable
 		Ttime time;
 		Callback<Event> *callback;
 		bool enabled;
-		bool auto_destroy;
 
 		inline Event to_Event () const
 		{
-			return Event { .id = this->id, .time = this->time };
-		}
-
-		inline bool operator> (const EventFull& rhs) const
-		{
-			return (this->time > rhs.time);
+			return Event { .time = this->time };
 		}
 	};
 
-	std::priority_queue<EventFull, std::vector<EventFull>, std::greater<EventFull>> events;
+	struct Descriptor {
+		EventFull *ptr;
+	};
+
+private:
+	struct Internal {
+		EventFull *event_full;
+
+		inline bool operator< (const Internal& rhs) const
+		{
+			return (this->event_full->time > rhs.event_full->time);
+		}
+	};
+
+	std::vector<Internal> events;
 	Ttime current_time;
-	Descriptor next_id;
 
 public:
-	Timer (const Ttime initial_time)
+	Timer (const Ttime& initial_time)
 		: current_time(initial_time)
 	{
-		this->next_id = 0;
 	}
 
 	inline uint32_t get_n_scheduled_events () const
@@ -67,32 +68,32 @@ public:
 		return this->events.size();
 	}
 
-	void trigger_events (const Ttime time)
+	void trigger_events (const Ttime& time)
 	{
 		this->current_time = time;
 
 		while (!this->events.empty()) {
-			const EventFull& event_ = this->events.top();
+			EventFull *event = this->events.front().event_full;
 
-			if (event_.time <= time) {
-				EventFull event = event_; // copy before deleting
+			if (event->time <= time) {
+				this->pop();
 
-				this->events.pop();
+				auto& c = *(event->callback);
 
-				auto& c = *(event.callback);
-
-				Event user_event = event.to_Event();
+				Event user_event = event->to_Event();
 				user_event.re_schedule = false;
 
-				if (event.enabled)
+				if (event->enabled)
 					c(user_event);
 
 				if (user_event.re_schedule) {
-					event.time = user_event.time;
-					this->events.push(event);
+					event->time = user_event.time;
+					this->push(event);
 				}
-				else if (event.auto_destroy)
-					delete event.callback;
+				else {
+					delete event->callback;
+					delete event;
+				}
 			}
 			else
 				break;
@@ -103,32 +104,41 @@ public:
 	   we allocate internal storage and copy the value to it.
 	*/
 	template <typename Tcallback>
-	Descriptor schedule_event (const Ttime time, Tcallback&& callback)
-		requires std::is_rvalue_reference<decltype(callback)>::value
+	Descriptor schedule_event (const Ttime& time, const Tcallback& callback)
+		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
 
 		Tc *persistent_callback = new Tc(callback);
 		
-		EventFull event {
-			.id = this->next_id++,
+		EventFull *event = new EventFull {
 			.time = time,
 			.callback = persistent_callback,
 			.enabled = true,
-			.auto_destroy = true
 		};
 
-		this->events.push(event);
+		this->push(event);
 		
-		return event.id;
+		return Descriptor { .ptr = event };
 	}
 
 	void unschedule_event (const Descriptor& descriptor)
 	{
-/*		for (const auto& event : this->events) {
-			if (event.id == descriptor)
-				event.enabled = false; // better than rebuild the heap
-		}*/
+		descriptor.ptr->enabled = false; // better than rebuild the heap
+	}
+
+private:
+	inline void push (EventFull *event)
+	{
+		Internal storage { .event_full = event };
+		this->events.push_back(storage);
+		std::push_heap(this->events.begin(), this->events.end());
+	}
+
+	inline void pop ()
+	{
+		std::pop_heap(this->events.begin(), this->events.end());
+		this->events.pop_back();
 	}
 };
 

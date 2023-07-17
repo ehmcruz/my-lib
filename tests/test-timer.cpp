@@ -59,6 +59,12 @@ int main ()
 
 	timer.schedule_event(20, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
 
+	timer.schedule_event(5, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+
+	timer.schedule_event(1, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+
+	timer.schedule_event(3, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+
 	std::cout << "created " << timer.get_n_scheduled_events() << " events" << std::endl;
 
 	// ensure that test object was not copy/moved
