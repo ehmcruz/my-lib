@@ -261,7 +261,7 @@ public:
 		}
 	}
 
-	void publish (Tevent&& event)
+	inline void publish (Tevent&& event)
 	{
 		this->publish(event);
 	}
@@ -296,7 +296,6 @@ public:
 
 		if (saved == nullptr)
 			saved = new MyCallbackHandler(this->allocator);
-
 	
 		Tc *persistent_callback = new (saved->allocator.allocate(1)) Tc(callback);
 		

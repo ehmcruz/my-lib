@@ -1,7 +1,7 @@
 HEADERS = $(wildcard src/*.h) $(wildcard src/*.h)
 CPPFLAGS = -I./include -Wall -ggdb -std=c++23
 
-all: pool stl timer trigger
+all: pool stl timer trigger any
 	@echo "My-lib compiled! yes!"
 
 pool: $(HEADERS) lib/pool-alloc.cpp tests/test-pool-alloc.cpp
@@ -15,6 +15,9 @@ timer: $(HEADERS) tests/test-timer.cpp
 
 trigger: $(HEADERS) tests/test-trigger.cpp
 	g++ tests/test-trigger.cpp -o test-trigger $(CPPFLAGS)
+
+any: $(HEADERS) tests/test-any.cpp
+	g++ tests/test-any.cpp -o test-any $(CPPFLAGS)
 
 clean:
 	- rm -rf test-pool-alloc test-stl-alloc test-timer

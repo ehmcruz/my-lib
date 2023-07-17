@@ -162,7 +162,7 @@ public:
 		return Descriptor { .ptr = event };
 	}
 
-	void unschedule_event (const Descriptor& descriptor)
+	inline void unschedule_event (const Descriptor& descriptor)
 	{
 		descriptor.ptr->enabled = false; // better than rebuild the heap
 	}
@@ -181,7 +181,7 @@ private:
 		this->events.pop_back();
 	}
 
-	void destroy_event (EventFull *event)
+	inline void destroy_event (EventFull *event)
 	{
 		event->callback_handler->free_memory(event->callback);
 		this->allocator.deallocate(event, 1);

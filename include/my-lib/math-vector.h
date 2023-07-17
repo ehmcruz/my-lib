@@ -39,12 +39,6 @@ public:
 			this->data[i] = other.data[i];
 	}
 
-	inline Vector (Vector&& other)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = other.data[i];
-	}
-
 	inline Vector (const float *data)
 	{
 		for (uint32_t i = 0; i < dim; i++)
@@ -52,13 +46,6 @@ public:
 	}
 
 	Vector& operator= (const Vector& other)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = other.data[i];
-		return *this;
-	}
-
-	Vector& operator= (Vector&& other)
 	{
 		for (uint32_t i = 0; i < dim; i++)
 			this->data[i] = other.data[i];
