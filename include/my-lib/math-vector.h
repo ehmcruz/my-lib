@@ -1,6 +1,7 @@
 #ifndef __MY_LIBS_MATH_VECTOR_HEADER_H__
 #define __MY_LIBS_MATH_VECTOR_HEADER_H__
 
+#include <iostream>
 #include <concepts>
 #include <type_traits>
 
@@ -164,12 +165,6 @@ public:
 			this->data[1] OP other.data[1]; \
 			return *this; \
 		} \
-		inline Vector& operator OP (const Vector&& other) \
-		{ \
-			this->data[0] OP other.data[0]; \
-			this->data[1] OP other.data[1]; \
-			return *this; \
-		} \
 		inline Vector& operator OP (const float s) \
 		{ \
 			this->data[0] OP s; \
@@ -187,12 +182,20 @@ public:
 		return std::sqrt(this->x * this->x + this->y * this->y);
 	}
 
-	static inline float dot_product (const Vector& a, const Vector& b)
+	inline float& operator[] (const uint32_t i)
 	{
-		return a.x * b.x + a.y * b.y;
+		return this->data[i];
 	}
 
-	void println () const;
+	inline const float operator[] (const uint32_t i) const
+	{
+		return this->data[i];
+	}
+
+	inline const float operator() (const uint32_t i) const
+	{
+		return this->data[i];
+	}
 };
 
 using Vector2d = Vector<2>;
@@ -216,35 +219,7 @@ concept is_Vector2d = std::same_as< typename remove_type_qualifiers<T>::type, Ve
 		r.data[1] = a.data[1] OP b.data[1]; \
 		return r; \
 	} \
-	inline Vector2d operator OP (const Vector2d&& a, const Vector2d& b) \
-	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP b.data[0]; \
-		r.data[1] = a.data[1] OP b.data[1]; \
-		return r; \
-	} \
-	inline Vector2d operator OP (const Vector2d& a, const Vector2d&& b) \
-	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP b.data[0]; \
-		r.data[1] = a.data[1] OP b.data[1]; \
-		return r; \
-	} \
-	inline Vector2d operator OP (const Vector2d&& a, const Vector2d&& b) \
-	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP b.data[0]; \
-		r.data[1] = a.data[1] OP b.data[1]; \
-		return r; \
-	} \
 	inline Vector2d operator OP (const Vector2d& a, const float s) \
-	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP s; \
-		r.data[1] = a.data[1] OP s; \
-		return r; \
-	} \
-	inline Vector2d operator OP (const Vector2d&& a, const float s) \
 	{ \
 		Vector2d r; \
 		r.data[0] = a.data[0] OP s; \
@@ -265,12 +240,9 @@ inline Vector2d operator- (const Vector2d& v)
 	return r;
 }
 
-inline Vector2d operator- (const Vector2d&& v)
+inline float dot_product (const Vector2d& a, const Vector2d& b)
 {
-	Vector2d r;
-	r.data[0] = -v.data[0];
-	r.data[1] = -v.data[1];
-	return r;
+	return a.x * b.x + a.y * b.y;
 }
 
 /*#undef MYLIB_MATH_BUILD_OPERATION
@@ -340,15 +312,20 @@ public:
 		this->data[3] = 1.0f;
 	}
 
-	Vector (const Vector2d&& v2d)
+	inline float& operator[] (const uint32_t i)
 	{
-		this->data[0] = v2d.data[0];
-		this->data[1] = v2d.data[1];
-		this->data[2] = 0.0f;
-		this->data[3] = 1.0f;
+		return this->data[i];
 	}
 
-	void println () const;
+	inline const float operator[] (const uint32_t i) const
+	{
+		return this->data[i];
+	}
+
+	inline const float operator() (const uint32_t i) const
+	{
+		return this->data[i];
+	}
 };
 
 using Vector4d = Vector<4>;
@@ -369,11 +346,37 @@ concept is_Vector = is_Vector2d<T> || is_Vector4d<T>;
 
 template <typename Ta, typename Tb>
 requires is_Vector<Ta> && is_Vector<Tb>
-inline float distance (Ta&& a, Tb&& b)
+inline float distance (const Ta& a, const Tb& b)
 {
 	static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
 	Vector2d d = a - b;
 	return d.length();
+}
+
+// ---------------------------------------------------
+
+template<typename T>
+requires is_Vector<T>
+void print (const T& v, std::ostream& out=std::cout)
+{
+	out << "[";
+	
+	for (uint32_t i = 0; i < T::get_dim(); i++) {
+		out << v(i);
+		
+		if (i < (T::get_dim()-1))
+			out << ", ";
+	}
+
+	out << "]";
+}
+
+template<typename T>
+requires is_Vector<T>
+void println (const T& v, std::ostream& out=std::cout)
+{
+	print(v, out);
+	out << std::endl;
 }
 
 // ---------------------------------------------------

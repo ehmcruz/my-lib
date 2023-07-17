@@ -1,6 +1,7 @@
 #ifndef __MY_LIBS_MATH_MATRIX_HEADER_H__
 #define __MY_LIBS_MATH_MATRIX_HEADER_H__
 
+#include <iostream>
 #include <concepts>
 #include <type_traits>
 
@@ -63,7 +64,7 @@ public:
 		return this->data[row*get_ncols() + col];
 	}
 
-	inline const float& operator() (const uint32_t row, const uint32_t col) const
+	inline const float operator() (const uint32_t row, const uint32_t col) const
 	{
 		return this->data[row*get_ncols() + col];
 	}
@@ -94,11 +95,6 @@ public:
 		this->data[3*4 + 3] = 1.0f;
 	}
 
-	inline void set_scale (const Vector2d&& v)
-	{
-		this->set_scale(v);
-	}
-
 	void set_translate (const Vector2d& v)
 	{
 		for (uint32_t i=0; i<16; i++)
@@ -112,13 +108,6 @@ public:
 		this->data[1*4 + 3] = v.y;
 		this->data[3*4 + 3] = 1.0f;
 	}
-
-	inline void set_translate (const Vector2d&& v)
-	{
-		this->set_translate(v);
-	}
-
-	void println () const;
 };
 
 using Matrix4d = Matrix<4, 4>;
@@ -135,7 +124,7 @@ concept is_Matrix = is_Matrix4d<T>;
 
 template <typename Ta, typename Tb>
 requires is_Matrix<Ta> && is_Matrix<Tb>
-auto operator* (Ta&& a_, Tb&& b_)
+auto operator* (const Ta& a_, const Tb& b_)
 {
 	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_dim();
 	Matrix<dim, dim> r_;
@@ -167,7 +156,7 @@ auto operator* (Ta&& a_, Tb&& b_)
 
 template <typename Tm, typename Tv>
 requires is_Matrix<Tm> && is_Vector<Tv>
-auto operator* (Tm&& m_, Tv&& v_)
+auto operator* (const Tm& m_, const Tv& v_)
 {
 	constexpr uint32_t dim = remove_type_qualifiers<Tv>::type::get_dim();
 	Vector<dim> r_;
@@ -187,6 +176,26 @@ auto operator* (Tm&& m_, Tv&& v_)
 	}
 	
 	return r_;
+}
+
+// ---------------------------------------------------
+
+template<typename T>
+requires is_Matrix<T>
+void print (const T& m, std::ostream& out=std::cout)
+{
+	for (uint32_t i=0; i<T::get_nrows(); i++) {
+		for (uint32_t j=0; j<T::get_ncols(); j++)
+			out << m(i, j) << ", ";
+		out << std::endl;
+	}
+}
+
+template<typename T>
+requires is_Matrix<T>
+void println (const T& m, std::ostream& out=std::cout)
+{
+	print(m, out);
 }
 
 // ---------------------------------------------------

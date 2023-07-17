@@ -117,7 +117,7 @@ auto make_filter_callback_object (Tfilter_&& filter, Tobj& obj, Tfunc callback)
 */
 
 template <typename Tevent, typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
-auto make_callback_object_with_params (Tobj& obj, Tfunc callback, Tfirst_param first_param, Args&&... args)
+auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_param& first_param, Args&&... args)
 {
 	//auto params = std::make_tuple(first_param, std::forward<Args>(args)...);
 	auto params = std::make_tuple(first_param, args...);
@@ -165,7 +165,7 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, Tfirst_param f
 */
 
 template <typename Tevent, typename Tfilter_, typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
-auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfunc callback, Tfirst_param first_param, Args&&... args)
+auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfunc callback, const Tfirst_param& first_param, Args&&... args)
 {
 	using Tfilter = remove_type_qualifiers<Tfilter_>::type;
 
@@ -218,7 +218,6 @@ public:
 	struct Subscriber {
 		Callback<Tevent> *callback;
 		bool enabled;
-		bool auto_destroy;
 	};
 
 	struct Descriptor {
@@ -231,10 +230,8 @@ private:
 public:
 	~EventHandler ()
 	{
-		for (auto& subscriber : this->subscribers) {
-			if (subscriber.auto_destroy)
-				delete subscriber.callback;
-		}
+		for (auto& subscriber : this->subscribers)
+			delete subscriber.callback;
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -254,19 +251,12 @@ public:
 		this->publish(event);
 	}
 
-	Descriptor subscribe (Callback<Tevent>& callback)
-	{
-		//std::cout << "here lvalue" << std::endl;
-		this->subscribers.push_back( Subscriber { .callback = &callback, .enabled = true, .auto_destroy = false } );
-		return Descriptor { .subscriber = &this->subscribers.back() };
-	}
-
 	/* When creating the event listener by r-value ref,
 	   we allocate internal storage and copy the value to it.
 	*/
 	template <typename Tcallback>
-	Descriptor subscribe (Tcallback&& callback)
-		requires std::is_rvalue_reference<decltype(callback)>::value
+	Descriptor subscribe (const Tcallback& callback)
+		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		//std::cout << "here R-VALUE " << callback.filter.myself->get_name() << std::endl;
 		using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
@@ -274,7 +264,7 @@ public:
 		//Tc *persistent_callback = new Tc( static_cast<Tc&>(callback) );
 		Tc *persistent_callback = new Tc(callback);
 		//std::cout << "persistent " << persistent_callback->filter.myself->get_name() << std::endl;
-		this->subscribers.push_back( Subscriber { .callback = persistent_callback, .enabled = true, .auto_destroy = true } );
+		this->subscribers.push_back( Subscriber { .callback = persistent_callback, .enabled = true } );
 		//std::cout << "LIST " << static_cast<Tc*>(this->subscribers.back().callback)->filter.myself->get_name() << std::endl;
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
@@ -285,7 +275,7 @@ public:
 			[&descriptor] (Subscriber& subscriber) -> bool {
 				bool found = (descriptor.subscriber == &subscriber);
 
-				if (found && subscriber.auto_destroy)
+				if (found)
 					delete subscriber.callback;
 				
 				return found;

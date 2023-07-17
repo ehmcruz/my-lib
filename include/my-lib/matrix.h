@@ -190,7 +190,7 @@ public:
 		return this->storage[row*this->ncols + col];
 	}
 
-	inline T& operator() (const uint32_t row, const uint32_t col) const
+	inline const T& operator() (const uint32_t row, const uint32_t col) const
 	{
 		return this->storage[row*this->ncols + col];
 	}
