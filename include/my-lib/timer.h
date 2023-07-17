@@ -162,7 +162,7 @@ public:
 		return Descriptor { .ptr = event };
 	}
 
-	inline void unschedule_event (const Descriptor& descriptor)
+	inline void unschedule_event (Descriptor& descriptor)
 	{
 		descriptor.ptr->enabled = false; // better than rebuild the heap
 	}

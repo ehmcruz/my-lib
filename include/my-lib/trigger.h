@@ -308,7 +308,7 @@ public:
 		return Descriptor { .subscriber = &this->subscribers.back() };
 	}
 
-	void unsubscribe (Descriptor& descriptor)
+	void unsubscribe (const Descriptor& descriptor)
 	{
 		this->subscribers.remove_if(
 			[&descriptor] (Subscriber& subscriber) -> bool {

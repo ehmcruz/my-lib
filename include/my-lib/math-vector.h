@@ -21,44 +21,7 @@ namespace Math
 // ---------------------------------------------------
 
 template <uint32_t dim>
-class Vector
-{
-public:
-	consteval static uint32_t get_dim ()
-	{
-		return dim;
-	}
-
-	float data[dim];
-
-	Vector () = default;
-
-	inline Vector (const Vector& other)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = other.data[i];
-	}
-
-	inline Vector (const float *data)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = data[i];
-	}
-
-	Vector& operator= (const Vector& other)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = other.data[i];
-		return *this;
-	}
-
-	Vector& operator= (const float *v)
-	{
-		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = v[i];
-		return *this;
-	}
-};
+class Vector;
 
 // ---------------------------------------------------
 

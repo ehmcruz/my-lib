@@ -36,7 +36,7 @@ private:
 
 public:
 	template <typename T>
-	Any& operator= (const T& value)
+	inline Any& operator= (const T& value)
 	{
 		static_assert(sizeof(T) <= size());
 		memcpy(this, &value, sizeof(T));
@@ -45,7 +45,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	T& get_value ()
+	inline T& get_value ()
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
@@ -53,7 +53,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	const T& get_value () const
+	inline const T& get_value () const
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));

@@ -20,10 +20,7 @@ namespace Math
 // ---------------------------------------------------
 
 template <uint32_t nrows, uint32_t ncols>
-class Matrix
-{
-
-};
+class Matrix;
 
 // ---------------------------------------------------
 
