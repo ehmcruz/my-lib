@@ -6,6 +6,10 @@
 
 #include <cstdint>
 
+#if !(defined(__clang__) || defined(__GNUC__) || defined(_MSC_VER))
+	#warning Untested compiler
+#endif
+
 namespace Mylib
 {
 

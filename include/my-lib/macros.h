@@ -70,4 +70,14 @@
 		exit(1); \
 	}
 
+// ---------------------------------------------------
+
+#if defined(__GNUC__) || defined(__clang__)
+	#define MYLIB_ALIGN_STRUCT(V)   __attribute__((aligned(V)))
+#elif defined(_MSC_VER)
+	#define MYLIB_ALIGN_STRUCT(V)   __declspec(align(V))
+#else
+	#error "Unknown compiler. Can't define MYLIB_ALIGN_STRUCT"
+#endif
+
 #endif

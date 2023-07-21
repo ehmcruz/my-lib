@@ -231,7 +231,7 @@ public:
 	};
 
 private:
-	using TallocSubscriber = typename std::allocator_traits<Talloc>::rebind_alloc<Subscriber>;
+	using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
 	TallocSubscriber allocator;
 	std::list<Subscriber, TallocSubscriber> subscribers;
 
@@ -276,7 +276,7 @@ public:
 		//std::cout << "here R-VALUE " << callback.filter.myself->get_name() << std::endl;
 		//using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
 		using Tc = Tcallback;
-		using TallocTc = typename std::allocator_traits<TallocSubscriber>::rebind_alloc<Tc>;
+		using TallocTc = typename std::allocator_traits<TallocSubscriber>::template rebind_alloc<Tc>;
 
 		struct MyCallbackHandler : public CallbackHandler {
 			TallocTc allocator;

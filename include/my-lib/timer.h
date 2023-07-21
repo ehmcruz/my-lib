@@ -62,7 +62,7 @@ private:
 		}
 	};
 
-	using TallocEventFull = typename std::allocator_traits<Talloc>::rebind_alloc<EventFull>;
+	using TallocEventFull = typename std::allocator_traits<Talloc>::template rebind_alloc<EventFull>;
 	TallocEventFull allocator;
 	std::vector<Internal> events; // we let the vector use its standard allocator
 	Ttime current_time;
@@ -127,7 +127,7 @@ public:
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		using Tc = Tcallback;
-		using TallocTc = typename std::allocator_traits<TallocEventFull>::rebind_alloc<Tc>;
+		using TallocTc = typename std::allocator_traits<TallocEventFull>::template rebind_alloc<Tc>;
 
 		struct MyCallbackHandler : public CallbackHandler {
 			TallocTc allocator;

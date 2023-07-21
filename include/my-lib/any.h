@@ -21,7 +21,7 @@ namespace Mylib
 */
 
 template <uint32_t minimum_storage_size, uint32_t alignment=__STDCPP_DEFAULT_NEW_ALIGNMENT__>
-class Any
+class MYLIB_ALIGN_STRUCT(alignment) Any
 {
 public:
 	consteval static uint32_t size ()
@@ -58,7 +58,7 @@ public:
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
 	}
-} __attribute__((aligned(alignment)));
+};
 
 // ---------------------------------------------------
 
