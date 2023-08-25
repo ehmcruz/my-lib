@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include <my-lib/std.h>
+#include <my-lib/macros.h>
 
 namespace Mylib
 {
@@ -95,7 +96,7 @@ public:
 
 // ---------------------------------------------------
 
-template<typename T>
+template<typename T, bool bound_check = false>
 class Matrix
 {
 private:
@@ -175,6 +176,14 @@ public:
 		return *this;
 	}
 
+	void set_all (const T& v)
+	{
+		const uint32_t size = this->nrows * this->ncols;
+
+		for (uint32_t i = 0; i < size; i++)
+			this->storage[i] = v;
+	}
+
 	inline T* get_raw ()
 	{
 		return this->storage;
@@ -187,11 +196,19 @@ public:
 
 	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
 		return this->storage[row*this->ncols + col];
 	}
 
 	inline const T& operator() (const uint32_t row, const uint32_t col) const
 	{
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
 		return this->storage[row*this->ncols + col];
 	}
 };

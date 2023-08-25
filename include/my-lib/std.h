@@ -3,6 +3,10 @@
 
 #include <concepts>
 #include <type_traits>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <stdexcept>
 
 #include <cstdint>
 
@@ -38,6 +42,37 @@ inline void free (void *p)
 {
 	::operator delete(p);
 }
+
+// ---------------------------------------------------
+
+class Exception : public std::exception
+{
+private:
+	std::string msg;
+
+public:
+	Exception (const std::string& msg_)
+	: msg(msg_)
+	{
+	}
+
+	const char* what() const noexcept override
+	{
+		return this->msg.data();
+	}
+};
+
+#define mylib_assert_exception_msg(bool_expr, msg) \
+	if (!(bool_expr)) [[unlikely]] { \
+		std::ostringstream str_stream; \
+		str_stream << "sanity error!" << std::endl << "file " << __FILE__ << " at line " << __LINE__ << " assertion failed!" << std::endl << #bool_expr << std::endl; \
+		str_stream << msg << std::endl; \
+		const std::string str = str_stream.str(); \
+		\
+		throw Mylib::Exception(str); \
+	}
+
+#define mylib_assert_exception(bool_expr) mylib_assert_exception_msg(bool_expr, "")
 
 // ---------------------------------------------------
 
