@@ -62,8 +62,9 @@ public:
 	}
 };
 
-#define mylib_assert_exception_msg(bool_expr, msg) \
+#define mylib_assert_exception_diecode_msg(bool_expr, die_code, msg) \
 	if (!(bool_expr)) [[unlikely]] { \
+		die_code \
 		std::ostringstream str_stream; \
 		str_stream << "sanity error!" << std::endl << "file " << __FILE__ << " at line " << __LINE__ << " assertion failed!" << std::endl << #bool_expr << std::endl; \
 		str_stream << msg << std::endl; \
@@ -71,6 +72,8 @@ public:
 		\
 		throw Mylib::Exception(str); \
 	}
+
+#define mylib_assert_exception_msg(bool_expr, msg) mylib_assert_exception_diecode_msg(bool_expr, , msg)
 
 #define mylib_assert_exception(bool_expr) mylib_assert_exception_msg(bool_expr, "")
 

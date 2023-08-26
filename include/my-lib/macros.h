@@ -20,6 +20,8 @@
 
 // ---------------------------------------------------
 
+// these are deprecated and will be removed in the future
+
 #define OO_ENCAPSULATE_READONLY(TYPE, VAR) \
 	protected: \
 		TYPE VAR; \
@@ -59,6 +61,27 @@
 			this->VAR = VAR; \
 		} \
 	protected:
+
+// ---------------------------------------------------
+
+#define OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
+	protected: \
+		TYPE VAR; \
+	public: \
+		inline TYPE get_##VAR () const { \
+			return this->VAR; \
+		} \
+	protected:
+
+#define OO_ENCAPSULATE_SCALAR(TYPE, VAR) \
+	OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
+	public: \
+		inline void set_##VAR (const TYPE VAR) { \
+			this->VAR = VAR; \
+		} \
+	protected:
+
+// ---------------------------------------------------
 
 #define ASSERT(V) ASSERT_PRINT(V, "bye!\n")
 
