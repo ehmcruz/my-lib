@@ -35,6 +35,15 @@ private:
 	uint8_t data[ size() ];
 
 public:
+	Any () = default;
+
+	template <typename T>
+	inline Any (const T& value)
+	{
+		static_assert(sizeof(T) <= size());
+		memcpy(this, &value, sizeof(T));
+	}
+
 	template <typename T>
 	inline Any& operator= (const T& value)
 	{
