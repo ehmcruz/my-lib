@@ -49,7 +49,7 @@ public:
 	}
 
 	template <typename T>
-	void deallocate_type (const void *p, const size_t count)
+	void deallocate_type (const T *p, const size_t count)
 	{
 		std::align_val_t align;
 
