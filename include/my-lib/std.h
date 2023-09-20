@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <utility>
 
 #include <cstdint>
 
@@ -57,7 +58,7 @@ public:
 	}
 
 	Exception (std::string&& msg_)
-	: msg(msg_)
+	: msg(std::move(msg_))
 	{
 	}
 
