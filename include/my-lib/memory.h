@@ -64,11 +64,11 @@ public:
 
 // ---------------------------------------------------
 
-class StdManager : public Manager
+class DefaultManager : public Manager
 {
 public:
-	[[nodiscard]] virtual void* allocate (const size_t size, const std::align_val_t align) override;
-	virtual void deallocate (const void *p, const size_t size, const std::align_val_t align) override;
+	[[nodiscard]] void* allocate (const size_t size, const std::align_val_t align) override;
+	void deallocate (const void *p, const size_t size, const std::align_val_t align) override;
 };
 
 // ---------------------------------------------------

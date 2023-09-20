@@ -56,6 +56,16 @@ public:
 	{
 	}
 
+	Exception (std::string&& msg_)
+	: msg(msg_)
+	{
+	}
+
+	Exception (const char *msg_)
+	: msg(msg_)
+	{
+	}
+
 	const char* what() const noexcept override
 	{
 		return this->msg.data();
