@@ -9,33 +9,14 @@ namespace Memory
 
 // ---------------------------------------------------
 
-[[nodiscard]] void* StdManager::allocate (const size_t size, const std::align_val_t align)
+[[nodiscard]] void* DefaultManager::allocate (const size_t type_size, const size_t count, const uint32_t align)
 {
-#if __cpp_aligned_new
-	if (align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
-		return ::operator new(size, align);
-#endif
-
-	return ::operator new(size);
+	return m_allocate(type_size * count, align);
 }
 
-void StdManager::deallocate (const void *p, const size_t size, const std::align_val_t align)
+void DefaultManager::deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align)
 {
-#if __cpp_aligned_new
-	if (align > __STDCPP_DEFAULT_NEW_ALIGNMENT__) {
-		::operator delete(p,
-	#if __cpp_sized_deallocation
-		size,
-	#endif
-		align));
-		return;
-	}
-#endif
-	::operator delete(p
-#if __cpp_sized_deallocation
-	, size
-#endif
-	);
+	m_deallocate(p, type_size * count, align);
 }
 
 // ---------------------------------------------------
