@@ -21,11 +21,12 @@ namespace Memory
 
 [[nodiscard]] inline void* m_allocate (const size_t size, const uint32_t align)
 {
+//	std::cout << "m_allocate size " << size << " align " << align << std::endl;
 #if __cpp_aligned_new
 	if (align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
 		return ::operator new(size, std::align_val_t(align));
 #endif
-
+//	std::cout << "\tstd align " << __STDCPP_DEFAULT_NEW_ALIGNMENT__ << std::endl;
 	return ::operator new(size);
 }
 
