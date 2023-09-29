@@ -30,6 +30,42 @@ public:
 
 /*
 	Template parameter Tevent must be explicitly set.
+	Function should be:
+	void Tfunc (Tevent&);
+*/
+
+template <typename Tevent, typename Tfunc>
+auto make_callback_function (Tfunc callback)
+{
+	class DerivedCallback : public Callback<Tevent>
+	{
+	private:
+		Tfunc callback_function;
+
+	public:
+		DerivedCallback (Tfunc callback_function_)
+			: callback_function(callback_function_)
+		{
+		}
+
+		void operator() (Tevent& event) override
+		{
+			/*auto built_params = std::tuple_cat(
+				std::forward_as_tuple(this->obj),
+				std::forward_as_tuple(event)
+			);
+			std::apply(this->callback_function, built_params);*/
+			std::invoke(this->callback_function, event);
+		}
+	};
+
+	return DerivedCallback(callback);
+}
+
+// ---------------------------------------------------
+
+/*
+	Template parameter Tevent must be explicitly set.
 	Object function should be:
 	void Tobj::Tfunc (const Tevent&);
 */
