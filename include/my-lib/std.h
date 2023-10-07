@@ -34,14 +34,23 @@ using size_t = std::size_t;
 
 // ---------------------------------------------------
 
-inline void* alloc (size_t size, std::align_val_t align)
+constexpr void build_str_from_stream__ (std::ostringstream& str_stream)
 {
-	return ::operator new(size, align);
 }
 
-inline void free (void *p)
+template <typename T, typename... Types>
+void build_str_from_stream__ (std::ostringstream& str_stream, T var1, Types&&... vars)
 {
-	::operator delete(p);
+	str_stream << var1;
+	build_str_from_stream__(str_stream, vars...);
+}
+
+template <typename... Types>
+std::string build_str_from_stream (Types&&... vars)
+{
+	std::ostringstream str_stream;
+	build_str_from_stream__(str_stream, vars...);
+	return str_stream.str();
 }
 
 // ---------------------------------------------------
@@ -52,19 +61,10 @@ private:
 	std::string msg;
 
 public:
-	Exception (const std::string& msg_)
-	: msg(msg_)
+	template <typename... Types>
+	Exception (Types&&... vars)
 	{
-	}
-
-	Exception (std::string&& msg_)
-	: msg(std::move(msg_))
-	{
-	}
-
-	Exception (const char *msg_)
-	: msg(msg_)
-	{
+		this->msg = Mylib::build_str_from_stream(vars...);
 	}
 
 	const char* what() const noexcept override
@@ -73,18 +73,14 @@ public:
 	}
 };
 
-#define mylib_assert_exception_diecode_msg(bool_expr, die_code, msg) \
+#define mylib_assert_exception_diecode_msg(bool_expr, die_code, ...) \
 	if (!(bool_expr)) [[unlikely]] { \
 		die_code \
-		std::ostringstream str_stream; \
-		str_stream << "sanity error!" << std::endl << "file " << __FILE__ << " at line " << __LINE__ << " assertion failed!" << std::endl << #bool_expr << std::endl; \
-		str_stream << msg << std::endl; \
-		const std::string str = str_stream.str(); \
-		\
+		std::string str = Mylib::build_str_from_stream("assert failed at file ", __FILE__, " line ", __LINE__, "\n", #bool_expr, "\n", __VA_ARGS__, "\n"); \
 		throw Mylib::Exception(str); \
 	}
 
-#define mylib_assert_exception_msg(bool_expr, msg) mylib_assert_exception_diecode_msg(bool_expr, , msg)
+#define mylib_assert_exception_msg(bool_expr, ...) mylib_assert_exception_diecode_msg(bool_expr, , __VA_ARGS__)
 
 #define mylib_assert_exception(bool_expr) mylib_assert_exception_msg(bool_expr, "")
 
