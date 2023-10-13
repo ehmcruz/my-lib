@@ -12,7 +12,7 @@ namespace Mylib
 
 // ---------------------------------------------------
 
-template<typename T, uint32_t nrows, uint32_t ncols>
+template<typename T, uint32_t nrows, uint32_t ncols, bool bound_check = false>
 class StaticMatrix
 {
 private:
@@ -85,11 +85,19 @@ public:
 
 	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
 		return this->storage[row*ncols + col];
 	}
 
 	inline const T& operator() (const uint32_t row, const uint32_t col) const
 	{
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
 		return this->storage[row*ncols + col];
 	}
 };
