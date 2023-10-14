@@ -81,6 +81,15 @@
 		} \
 	protected:
 
+#define OO_ENCAPSULATE_CONST_SCALAR_READONLY(TYPE, VAR) \
+	protected: \
+		const TYPE VAR; \
+	public: \
+		inline TYPE get_##VAR () const { \
+			return this->VAR; \
+		} \
+	protected:
+
 #define OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		TYPE VAR = (DATA); \
@@ -94,6 +103,17 @@
 	OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	public: \
 		inline void set_##VAR (const TYPE VAR) { \
+			this->VAR = VAR; \
+		} \
+	protected:
+
+#define OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+	OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA)
+
+#define OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
+	OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+	public: \
+		inline void set_##VAR (TYPE VAR) { \
 			this->VAR = VAR; \
 		} \
 	protected:
