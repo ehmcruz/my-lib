@@ -20,7 +20,7 @@ T base2_log_of_integer (const T value)
 			return pos;
 	}
 
-	throw Mylib::Exception("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero");
+	throw Mylib::Exception(Mylib::build_str_from_stream("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero"));
 
 	return 0;
 }

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 #include <utility>
 
@@ -39,7 +40,7 @@ constexpr void build_str_from_stream__ (std::ostringstream& str_stream)
 }
 
 template <typename T, typename... Types>
-void build_str_from_stream__ (std::ostringstream& str_stream, T var1, Types&&... vars)
+void build_str_from_stream__ (std::ostringstream& str_stream, T&& var1, Types&&... vars)
 {
 	str_stream << var1;
 	build_str_from_stream__(str_stream, vars...);
@@ -61,10 +62,19 @@ private:
 	std::string msg;
 
 public:
-	template <typename... Types>
-	Exception (Types&&... vars)
+	Exception (std::string&& msg)
 	{
-		this->msg = Mylib::build_str_from_stream(vars...);
+		this->msg = std::move(msg);
+	}
+
+	Exception (const std::string& msg)
+	{
+		this->msg = msg;
+	}
+
+	Exception (const char *msg)
+	{
+		this->msg = msg;
 	}
 
 	const char* what() const noexcept override
@@ -76,8 +86,7 @@ public:
 #define mylib_assert_exception_diecode_msg(bool_expr, die_code, ...) \
 	if (!(bool_expr)) [[unlikely]] { \
 		die_code \
-		std::string str = Mylib::build_str_from_stream("assert failed at file ", __FILE__, " line ", __LINE__, "\n", #bool_expr, "\n", __VA_ARGS__, "\n"); \
-		throw Mylib::Exception(str); \
+		throw Mylib::Exception( Mylib::build_str_from_stream("assert failed at file ", __FILE__, " line ", __LINE__, "\n", #bool_expr, "\n", __VA_ARGS__, "\n") ); \
 	}
 
 #define mylib_assert_exception_msg(bool_expr, ...) mylib_assert_exception_diecode_msg(bool_expr, , __VA_ARGS__)
