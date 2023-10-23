@@ -114,9 +114,18 @@ private:
 
 	void alloc (const uint32_t nrows, const uint32_t ncols)
 	{
-		if (this->storage != nullptr && (this->nrows != nrows || this->ncols != ncols))
-			delete[] this->storage;
-		this->storage = new T[nrows * ncols];
+		const uint32_t new_size = nrows * ncols;
+
+		if (this->storage == nullptr)
+			this->storage = new T[new_size];
+		else {
+			const uint32_t stored_size = this->nrows * this->ncols;
+		 	
+			if (stored_size != new_size) {
+				delete[] this->storage;
+				this->storage = new T[new_size];
+			}
+		}
 		this->nrows = nrows;
 		this->ncols = ncols;
 	}
@@ -124,7 +133,8 @@ private:
 	void copy (const Matrix& other)
 	{
 		this->alloc(other.nrows, other.ncols);
-		for (uint32_t i=0; i<(this->nrows * this->ncols); i++)
+		const uint32_t size = this->nrows * this->ncols;
+		for (uint32_t i=0; i<size; i++)
 			this->storage[i] = other.storage[i];
 	}
 
@@ -152,8 +162,10 @@ public:
 
 	~Matrix ()
 	{
-		if (this->storage != nullptr)
+		if (this->storage != nullptr) {
 			delete[] this->storage;
+			this->storage = nullptr;
+		}
 	}
 
 	// copy-constructor
