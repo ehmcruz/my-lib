@@ -1,5 +1,5 @@
-#ifndef __MY_LIBS_ANY_HEADER_H__
-#define __MY_LIBS_ANY_HEADER_H__
+#ifndef __MY_LIB_ANY_HEADER_H__
+#define __MY_LIB_ANY_HEADER_H__
 
 #include <type_traits>
 
@@ -38,23 +38,27 @@ public:
 	Any () = default;
 
 	template <typename T>
-	inline Any (const T& value)
+	Any (const T& value)
 	{
 		static_assert(sizeof(T) <= size());
 		memcpy(this, &value, sizeof(T));
 	}
 
+	// -----------------------
+
 	template <typename T>
-	inline Any& operator= (const T& value)
+	Any& operator= (const T& value)
 	{
 		static_assert(sizeof(T) <= size());
 		memcpy(this, &value, sizeof(T));
 		return *this;
 	}
 
+	// -----------------------
+
 	// T must be explicitly set when calling
 	template <typename T>
-	inline T& get_value ()
+	T& get_value ()
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
@@ -62,7 +66,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	inline const T& get_value () const
+	const T& get_value () const
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
