@@ -109,8 +109,8 @@ class Matrix
 {
 private:
 	T *storage;
-	OO_ENCAPSULATE_READONLY(uint32_t, nrows)
-	OO_ENCAPSULATE_READONLY(uint32_t, ncols)
+	OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, nrows)
+	OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, ncols)
 
 	void alloc (const uint32_t nrows, const uint32_t ncols)
 	{

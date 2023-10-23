@@ -20,25 +20,83 @@ namespace Math
 
 // ---------------------------------------------------
 
-template <uint32_t dim>
-class Vector;
+template <typename T, uint32_t dim>
+class VectorStorage__;
 
 // ---------------------------------------------------
 
 template<>
-class Vector<2>
+class VectorStorage__<float, 2>
 {
 public:
+	using Type = T;
+
 	union {
-		float data[2];
+		Type data[dim];
 
 		struct {
-			float x;
-			float y;
+			Type x;
+			Type y;
 		};
 
 		//uint64_t ivalue;
 	};
+
+	VectorStorage__ (const Type x_, const Type y_)
+		: x(x_), y(y_)
+	{
+	}
+
+	inline void set (const Type x, const Type y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+};
+
+// ---------------------------------------------------
+
+template<>
+class VectorStorage__<float, 4>
+{
+public:
+	using Type = T;
+
+	union {
+		Type data[dim];
+
+		struct {
+			Type x;
+			Type y;
+			Type z;
+			Type w;
+		};
+
+		//uint64_t ivalue;
+	};
+
+	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_)
+		: x(x_), y(y_), z(z), w(w_)
+	{
+	}
+
+	inline void set (const Type x, const Type y, const Type z, const Type w)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+		this->w = w;
+	}
+};
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+class Vector : public VectorStorage__<T, dim>
+{
+public:
+	using TParent = VectorStorage__<T, dim>;
+	using Type = T;
 
 	inline float* get_raw ()
 	{
@@ -52,32 +110,14 @@ public:
 
 	consteval static uint32_t get_dim ()
 	{
-		return 2;
+		return dim;
 	}
 
 	// ------------------------ Constructors
 
 	Vector () = default;
 
-/*	inline Vector (const Vector& other)
-	{
-		this->ivalue = other.ivalue;
-	}
-
-	inline Vector (Vector&& other)
-	{
-		this->ivalue = other.ivalue;
-	}
-
-	inline Vector (const float *v)
-	{
-		this->ivalue = *(reinterpret_cast<const uint64_t*>(v));
-	}
-*/
-	inline Vector (const float x_, const float y_)
-		: x(x_), y(y_)
-	{
-	}
+	using TParent::VectorStorage__;
 
 	// ------------------------ operator=
 
@@ -101,24 +141,18 @@ public:
 
 	// ------------------------ Other stuff
 
-	inline void set (const float x, const float y)
-	{
-		this->x = x;
-		this->y = y;
-	}
-
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
 		inline Vector& operator OP (const Vector& other) \
 		{ \
-			this->data[0] OP other.data[0]; \
-			this->data[1] OP other.data[1]; \
+			for (uint32_t i = 0; i < dim; i++) \
+				this->data[i] OP other.data[i]; \
 			return *this; \
 		} \
-		inline Vector& operator OP (const float s) \
+		inline Vector& operator OP (const T s) \
 		{ \
-			this->data[0] OP s; \
-			this->data[1] OP s; \
+			for (uint32_t i = 0; i < dim; i++) \
+				this->data[i] OP s; \
 			return *this; \
 		}
 	
@@ -127,11 +161,6 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	inline float length () const
-	{
-		return std::sqrt(this->x * this->x + this->y * this->y);
-	}
-
 	inline float& operator[] (const uint32_t i)
 	{
 		return this->data[i];
@@ -142,38 +171,31 @@ public:
 		return this->data[i];
 	}
 
-	inline const float operator() (const uint32_t i) const
+	inline float length () const
 	{
-		return this->data[i];
+		T value = 0;
+		for (uint32_t i = 0; i < dim; i++)
+			value += this->data[i] * this->data[i];
+		return std::sqrt(value);
 	}
 };
 
-using Vector2d = Vector<2>;
-
-static_assert(sizeof(Vector2d) == (2 * sizeof(float)));
-static_assert(sizeof(Vector2d) == sizeof(uint64_t));
-static_assert(sizeof(Vector2d) == 8);
-
-template<typename T>
-concept is_Vector2d = std::same_as< typename remove_type_qualifiers<T>::type, Vector2d >;
-//concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
-//concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
-//concept is_Vector2d = std::same_as< typename std::remove_reference<T>::type, Vector2d >;
-
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
-	inline Vector2d operator OP (const Vector2d& a, const Vector2d& b) \
+	template <typename T, uint32_t dim> \
+	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) \
 	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP b.data[0]; \
-		r.data[1] = a.data[1] OP b.data[1]; \
+		Vector<T, dim> r; \
+		for (uint32_t i = 0; i < dim; i++) \
+			r.data[i] = a.data[i] OP b.data[i]; \
 		return r; \
 	} \
-	inline Vector2d operator OP (const Vector2d& a, const float s) \
+	template <typename T, uint32_t dim> \
+	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) \
 	{ \
-		Vector2d r; \
-		r.data[0] = a.data[0] OP s; \
-		r.data[1] = a.data[1] OP s; \
+		Vector<T, dim> r; \
+		for (uint32_t i = 0; i < dim; i++) \
+			r.data[i] = a.data[i] OP s; \
 		return r; \
 	}
 
@@ -182,124 +204,68 @@ MYLIB_MATH_BUILD_OPERATION( - )
 MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
 
-inline Vector2d operator- (const Vector2d& v)
+template <typename T, uint32_t dim> \
+inline Vector<T, dim> operator- (const Vector<T, dim>& v)
 {
-	Vector2d r;
-	r.data[0] = -v.data[0];
-	r.data[1] = -v.data[1];
+	Vector<T, dim> r;
+	for (uint32_t i = 0; i < dim; i++) \
+		r.data[i] = -v.data[i];
 	return r;
 }
 
-inline float dot_product (const Vector2d& a, const Vector2d& b)
+template <typename T, uint32_t dim>
+inline T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b)
 {
-	return a.x * b.x + a.y * b.y;
+	T value = 0;
+	for (uint32_t i = 0; i < dim; i++)
+		value += a[i] * b[i];
+	return value;
 }
 
-/*#undef MYLIB_MATH_BUILD_OPERATION
-#define MYLIB_MATH_BUILD_OPERATION(NAME, CODE) \
-	inline float NAME (const Vector2d& a, const Vector2d& b) \
-	{ \
-		CODE \
-	} \
-	inline float NAME (const Vector2d&& a, const Vector2d& b) \
-	{ \
-		CODE \
-	} \
-	inline float NAME (const Vector2d& a, const Vector2d&& b) \
-	{ \
-		CODE \
-	} \
-	inline float NAME (const Vector2d&& a, const Vector2d&& b) \
-	{ \
-		CODE \
-	}
+// ---------------------------------------------------
 
-MYLIB_MATH_BUILD_OPERATION(distance, Vector2d d = a - b; return d.length();)*/
+using Vector2df = Vector<float, 2>;
+using Point2df = Vector2df;
+
+static_assert(sizeof(Vector2df) == (2 * sizeof(float)));
+static_assert(sizeof(Vector2df) == sizeof(uint64_t));
+static_assert(sizeof(Vector2df) == 8);
+
+template<typename T>
+concept is_Vector2df = std::same_as< typename remove_type_qualifiers<T>::type, Vector2df >;
+//concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
+//concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
+//concept is_Vector2d = std::same_as< typename std::remove_reference<T>::type, Vector2d >;
 
 // ---------------------------------------------------
 
-template<>
-class Vector<4>
-{
-public:
-	union {
-		float data[4];
+using Vector4df = Vector<float, 4>;
+using Point4df = Vector4df;
 
-		struct {
-			float x;
-			float y;
-			float z;
-			float w;
-		};
-
-		//uint64_t ivalue[2];
-	};
-
-	inline float* get_raw ()
-	{
-		return this->data;
-	}
-
-	inline const float* get_raw () const
-	{
-		return this->data;
-	}
-
-	consteval static uint32_t get_dim ()
-	{
-		return 4;
-	}
-
-	// ------------------------ Constructors
-
-	Vector () = default;
-
-	Vector (const Vector2d& v2d)
-	{
-		this->data[0] = v2d.data[0];
-		this->data[1] = v2d.data[1];
-		this->data[2] = 0.0f;
-		this->data[3] = 1.0f;
-	}
-
-	inline float& operator[] (const uint32_t i)
-	{
-		return this->data[i];
-	}
-
-	inline const float operator[] (const uint32_t i) const
-	{
-		return this->data[i];
-	}
-
-	inline const float operator() (const uint32_t i) const
-	{
-		return this->data[i];
-	}
-};
-
-using Vector4d = Vector<4>;
-
-static_assert(sizeof(Vector4d) == (4 * sizeof(float)));
-static_assert(sizeof(Vector4d) == (2 * sizeof(uint64_t)));
-static_assert(sizeof(Vector4d) == 16);
+static_assert(sizeof(Vector4df) == (4 * sizeof(float)));
+static_assert(sizeof(Vector4df) == (2 * sizeof(uint64_t)));
+static_assert(sizeof(Vector4df) == 16);
 
 template<typename T>
-concept is_Vector4d = std::same_as< typename remove_type_qualifiers<T>::type, Vector4d >;
+concept is_Vector4df = std::same_as< typename remove_type_qualifiers<T>::type, Vector4df >;
 
 // ---------------------------------------------------
 
 template<typename T>
-concept is_Vector = is_Vector2d<T> || is_Vector4d<T>;
+concept is_Vector = is_Vector2df<T> || is_Vector4df<T>;
+
+template<typename T>
+concept is_Point = is_Vector<T>;
 
 // ---------------------------------------------------
 
-template <typename Ta, typename Tb>
-requires is_Vector<Ta> && is_Vector<Tb>
-inline float distance (const Ta& a, const Tb& b)
+template <typename T>
+//requires is_Vector<Ta> && is_Vector<Tb>
+requires is_Point<T>;
+inline T::Type distance (const T& a, const T& b)
 {
-	static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
-	Vector2d d = a - b;
+	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
+	const T d = a - b;
 	return d.length();
 }
 

@@ -1,5 +1,5 @@
-#ifndef __MY_LIBS_STD_HEADER_H__
-#define __MY_LIBS_STD_HEADER_H__
+#ifndef __MY_LIB_STD_HEADER_H__
+#define __MY_LIB_STD_HEADER_H__
 
 #include <concepts>
 #include <type_traits>

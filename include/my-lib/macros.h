@@ -1,66 +1,9 @@
-#ifndef __MY_LIBS_DATA_MACROS_HEADER_H__
-#define __MY_LIBS_DATA_MACROS_HEADER_H__
+#ifndef __MY_LIB_DATA_MACROS_HEADER_H__
+#define __MY_LIB_DATA_MACROS_HEADER_H__
 
 #include <iostream>
 #include <string>
-
-// ---------------------------------------------------
-
-#define DEBUG
-
-// ---------------------------------------------------
-
-#ifdef DEBUG
-	#define dprint(STR) { std::cout << STR; }
-	#define dprintln(STR) { std::cout << STR << std::endl; }
-#else
-	#define dprint(STR)
-	#define dprintln(STR)
-#endif
-
-// ---------------------------------------------------
-
-// these are deprecated and will be removed in the future
-
-#define OO_ENCAPSULATE_READONLY(TYPE, VAR) \
-	protected: \
-		TYPE VAR; \
-	public: \
-		inline TYPE get_##VAR () const { \
-			return this->VAR; \
-		} \
-	protected:
-
-#define OO_ENCAPSULATE(TYPE, VAR) \
-	OO_ENCAPSULATE_READONLY(TYPE, VAR) \
-	public: \
-		inline void set_##VAR (TYPE VAR) { \
-			this->VAR = VAR; \
-		} \
-	protected:
-
-#define OO_ENCAPSULATE_REFERENCE_READONLY(TYPE, VAR) \
-	protected: \
-		TYPE VAR; \
-	public: \
-		inline TYPE& get_##VAR () { \
-			return this->VAR; \
-		} \
-		inline const TYPE& get_##VAR () const { \
-			return this->VAR; \
-		} \
-	protected:
-
-#define OO_ENCAPSULATE_REFERENCE(TYPE, VAR) \
-	OO_ENCAPSULATE_REFERENCE_READONLY(TYPE, VAR) \
-	public: \
-		inline void set_##VAR (const TYPE& VAR) { \
-			this->VAR = VAR; \
-		} \
-		inline void set_##VAR (const TYPE&& VAR) { \
-			this->VAR = VAR; \
-		} \
-	protected:
+#include <type_traits>
 
 // ---------------------------------------------------
 
@@ -81,7 +24,9 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_CONST_SCALAR_READONLY(TYPE, VAR) \
+// ---------------------------------------------------
+
+#define OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
 	protected: \
 		const TYPE VAR; \
 	public: \
@@ -89,6 +34,8 @@
 			return this->VAR; \
 		} \
 	protected:
+
+// ---------------------------------------------------
 
 #define OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
@@ -107,11 +54,30 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA)
+// ---------------------------------------------------
 
-#define OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+#define OO_ENCAPSULATE_SCALAR_INIT_CONST_READONLY(TYPE, VAR, DATA) \
+	protected: \
+		const TYPE VAR = (DATA); \
+	public: \
+		inline TYPE get_##VAR () const { \
+			return this->VAR; \
+		} \
+	protected:
+
+// ---------------------------------------------------
+
+#define OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR, DATA) \
+	protected: \
+		TYPE VAR = DATA; \
+	public: \
+		inline TYPE get_##VAR () { \
+			return this->VAR; \
+		} \
+	protected:
+
+#define OO_ENCAPSULATE_PTR(TYPE, VAR) \
+	OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
 	public: \
 		inline void set_##VAR (TYPE VAR) { \
 			this->VAR = VAR; \
@@ -120,15 +86,22 @@
 
 // ---------------------------------------------------
 
-#define ASSERT(V) ASSERT_PRINT(V, "bye!\n")
+#define OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+	protected: \
+		TYPE VAR = DATA; \
+	public: \
+		inline TYPE get_##VAR () { \
+			return this->VAR; \
+		} \
+	protected:
 
-#define ASSERT_PRINT(V, STR) \
-	if (!(V)) [[unlikely]] { \
-		std::string assert_str_ = (STR); \
-		std::cout << "sanity error!" << std::endl << "file " << __FILE__ << " at line " << __LINE__ << " assertion failed!" << std::endl << #V << std::endl; \
-		std::cout << assert_str_ << std::endl; \
-		exit(1); \
-	}
+#define OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
+	OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+	public: \
+		inline void set_##VAR (TYPE VAR) { \
+			this->VAR = VAR; \
+		} \
+	protected:
 
 // ---------------------------------------------------
 
