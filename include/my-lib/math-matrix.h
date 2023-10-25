@@ -202,15 +202,15 @@ auto operator* (const Tm& m_, const Tv& v_)
 // ---------------------------------------------------
 
 template <typename T, uint32_t nrows, uint32_t ncols>
-std::ostream& operator << (std::ostream& o, const Matrix<T, nrows, ncols>& m)
+std::ostream& operator << (std::ostream& out, const Matrix<T, nrows, ncols>& m)
 {
 	for (uint32_t i = 0; i < nrows; i++) {
 		for (uint32_t j = 0; j < ncols; j++)
-			o << m(i, j) << ", ";
-		o << std::endl;
+			out << m(i, j) << ", ";
+		out << std::endl;
 	}
 
-	return o;
+	return out;
 }
 
 // ---------------------------------------------------

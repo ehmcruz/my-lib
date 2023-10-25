@@ -317,11 +317,11 @@ public:
 // ---------------------------------------------------
 
 template <std::size_t nbits>
-std::ostream& operator << (std::ostream& o, const BitSet<nbits>& bitset)
+std::ostream& operator << (std::ostream& out, const BitSet<nbits>& bitset)
 {
 	for (int32_t i = bitset.size(); i >= 0; i--)
-		o << bitset[i];
-	return o;
+		out << bitset[i];
+	return out;
 }
 
 // ---------------------------------------------------

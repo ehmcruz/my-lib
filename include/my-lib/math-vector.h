@@ -338,20 +338,20 @@ inline T distance (const Point<T, dim>& a, const Point<T, dim>& b)
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-std::ostream& operator << (std::ostream& o, const Vector<T, dim>& v)
+std::ostream& operator << (std::ostream& out, const Vector<T, dim>& v)
 {
-	o << "[";
+	out << "[";
 	
 	for (uint32_t i = 0; i < v.get_dim(); i++) {
-		o << v[i];
+		out << v[i];
 		
 		if (i < (v.get_dim()-1))
-			o << ", ";
+			out << ", ";
 	}
 
-	o << "]";
+	out << "]";
 
-	return o;
+	return out;
 }
 
 // ---------------------------------------------------
