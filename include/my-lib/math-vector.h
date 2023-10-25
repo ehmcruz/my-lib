@@ -1,9 +1,10 @@
-#ifndef __MY_LIBS_MATH_VECTOR_HEADER_H__
-#define __MY_LIBS_MATH_VECTOR_HEADER_H__
+#ifndef __MY_LIB_MATH_VECTOR_HEADER_H__
+#define __MY_LIB_MATH_VECTOR_HEADER_H__
 
 #include <iostream>
 #include <concepts>
 #include <type_traits>
+#include <ostream>
 
 #include <cmath>
 
@@ -29,10 +30,10 @@ template<>
 class VectorStorage__<float, 2>
 {
 public:
-	using Type = T;
+	using Type = float;
 
 	union {
-		Type data[dim];
+		Type data[2];
 
 		struct {
 			Type x;
@@ -41,6 +42,8 @@ public:
 
 		//uint64_t ivalue;
 	};
+
+	VectorStorage__ () = default;
 
 	VectorStorage__ (const Type x_, const Type y_)
 		: x(x_), y(y_)
@@ -57,13 +60,48 @@ public:
 // ---------------------------------------------------
 
 template<>
+class VectorStorage__<float, 3>
+{
+public:
+	using Type = float;
+
+	union {
+		Type data[3];
+
+		struct {
+			Type x;
+			Type y;
+			Type z;
+		};
+
+		//uint64_t ivalue;
+	};
+
+	VectorStorage__ () = default;
+
+	VectorStorage__ (const Type x_, const Type y_, const Type z_)
+		: x(x_), y(y_), z(z)
+	{
+	}
+
+	inline void set (const Type x, const Type y, const Type z)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
+};
+
+// ---------------------------------------------------
+
+template<>
 class VectorStorage__<float, 4>
 {
 public:
-	using Type = T;
+	using Type = float;
 
 	union {
-		Type data[dim];
+		Type data[4];
 
 		struct {
 			Type x;
@@ -74,6 +112,8 @@ public:
 
 		//uint64_t ivalue;
 	};
+
+	VectorStorage__ () = default;
 
 	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_)
 		: x(x_), y(y_), z(z), w(w_)
@@ -91,12 +131,14 @@ public:
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-class Vector : public VectorStorage__<T, dim>
+template <typename T, uint32_t dim,
+          typename TParent = VectorStorage__<T, dim>>
+class Vector : public TParent
 {
 public:
-	using TParent = VectorStorage__<T, dim>;
 	using Type = T;
+
+	static_assert(sizeof(TParent) == (dim * sizeof(Type)));
 
 	inline float* get_raw ()
 	{
@@ -117,7 +159,17 @@ public:
 
 	Vector () = default;
 
-	using TParent::VectorStorage__;
+	using TParent::TParent;
+
+	template <uint32_t dim_other>
+	Vector (const Vector<T, dim_other>& other)
+	{
+		static_assert(dim_other <= dim);
+		for (uint32_t i = 0; i < dim_other; i++)
+			this->data[i] = other.data[i];
+		for (uint32_t i = dim_other; i < dim; i++)
+			this->data[i] = 0;
+	}
 
 	// ------------------------ operator=
 
@@ -149,7 +201,7 @@ public:
 				this->data[i] OP other.data[i]; \
 			return *this; \
 		} \
-		inline Vector& operator OP (const T s) \
+		inline Vector& operator OP (const Type s) \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP s; \
@@ -161,19 +213,19 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	inline float& operator[] (const uint32_t i)
+	inline Type& operator[] (const uint32_t i)
 	{
 		return this->data[i];
 	}
 
-	inline const float operator[] (const uint32_t i) const
+	inline const Type operator[] (const uint32_t i) const
 	{
 		return this->data[i];
 	}
 
-	inline float length () const
+	inline Type length () const
 	{
-		T value = 0;
+		Type value = 0;
 		for (uint32_t i = 0; i < dim; i++)
 			value += this->data[i] * this->data[i];
 		return std::sqrt(value);
@@ -224,75 +276,82 @@ inline T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b)
 
 // ---------------------------------------------------
 
-using Vector2df = Vector<float, 2>;
-using Point2df = Vector2df;
+template <typename T, uint32_t dim>
+using Point = Vector<T, dim>;
 
-static_assert(sizeof(Vector2df) == (2 * sizeof(float)));
-static_assert(sizeof(Vector2df) == sizeof(uint64_t));
-static_assert(sizeof(Vector2df) == 8);
+// ---------------------------------------------------
+
+using Vector2f = Vector<float, 2>;
+using Point2f = Vector2f;
+
+static_assert(sizeof(Vector2f) == (2 * sizeof(float)));
 
 template<typename T>
-concept is_Vector2df = std::same_as< typename remove_type_qualifiers<T>::type, Vector2df >;
+concept is_Vector2f = std::same_as< typename remove_type_qualifiers<T>::type, Vector2f >;
 //concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
 //concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
 //concept is_Vector2d = std::same_as< typename std::remove_reference<T>::type, Vector2d >;
 
 // ---------------------------------------------------
 
-using Vector4df = Vector<float, 4>;
-using Point4df = Vector4df;
+using Vector3f = Vector<float, 3>;
+using Point3f = Vector3f;
 
-static_assert(sizeof(Vector4df) == (4 * sizeof(float)));
-static_assert(sizeof(Vector4df) == (2 * sizeof(uint64_t)));
-static_assert(sizeof(Vector4df) == 16);
+static_assert(sizeof(Vector3f) == (3 * sizeof(float)));
 
 template<typename T>
-concept is_Vector4df = std::same_as< typename remove_type_qualifiers<T>::type, Vector4df >;
+concept is_Vector3f = std::same_as< typename remove_type_qualifiers<T>::type, Vector3f >;
+//concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
+//concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
+//concept is_Vector2d = std::same_as< typename std::remove_reference<T>::type, Vector2d >;
+
+// ---------------------------------------------------
+
+using Vector4f = Vector<float, 4>;
+using Point4f = Vector4f;
+
+static_assert(sizeof(Vector4f) == (4 * sizeof(float)));
+
+template<typename T>
+concept is_Vector4f = std::same_as< typename remove_type_qualifiers<T>::type, Vector4f >;
 
 // ---------------------------------------------------
 
 template<typename T>
-concept is_Vector = is_Vector2df<T> || is_Vector4df<T>;
+concept is_Vector = is_Vector2f<T> || is_Vector3f<T> || is_Vector4f<T>;
 
 template<typename T>
 concept is_Point = is_Vector<T>;
 
 // ---------------------------------------------------
 
-template <typename T>
+//template <typename T>
 //requires is_Vector<Ta> && is_Vector<Tb>
-requires is_Point<T>;
-inline T::Type distance (const T& a, const T& b)
+//requires is_Point<T>;
+template <typename T, uint32_t dim>
+inline T distance (const Point<T, dim>& a, const Point<T, dim>& b)
 {
 	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
-	const T d = a - b;
-	return d.length();
+	return (a - b).length();
 }
 
 // ---------------------------------------------------
 
-template<typename T>
-requires is_Vector<T>
-void print (const T& v, std::ostream& out=std::cout)
+template <typename T, uint32_t dim>
+std::ostream& operator << (std::ostream& o, const Vector<T, dim>& v)
 {
-	out << "[";
+	o << "[";
 	
-	for (uint32_t i = 0; i < T::get_dim(); i++) {
-		out << v(i);
+	for (uint32_t i = 0; i < v.get_dim(); i++) {
+		o << v[i];
 		
-		if (i < (T::get_dim()-1))
-			out << ", ";
+		if (i < (v.get_dim()-1))
+			o << ", ";
 	}
 
-	out << "]";
-}
+	o << "]";
 
-template<typename T>
-requires is_Vector<T>
-void println (const T& v, std::ostream& out=std::cout)
-{
-	print(v, out);
-	out << std::endl;
+	return o;
 }
 
 // ---------------------------------------------------

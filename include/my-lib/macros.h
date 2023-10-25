@@ -1,5 +1,5 @@
-#ifndef __MY_LIB_DATA_MACROS_HEADER_H__
-#define __MY_LIB_DATA_MACROS_HEADER_H__
+#ifndef __MY_LIB_MACROS_HEADER_H__
+#define __MY_LIB_MACROS_HEADER_H__
 
 #include <iostream>
 #include <string>

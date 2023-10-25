@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 
@@ -53,6 +54,11 @@ int main ()
 	const Mylib::BitSet<3> bs (0b101);
 	bitset(1, 3) = bs;
 	std::cout << bitset << std::endl;
+
+	std::stringstream ss;
+	std::cout << "----------------------" << std::endl;
+	ss << bitset;
+	std::cout << ss.str() << std::endl;
 
 	return 0;
 }
