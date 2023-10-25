@@ -58,7 +58,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	T& get_value ()
+	T& get_ref ()
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
@@ -66,10 +66,10 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	const T& get_value () const
+	const T& get_ref () const
 	{
 		static_assert(sizeof(T) <= size());
-		return *(reinterpret_cast<T*>(this));
+		return *(reinterpret_cast<const T*>(this));
 	}
 };
 

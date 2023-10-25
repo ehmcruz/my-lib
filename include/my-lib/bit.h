@@ -1,6 +1,8 @@
 #ifndef __MY_LIB_BIT_HEADER_H__
 #define __MY_LIB_BIT_HEADER_H__
 
+#include <ostream>
+
 #include <cstdint>
 
 namespace Mylib
@@ -26,11 +28,11 @@ constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t ble
 
 // ---------------------------------------------------
 
-template <uint32_t storage_nbits>
-class BitsetStorage__;
+template <std::size_t storage_nbits>
+class BitSetStorage__;
 
 template<>
-class BitsetStorage__<8>
+class BitSetStorage__<8>
 {
 public:
 	using Type = uint8_t;
@@ -39,7 +41,7 @@ protected:
 };
 
 template<>
-class BitsetStorage__<16>
+class BitSetStorage__<16>
 {
 public:
 	using Type = uint16_t;
@@ -48,7 +50,7 @@ protected:
 };
 
 template<>
-class BitsetStorage__<32>
+class BitSetStorage__<32>
 {
 public:
 	using Type = uint32_t;
@@ -57,7 +59,7 @@ protected:
 };
 
 template<>
-class BitsetStorage__<64>
+class BitSetStorage__<64>
 {
 public:
 	using Type = uint64_t;
@@ -65,7 +67,7 @@ protected:
 	Type storage;
 };
 
-consteval uint32_t calc_fast_bit_set_storage_nbits__ (const uint32_t nbits)
+consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
 {
 	if (nbits <= 8)
 		return 8;
@@ -79,41 +81,48 @@ consteval uint32_t calc_fast_bit_set_storage_nbits__ (const uint32_t nbits)
 		return 0;
 }
 
-template <uint32_t nbits,
-          uint32_t storage_nbits = calc_fast_bit_set_storage_nbits__(nbits),
-		  typename ParentType = BitsetStorage__<storage_nbits>
+template <std::size_t nbits,
+          std::size_t storage_nbits = calc_bit_set_storage_nbits__(nbits),
+		  typename ParentType = BitSetStorage__<storage_nbits>
 		  >
-class Bitset : public ParentType
+class BitSet : public ParentType
 {
 public:
 	using Type = ParentType::Type;
 
-	constexpr uint32_t get_storage_nbits () const
+	static consteval std::size_t get_storage_nbits ()
 	{
 		return storage_nbits;
 	}
 
 	static_assert(storage_nbits == (sizeof(Type)*8));
 
-	constexpr Bitset (const Bitset& other)
+	static consteval std::size_t size ()
+	{
+		return nbits;
+	}
+
+	BitSet () = default;
+
+	constexpr BitSet (const BitSet& other)
 	{
 		this->storage = other.storage;
 	}
 
-	constexpr Bitset (const Type v)
+	constexpr BitSet (const Type v)
 	{
 		this->storage = v;
 	}
 
 	template <typename T>
-	constexpr Bitset& operator= (const Bitset& other)
+	constexpr BitSet& operator= (const BitSet& other)
 	{
 		this->storage = other.storage;
 		return *this;
 	}
 
 	template <typename T>
-	constexpr Bitset& operator= (const Type v)
+	constexpr BitSet& operator= (const Type v)
 	{
 		this->storage = v;
 		return *this;
@@ -129,62 +138,72 @@ public:
 		return (this->storage >> pos) & 0x01;
 	}
 
-	constexpr Bitset operator() (const std::size_t ini, const std::size_t length) const
+	constexpr BitSet operator() (const std::size_t ini, const std::size_t length) const
 	{
-		return Bitset( extract_bits(this->storage, ini, length) );
+		return BitSet( extract_bits(this->storage, ini, length) );
 	}
 
-	constexpr Bitset range (const std::size_t ini, const std::size_t end) const
+	constexpr BitSet range (const std::size_t ini, const std::size_t end) const
 	{
-		return Bitset( extract_bits(this->storage, ini, end-ini+1) );
+		return BitSet( extract_bits(this->storage, ini, end-ini+1) );
 	}
 
-	constexpr Bitset extract (const std::size_t ini, const std::size_t length) const
+	constexpr BitSet extract (const std::size_t ini, const std::size_t length) const
 	{
-		return Bitset( extract_bits(this->storage, ini, length) );
+		return BitSet( extract_bits(this->storage, ini, length) );
 	}
 
-	constexpr Bitset& operator&= (const Bitset& other)
+	constexpr BitSet& operator&= (const BitSet& other)
 	{
 		this->storage &= other.storage;
 		return *this;
 	}
 
-	constexpr Bitset& operator&= (const Type v)
+	constexpr BitSet& operator&= (const Type v)
 	{
 		this->storage &= v;
 		return *this;
 	}
 
-	constexpr Bitset& operator|= (const Bitset& other)
+	constexpr BitSet& operator|= (const BitSet& other)
 	{
 		this->storage |= other.storage;
 		return *this;
 	}
 
-	constexpr Bitset& operator|= (const Type v)
+	constexpr BitSet& operator|= (const Type v)
 	{
 		this->storage |= v;
 		return *this;
 	}
 
-	constexpr Bitset& operator^= (const Bitset& other)
+	constexpr BitSet& operator^= (const BitSet& other)
 	{
 		this->storage ^= other.storage;
 		return *this;
 	}
 
-	constexpr Bitset& operator^= (const Type v)
+	constexpr BitSet& operator^= (const Type v)
 	{
 		this->storage ^= v;
 		return *this;
 	}
 
-	constexpr Bitset operator~ () const
+	constexpr BitSet operator~ () const
 	{
-		return Bitset(~this->storage);
+		return BitSet(~this->storage);
 	}
 };
+
+// ---------------------------------------------------
+
+template <std::size_t nbits>
+std::ostream& operator << (std::ostream& o, const BitSet<nbits>& bitset)
+{
+	for (int32_t i = bitset.size(); i >= 0; i--)
+		o << bitset[i];
+	return o;
+}
 
 // ---------------------------------------------------
 
