@@ -5,6 +5,8 @@
 
 #include <cstdint>
 
+#include <my-lib/std.h>
+
 namespace Mylib
 {
 
@@ -81,6 +83,13 @@ consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
 		return 0;
 }
 
+/*
+	BitSet is based on std::bitset.
+	Differences:
+		- Only works for up tp 64 bits, but it is faster.
+		- Allows extraction and set of range of bits.
+*/
+
 template <std::size_t nbits,
           std::size_t storage_nbits = calc_bit_set_storage_nbits__(nbits),
 		  typename ParentType = BitSetStorage__<storage_nbits>
@@ -89,6 +98,63 @@ class BitSet : public ParentType
 {
 public:
 	using Type = ParentType::Type;
+
+	// --------------------------
+
+	class reference
+	{
+	private:
+		BitSet& bitset;
+		const std::size_t pos;
+		const std::size_t length;
+	public:
+		reference () = delete;
+		
+		reference (BitSet& bitset_, const std::size_t pos_, const std::size_t length_)
+			: bitset(bitset_), pos(pos_), length(length_)
+		{
+		}
+
+		reference (const reference& other)
+			: bitset(other.bitset), pos(other.pos), length(other.length)
+		{
+		}
+
+		reference& operator= (const Type value)
+		{
+			this->bitset.set(this->pos, this->length, value);
+			return *this;
+		}
+
+		reference& operator= (const reference& other)
+		{
+			mylib_assert_exception_msg(this->length == other.length, "The length of both references must be the same. Given ", this->length, " and ", other.length, ".");
+			const Type value = other.bitset.extract_underlying(other.pos, other.length);
+			this->bitset.set(this->pos, this->length, value);
+			return *this;
+		}
+
+		template <std::size_t nbits_other>
+		reference& operator= (const BitSet<nbits_other>& other)
+		{
+			mylib_assert_exception_msg(this->length == other.size(), "The length of both references must be the same. Given ", this->length, " and ", other.size(), ".");
+			this->bitset.set(this->pos, this->length, other.underlying());
+			return *this;
+		}
+
+		Type operator~ () const
+		{
+			const Type mask = (1 << this->length) - 1;
+			return (~this->bitset.extract_underlying(this->pos, this->length)) & mask;
+		}
+
+		operator Type() const
+		{
+			return this->bitset.extract_underlying(this->pos, this->length);
+		}
+	};
+
+	// --------------------------
 
 	static consteval std::size_t get_storage_nbits ()
 	{
@@ -102,7 +168,12 @@ public:
 		return nbits;
 	}
 
-	BitSet () = default;
+	// --------------------------
+
+	constexpr BitSet ()
+	{
+		this->storage = 0;
+	}
 
 	constexpr BitSet (const BitSet& other)
 	{
@@ -114,44 +185,86 @@ public:
 		this->storage = v;
 	}
 
-	template <typename T>
+	// --------------------------
+
 	constexpr BitSet& operator= (const BitSet& other)
 	{
 		this->storage = other.storage;
 		return *this;
 	}
 
-	template <typename T>
 	constexpr BitSet& operator= (const Type v)
 	{
 		this->storage = v;
 		return *this;
 	}
 
+	// --------------------------
+
 	constexpr Type underlying () const
 	{
 		return this->storage;
 	}
+
+	// --------------------------
 
 	constexpr bool operator[] (const std::size_t pos) const
 	{
 		return (this->storage >> pos) & 0x01;
 	}
 
-	constexpr BitSet operator() (const std::size_t ini, const std::size_t length) const
+	reference operator[] (const std::size_t pos)
 	{
-		return BitSet( extract_bits(this->storage, ini, length) );
+		return reference(*this, pos, 1);
 	}
+
+	// --------------------------
+
+	constexpr Type operator() (const std::size_t ini, const std::size_t length) const
+	{
+		return extract_bits(this->storage, ini, length);
+	}
+
+	reference operator() (const std::size_t ini, const std::size_t length)
+	{
+		return reference(*this, ini, length);
+	}
+
+	// --------------------------
 
 	constexpr BitSet range (const std::size_t ini, const std::size_t end) const
 	{
 		return BitSet( extract_bits(this->storage, ini, end-ini+1) );
 	}
 
+	constexpr Type range_underlying (const std::size_t ini, const std::size_t end) const
+	{
+		return extract_bits(this->storage, ini, end-ini+1);
+	}
+
 	constexpr BitSet extract (const std::size_t ini, const std::size_t length) const
 	{
 		return BitSet( extract_bits(this->storage, ini, length) );
 	}
+
+	constexpr Type extract_underlying (const std::size_t ini, const std::size_t length) const
+	{
+		return extract_bits(this->storage, ini, length);
+	}
+
+	// --------------------------
+
+	constexpr void set_by_range (const std::size_t ini, const std::size_t end, const Type v)
+	{
+		this->storage = set_bits(this->storage, ini, end-ini+1, v);
+	}
+
+	constexpr void set (const std::size_t ini, const std::size_t length, const Type v)
+	{
+		this->storage = set_bits(this->storage, ini, length, v);
+	}
+
+	// --------------------------
 
 	constexpr BitSet& operator&= (const BitSet& other)
 	{
@@ -165,6 +278,8 @@ public:
 		return *this;
 	}
 
+	// --------------------------
+
 	constexpr BitSet& operator|= (const BitSet& other)
 	{
 		this->storage |= other.storage;
@@ -177,6 +292,8 @@ public:
 		return *this;
 	}
 
+	// --------------------------
+
 	constexpr BitSet& operator^= (const BitSet& other)
 	{
 		this->storage ^= other.storage;
@@ -188,6 +305,8 @@ public:
 		this->storage ^= v;
 		return *this;
 	}
+
+	// --------------------------
 
 	constexpr BitSet operator~ () const
 	{
