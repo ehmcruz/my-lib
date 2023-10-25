@@ -1,15 +1,14 @@
-#ifndef __MY_LIBS_MATH_MATRIX_HEADER_H__
-#define __MY_LIBS_MATH_MATRIX_HEADER_H__
+#ifndef __MY_LIB_MATH_MATRIX_HEADER_H__
+#define __MY_LIB_MATH_MATRIX_HEADER_H__
 
 #include <iostream>
 #include <concepts>
 #include <type_traits>
+#include <ostream>
 
 #include <cmath>
 
 #include <my-lib/std.h>
-#include <my-lib/macros.h>
-#include <my-lib/matrix.h>
 #include <my-lib/math-vector.h>
 
 namespace Mylib
@@ -19,129 +18,148 @@ namespace Math
 
 // ---------------------------------------------------
 
-template <uint32_t nrows, uint32_t ncols>
-class Matrix;
+template <typename T, uint32_t nrows, uint32_t ncols>
+class MatrixStorage__;
 
 // ---------------------------------------------------
 
 template <>
-class Matrix<4, 4>
+class MatrixStorage__<float, 4, 4>
 {
-private:
+protected:
 	float data[16];
+};
 
+// ---------------------------------------------------
+
+template <typename T, uint32_t nrows, uint32_t ncols,
+          typename TParent = MatrixStorage__<T, nrows, ncols>>
+class Matrix : public TParent
+{
 public:
-	consteval static uint32_t get_dim ()
-	{
-		return 4;
-	}
+	using Type = T;
 
 	consteval static uint32_t get_nrows ()
 	{
-		return get_dim();
+		return nrows;
 	}
 
 	consteval static uint32_t get_ncols ()
 	{
-		return get_dim();
+		return ncols;
 	}
 
-	inline float* get_raw ()
+	consteval static uint32_t get_length ()
+	{
+		return get_nrows() * get_ncols();
+	}
+
+	inline T* get_raw ()
 	{
 		return this->data;
 	}
 
-	inline const float* get_raw () const
+	inline const T* get_raw () const
 	{
 		return this->data;
 	}
 
-	inline float& operator() (const uint32_t row, const uint32_t col)
+	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
 		return this->data[row*get_ncols() + col];
 	}
 
-	inline const float operator() (const uint32_t row, const uint32_t col) const
+	inline const T operator() (const uint32_t row, const uint32_t col) const
 	{
 		return this->data[row*get_ncols() + col];
 	}
 	
 	void set_zero ()
 	{
-		for (uint32_t i=0; i<16; i++)
-			this->data[i] = 0.0f;
+		for (uint32_t i = 0; i < get_length(); i++)
+			this->data[i] = 0;
 	}
 
 	void set_identity ()
 	{
-		for (uint32_t i=0; i<16; i++)
-			this->data[i] = 0.0f;
-		this->data[0*4 + 0] = 1.0f;
-		this->data[1*4 + 1] = 1.0f;
-		this->data[2*4 + 2] = 1.0f;
-		this->data[3*4 + 3] = 1.0f;
+		static_assert(nrows == ncols);
+
+		this->set_zero();
+		
+		for (uint32_t i = 0; i < nrows; i++)
+			this->data[i*ncols + i] = 1;
 	}
 
-	void set_scale (const Vector2d& v)
+	template <uint32_t vector_dim>
+	void set_scale (const Vector<T, vector_dim>& v)
 	{
-		for (uint32_t i=0; i<16; i++)
-			this->data[i] = 0.0f;
-		this->data[0*4 + 0] = v.x;
-		this->data[1*4 + 1] = v.y;
-		this->data[2*4 + 2] = 1.0f;
-		this->data[3*4 + 3] = 1.0f;
+		static_assert(nrows == ncols);
+		static_assert(vector_dim <= nrows);
+
+		this->set_zero();
+		
+		for (uint32_t i = 0; i < vector_dim; i++)
+			this->data[i*ncols + i] = v[i];
+		
+		for (uint32_t i = vector_dim; i < nrows; i++)
+			this->data[i*ncols + i] = 1;
 	}
 
-	void set_translate (const Vector2d& v)
+	template <uint32_t vector_dim>
+	void set_translate (const Vector<T, vector_dim>& v)
 	{
-		for (uint32_t i=0; i<16; i++)
-			this->data[i] = 0.0f;
+		static_assert(nrows == ncols);
+		static_assert(vector_dim < nrows);
 
-		this->data[0*4 + 0] = 1.0f;
-		this->data[1*4 + 1] = 1.0f;
-		this->data[2*4 + 2] = 1.0f;
+		this->set_identity();
+		
+		constexpr uint32_t last = ncols - 1;
 
-		this->data[0*4 + 3] = v.x;
-		this->data[1*4 + 3] = v.y;
-		this->data[3*4 + 3] = 1.0f;
+		for (uint32_t i = 0; i < vector_dim; i++)
+			this->data[i*ncols + last] = v[i];
 	}
 };
 
-using Matrix4d = Matrix<4, 4>;
+using Matrix4f = Matrix<float, 4, 4>;
 
 template<typename T>
-concept is_Matrix4d = std::same_as< typename remove_type_qualifiers<T>::type, Matrix4d >;
+concept is_Matrix4f = std::same_as< typename remove_type_qualifiers<T>::type, Matrix4f >;
 
 // ---------------------------------------------------
 
 template<typename T>
-concept is_Matrix = is_Matrix4d<T>;
+concept is_Matrix = is_Matrix4f<T>;
 
 // ---------------------------------------------------
 
 template <typename Ta, typename Tb>
-requires is_Matrix<Ta> && is_Matrix<Tb>
+requires is_Matrix<Ta> && is_Matrix<Tb> && std::same_as<typename Ta::Type, typename Tb::Type>
 auto operator* (const Ta& a_, const Tb& b_)
 {
-	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_dim();
-	Matrix<dim, dim> r_;
-	uint32_t i;
-	const float *a, *b;
-	float *r;
+	using Type = Ta::Type;
+	
+	// only square matrices for now
+	static_assert(Ta::get_nrows() == Ta::get_ncols());
+	static_assert(Tb::get_nrows() == Tb::get_ncols());
+	static_assert(Ta::get_nrows() == Tb::get_nrows());
 
-	static_assert(remove_type_qualifiers<Tb>::type::get_dim() == dim);
+	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_dim();
+	
+	Matrix<Type, dim, dim> r_;
+	const Type *a, *b;
+	Type *r;
 
 	a = a_.get_raw();
 	b = b_.get_raw();
 	r = r_.get_raw();
 
-	for (i=0; i<(dim*dim); i++)
-			r[i] = 0.0f;
+	for (uint32_t i = 0; i < (dim*dim); i++)
+			r[i] = 0;
 
-	for (i=0; i<dim; i++) {
-		for (uint32_t k=0; k<dim; k++) {
+	for (uint32_t i = 0; i < dim; i++) {
+		for (uint32_t k = 0; k < dim; k++) {
 			const float v = a[i*dim + k];
-			for (uint32_t j=0; j<dim; j++)
+			for (uint32_t j = 0; j < dim; j++)
 				r[i*dim + j] += v * b[k*dim + j];
 		}
 	}
@@ -152,23 +170,29 @@ auto operator* (const Ta& a_, const Tb& b_)
 // ---------------------------------------------------
 
 template <typename Tm, typename Tv>
-requires is_Matrix<Tm> && is_Vector<Tv>
+requires is_Matrix<Tm> && is_Vector<Tv> && std::same_as<typename Tm::Type, typename Tv::Type>
 auto operator* (const Tm& m_, const Tv& v_)
 {
-	constexpr uint32_t dim = remove_type_qualifiers<Tv>::type::get_dim();
-	Vector<dim> r_;
-	const float *m, *v;
-	float *r;
+	using Type = Tm::Type;
 
-	static_assert(remove_type_qualifiers<Tm>::type::get_dim() == dim);
+	// only square matrices for now
+	static_assert(Tm::get_nrows() == Tm::get_ncols());
+
+	static_assert(Tm::get_nrows() == Tv::get_dim());
+
+	constexpr uint32_t dim = remove_type_qualifiers<Tv>::type::get_dim();
+
+	Vector<Type, dim> r_;
+	const Type *m, *v;
+	Type *r;
 
 	m = m_.get_raw();
 	v = v_.get_raw();
 	r = r_.get_raw();
 
-	for (uint32_t i=0; i<dim; i++) {
-		r[i] = 0.0f;
-		for (uint32_t j=0; j<dim; j++)
+	for (uint32_t i = 0; i < dim; i++) {
+		r[i] = 0;
+		for (uint32_t j = 0; j < dim; j++)
 			r[i] += m[i*dim + j] * v[j];
 	}
 	
@@ -177,22 +201,16 @@ auto operator* (const Tm& m_, const Tv& v_)
 
 // ---------------------------------------------------
 
-template<typename T>
-requires is_Matrix<T>
-void print (const T& m, std::ostream& out=std::cout)
+template <typename T, uint32_t nrows, uint32_t ncols>
+std::ostream& operator << (std::ostream& o, const Matrix<T, nrows, ncols>& m)
 {
-	for (uint32_t i=0; i<T::get_nrows(); i++) {
-		for (uint32_t j=0; j<T::get_ncols(); j++)
-			out << m(i, j) << ", ";
-		out << std::endl;
+	for (uint32_t i = 0; i < nrows; i++) {
+		for (uint32_t j = 0; j < ncols; j++)
+			o << m(i, j) << ", ";
+		o << std::endl;
 	}
-}
 
-template<typename T>
-requires is_Matrix<T>
-void println (const T& m, std::ostream& out=std::cout)
-{
-	print(m, out);
+	return o;
 }
 
 // ---------------------------------------------------
