@@ -56,7 +56,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_SCALAR_INIT_CONST_READONLY(TYPE, VAR, DATA) \
+#define OO_ENCAPSULATE_SCALAR_CONST_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		const TYPE VAR = (DATA); \
 	public: \
