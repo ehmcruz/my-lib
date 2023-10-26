@@ -19,23 +19,10 @@ namespace Math
 // ---------------------------------------------------
 
 template <typename T, uint32_t nrows, uint32_t ncols>
-class MatrixStorage__;
-
-// ---------------------------------------------------
-
-template <>
-class MatrixStorage__<float, 4, 4>
+class Matrix
 {
-protected:
-	float data[16];
-};
-
-// ---------------------------------------------------
-
-template <typename T, uint32_t nrows, uint32_t ncols,
-          typename TParent = MatrixStorage__<T, nrows, ncols>>
-class Matrix : public TParent
-{
+private:
+	T data[nrows*ncols];
 public:
 	using Type = T;
 

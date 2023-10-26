@@ -1,5 +1,5 @@
-#ifndef __MY_LIBS_TIMER_HEADER_H__
-#define __MY_LIBS_TIMER_HEADER_H__
+#ifndef __MY_LIB_TIMER_HEADER_H__
+#define __MY_LIB_TIMER_HEADER_H__
 
 #include <iostream>
 #include <vector>
