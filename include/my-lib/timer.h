@@ -33,7 +33,7 @@ public:
 	using TimerCallback = Callback<Event>;
 
 	struct CallbackHandler {
-		virtual void free_memory (TimerCallback *ptr) = 0;
+		virtual void free_memory (Timer *timer, TimerCallback *ptr) = 0;
 	};
 
 	struct EventFull {
@@ -63,7 +63,7 @@ private:
 	};
 
 	using TallocEventFull = typename std::allocator_traits<Talloc>::template rebind_alloc<EventFull>;
-	TallocEventFull allocator;
+	TallocEventFull event_allocator;
 	std::vector<Internal> events; // we let the vector use its standard allocator
 	Ttime current_time;
 
@@ -74,7 +74,7 @@ public:
 	}
 
 	Timer (const Ttime& initial_time, const Talloc& allocator_)
-		: current_time(initial_time), allocator(allocator_)
+		: current_time(initial_time), event_allocator(allocator_)
 	{
 	}
 
@@ -130,30 +130,23 @@ public:
 		using TallocTc = typename std::allocator_traits<TallocEventFull>::template rebind_alloc<Tc>;
 
 		struct MyCallbackHandler : public CallbackHandler {
-			TallocTc allocator;
-
-			MyCallbackHandler (const TallocEventFull& allocator_)
-				: allocator(allocator_)
+			virtual void free_memory (Timer *timer, TimerCallback *ptr) override
 			{
-			}
-
-			virtual void free_memory (TimerCallback *ptr) override
-			{
-				this->allocator.deallocate(static_cast<Tc*>(ptr), 1);
+				TallocTc callback_allocator(timer->event_allocator);
+				callback_allocator.deallocate(static_cast<Tc*>(ptr), 1);
 			}
 		};
 
-		static MyCallbackHandler *saved = nullptr;
+		static MyCallbackHandler my_callback_handler;
 
-		if (saved == nullptr)
-			saved = new MyCallbackHandler(this->allocator);
+		TallocTc callback_allocator(this->event_allocator);
 
-		Tc *persistent_callback = new (saved->allocator.allocate(1)) Tc(callback);
+		Tc *persistent_callback = new (callback_allocator.allocate(1)) Tc(callback);
 		
-		EventFull *event = new (this->allocator.allocate(1)) EventFull {
+		EventFull *event = new (this->event_allocator.allocate(1)) EventFull {
 			.time = time,
 			.callback = persistent_callback,
-			.callback_handler = saved,
+			.callback_handler = &my_callback_handler,
 			.enabled = true
 		};
 
@@ -183,8 +176,8 @@ private:
 
 	inline void destroy_event (EventFull *event)
 	{
-		event->callback_handler->free_memory(event->callback);
-		this->allocator.deallocate(event, 1);
+		event->callback_handler->free_memory(this, event->callback);
+		this->event_allocator.deallocate(event, 1);
 	}
 };
 
