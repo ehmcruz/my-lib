@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <iostream>
 #include <sstream>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <stdexcept>
@@ -52,6 +53,25 @@ std::string build_str_from_stream (Types&&... vars)
 	std::ostringstream str_stream;
 	build_str_from_stream__(str_stream, vars...);
 	return str_stream.str();
+}
+
+// ---------------------------------------------------
+
+constexpr void print_stream__ (std::ostream& out)
+{
+}
+
+template <typename T, typename... Types>
+void print_stream__ (std::ostream& out, T&& var1, Types&&... vars)
+{
+	out << var1;
+	print_stream__(out, vars...);
+}
+
+template <typename... Types>
+void print_stream (std::ostream& out, Types&&... vars)
+{
+	print_stream__(out, vars...);
 }
 
 // ---------------------------------------------------
