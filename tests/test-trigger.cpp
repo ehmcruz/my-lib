@@ -87,12 +87,15 @@ int main ()
 
 	test.b = 99;
 
+	std::cout << "----------------------" << std::endl;
 	event_handler.publish(50);
 
 	event_handler.unsubscribe(d1);
 
+	std::cout << "----------------------" << std::endl;
 	event_handler.publish(67);
 
+	std::cout << "----------------------" << std::endl;
 	event_handler.publish(2000);
 
 	//auto callback3 = Mylib::Trigger::make_callback_object<int>(test, &test_t::callback_3);

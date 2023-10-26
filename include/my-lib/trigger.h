@@ -1,5 +1,5 @@
-#ifndef __MY_LIBS_TRIGGER_HEADER_H__
-#define __MY_LIBS_TRIGGER_HEADER_H__
+#ifndef __MY_LIB_TRIGGER_HEADER_H__
+#define __MY_LIB_TRIGGER_HEADER_H__
 
 #include <iostream>
 #include <list>
@@ -253,7 +253,7 @@ public:
 	using EventCallback = Callback<Tevent>;
 
 	struct CallbackHandler {
-		virtual void free_memory (EventCallback *ptr) = 0;
+		virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) = 0;
 	};
 
 	struct Subscriber {
@@ -268,21 +268,21 @@ public:
 
 private:
 	using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
-	TallocSubscriber allocator;
+	TallocSubscriber subscriber_allocator;
 	std::list<Subscriber, TallocSubscriber> subscribers;
 
 public:
 	EventHandler () = default;
 
 	EventHandler (const Talloc& allocator_)
-		: allocator(allocator_), subscribers(this->allocator)
+		: subscriber_allocator(allocator_), subscribers(allocator_)
 	{
 	}
 
 	~EventHandler ()
 	{
 		for (auto& subscriber : this->subscribers)
-			subscriber.callback_handler->free_memory(subscriber.callback);
+			subscriber.callback_handler->free_memory(this, subscriber.callback);
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -315,29 +315,22 @@ public:
 		using TallocTc = typename std::allocator_traits<TallocSubscriber>::template rebind_alloc<Tc>;
 
 		struct MyCallbackHandler : public CallbackHandler {
-			TallocTc allocator;
-
-			MyCallbackHandler (const TallocSubscriber& allocator_)
-				: allocator(allocator_)
+			virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) override
 			{
-			}
-
-			virtual void free_memory (EventCallback *ptr) override
-			{
-				this->allocator.deallocate(static_cast<Tc*>(ptr), 1);
+				TallocTc callback_allocator(event_handler->subscriber_allocator);
+				callback_allocator.deallocate(static_cast<Tc*>(ptr), 1);
 			}
 		};
 
-		static MyCallbackHandler *saved = nullptr;
+		static MyCallbackHandler my_callback_handler;
 
-		if (saved == nullptr)
-			saved = new MyCallbackHandler(this->allocator);
+		TallocTc callback_allocator(this->subscriber_allocator);
 	
-		Tc *persistent_callback = new (saved->allocator.allocate(1)) Tc(callback);
+		Tc *persistent_callback = new (callback_allocator.allocate(1)) Tc(callback);
 		
 		this->subscribers.push_back( Subscriber {
 			.callback = persistent_callback,
-			.callback_handler = saved,
+			.callback_handler = &my_callback_handler,
 			.enabled = true
 			} );
 
@@ -347,11 +340,11 @@ public:
 	void unsubscribe (const Descriptor& descriptor)
 	{
 		this->subscribers.remove_if(
-			[&descriptor] (Subscriber& subscriber) -> bool {
+			[&descriptor, this] (Subscriber& subscriber) -> bool {
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found)
-					subscriber.callback_handler->free_memory(subscriber.callback);
+					subscriber.callback_handler->free_memory(this, subscriber.callback);
 				
 				return found;
 			}
