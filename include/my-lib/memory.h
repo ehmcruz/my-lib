@@ -53,6 +53,17 @@ inline void m_deallocate (void *p, const size_t size, const uint32_t align)
 
 // ---------------------------------------------------
 
+template <typename T>
+consteval uint32_t calculate_alignment ()
+{
+	if constexpr (alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+		return __STDCPP_DEFAULT_NEW_ALIGNMENT__;
+	else
+		return alignof(T);
+}
+
+// ---------------------------------------------------
+
 class Manager
 {
 public:
@@ -72,19 +83,13 @@ public:
 	template <typename T>
 	[[nodiscard]] T* allocate_type (const size_t count)
 	{
-		if constexpr (alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__)
-			return static_cast<T*>( this->allocate(sizeof(T), count, __STDCPP_DEFAULT_NEW_ALIGNMENT__) );
-		else
-			return static_cast<T*>( this->allocate(sizeof(T), count, alignof(T)) );
+		return static_cast<T*>( this->allocate(sizeof(T), count, calculate_alignment<T>()) );
 	}
 
 	template <typename T>
 	void deallocate_type (T *p, const size_t count)
 	{
-		if constexpr (alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__)
-			this->deallocate(p, sizeof(T), count, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
-		else
-			this->deallocate(p, sizeof(T), count, alignof(T));
+		this->deallocate(p, sizeof(T), count, calculate_alignment<T>());
 	}
 };
 
@@ -93,8 +98,15 @@ public:
 class DefaultManager : public Manager
 {
 public:
-	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override;
-	void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) override;
+	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override final
+	{
+		return m_allocate(type_size * count, align);
+	}
+
+	void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) override final
+	{
+		m_deallocate(p, type_size * count, align);
+	}
 };
 
 // ---------------------------------------------------

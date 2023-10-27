@@ -4,42 +4,30 @@
 
 namespace Mylib
 {
-namespace Alloc
-{
-namespace Pool
+namespace Memory
 {
 
 // ---------------------------------------------------
 
-Core::Core (size_t type_size, uint32_t chunks_per_block)
+PoolCore::PoolCore (size_t type_size_, uint32_t chunks_per_block_, uint32_t align_)
+	: type_size(type_size_), chunks_per_block(chunks_per_block_), align(align_),
+	  chunk_size((type_size_ < lowest_chunk_size()) ? lowest_chunk_size() : type_size_)
 {
-	this->type_size = type_size;
-
 	// we need space to store at least a pointer in each chunk, for the linked list of free chunks
-
-	if (type_size < lowest_chunk_size())
-		this->chunk_size = lowest_chunk_size();
-	else
-		this->chunk_size = type_size;
-
-	this->chunks_per_block = chunks_per_block;
-
-	this->free_chunks = nullptr;
-	this->blocks = nullptr;
 }
 
-Core::~Core ()
+PoolCore::~PoolCore ()
 {
 	Block *block, *next;
 
-	for (block=this->blocks; block!=nullptr; block=next) {
+	for (block = this->blocks; block != nullptr; block = next) {
 		next = block->next_block;
-		free(block->chunks);
+		m_deallocate(block->chunks, this->chunk_size * this->chunks_per_block, this->align);
 		delete block;
 	}
 }
 
-void Core::alloc_new_block ()
+void PoolCore::alloc_new_block ()
 {
 	Block *new_block;
 	
@@ -49,7 +37,7 @@ void Core::alloc_new_block ()
 	this->blocks = new_block;
 }
 
-void Core::alloc_chunks_for_block (Block *block)
+void PoolCore::alloc_chunks_for_block (Block *block)
 {
 	Chunk *chunk;
 
@@ -59,12 +47,14 @@ void Core::alloc_chunks_for_block (Block *block)
 	// When we remove an element, we remove its memory from the free_chunks linked list
 	//   and use the memory to store user data instead.
 
-	block->chunks = static_cast<Chunk*>( malloc(this->chunk_size * this->chunks_per_block) );
-	assert(block->chunks != nullptr);
+	block->chunks = static_cast<Chunk*>( m_allocate(this->chunk_size * this->chunks_per_block, this->align) );
+	mylib_assert_exception(block->chunks != nullptr);
 
 	chunk = block->chunks;
 
-	for (uint32_t i=0; i<this->chunks_per_block-1; i++) {
+	static_assert(sizeof(uint8_t) == 1);
+
+	for (uint32_t i = 0; i < this->chunks_per_block-1; i++) {
 		chunk->next_chunk = reinterpret_cast<Chunk*>( reinterpret_cast<uint8_t*>(chunk) + this->chunk_size );
 		chunk = chunk->next_chunk;
 	}
@@ -80,7 +70,7 @@ void Core::alloc_chunks_for_block (Block *block)
 	this->free_chunks = block->chunks;
 }
 
-void Core::release (void *p)
+void PoolCore::deallocate (void *p)
 {
 	Chunk *chunk = static_cast<Chunk*>(p);
 
@@ -91,66 +81,66 @@ void Core::release (void *p)
 
 // ---------------------------------------------------
 
-Manager::Manager (std::vector<size_t>& list_sizes, size_t max_block_size)
+PoolManager::PoolManager (std::vector<size_t>& list_type_sizes, const size_t max_block_size)
 {
 	this->load(list_sizes, max_block_size);
 }
 
-Manager::Manager (std::initializer_list<size_t> list_sizes, size_t max_block_size)
+PoolManager::PoolManager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size)
 {
 	std::vector<size_t> v = list_sizes;
 	this->load(v, max_block_size);
 }
 
-Manager::Manager (size_t max_size, size_t step_size, size_t max_block_size)
+PoolManager::PoolManager (const size_t max_type_size, const size_t step_size, const size_t max_block_size)
 {
-	std::vector<size_t> list_sizes;
+	std::vector<size_t> list_type_sizes;
 
-	list_sizes.reserve(max_size / step_size + 5); // 1...2...5... whatever
+	list_type_sizes.reserve(max_type_size / step_size + 5); // 1...2...5... whatever
 
-	for (size_t size=step_size; size<max_size; size+=step_size)
-		list_sizes.push_back(size);
-	list_sizes.push_back(max_size);
+	for (size_t type_size = step_size; type_size < max_type_size; type_size += step_size)
+		list_type_sizes.push_back(type_size);
+	list_type_sizes.push_back(max_type_size);
 	
-	this->load(list_sizes, max_block_size);
+	this->load(list_type_sizes, max_block_size);
 }
 
-Manager::~Manager ()
+PoolManager::~PoolManager ()
 {
-	for (Core *allocator: this->allocators)
+	for (PoolCore *allocator: this->allocators)
 		delete allocator;
 }
 
-void Manager::load (std::vector<size_t>& list_sizes, size_t max_block_size)
+void PoolManager::load (std::vector<size_t>& list_type_sizes, const size_t max_block_size)
 {
 	// we remove values lower than the minimum
-	std::for_each(list_sizes.begin(), list_sizes.end(),
+	std::for_each(list_type_sizes.begin(), list_type_sizes.end(),
 		[] (size_t& v) -> void {
-			if (v < Core::lowest_chunk_size())
-				v = Core::lowest_chunk_size();
+			if (v < PoolCore::lowest_chunk_size())
+				v = PoolCore::lowest_chunk_size();
 		}
 	);
 
 	// we need the allocators to be sorted in order to create the index
-	std::sort(list_sizes.begin(), list_sizes.end(),
-		[] (size_t a, size_t b) -> bool {
+	std::sort(list_type_sizes.begin(), list_type_sizes.end(),
+		[] (const size_t a, const size_t b) -> bool {
 			return (a < b);
 		}
 	);
 
 	// let's also remove any duplicate entries
-	auto last = std::unique(list_sizes.begin(), list_sizes.end());
-	list_sizes.erase(last, list_sizes.end());
+	auto last = std::unique(list_type_sizes.begin(), list_type_sizes.end());
+	list_type_sizes.erase(last, list_type_sizes.end());
 
-	this->allocators.reserve( list_sizes.size() );
+	this->allocators.reserve( list_type_sizes.size() );
 
-	for (size_t size: list_sizes) {
-		size_t chunks_per_block = max_block_size / size;
-		Core *allocator = new Core(size, chunks_per_block);
+	for (const size_t type_size : list_type_sizes) {
+		const size_t chunks_per_block = max_block_size / type_size;
+		PoolCore *allocator = new PoolCore(type_size, chunks_per_block, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 		this->allocators.push_back(allocator);
 	}
 
-	this->max_size = (*(this->allocators.end() - 1))->get_chunk_size();
+	this->max_type_size = (*(this->allocators.end() - 1))->get_chunk_size();
 
 #if 0
 	for (Core *allocator: this->allocators)
@@ -160,13 +150,13 @@ void Manager::load (std::vector<size_t>& list_sizes, size_t max_block_size)
 
 	// now, let's create an index for a O(1) time complexity
 
-	this->allocators_index.resize(this->max_size + 1, nullptr);
+	this->allocators_index.resize(this->max_type_size + 1, nullptr);
 
-	size_t size = 1;
-	for (Core *allocator: this->allocators) {
-		while (size <= allocator->get_chunk_size()) {
-			this->allocators_index[size] = allocator;
-			size++;
+	size_t type_size = 1;
+	for (PoolCore *allocator : this->allocators) {
+		while (type_size <= allocator->get_chunk_size()) {
+			this->allocators_index[type_size] = allocator;
+			type_size++;
 		}
 	}
 
@@ -337,6 +327,5 @@ void datablock_general_alloc_t::release (void *p)
 
 // ---------------------------------------------------
 
-} // end namespace Pool
-} // end namespace Alloc
+} // end namespace Memory
 } // end namespace Mylib
