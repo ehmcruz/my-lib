@@ -1,14 +1,14 @@
 #include <iostream>
 #include <cassert>
 
-#include <my-lib/pool-alloc.h>
+#include <my-lib/memory-pool.h>
 
 #define n 10000000
 //#define n 10
 
 void test_core ()
 {
-	Mylib::Alloc::Pool::SameType<uint32_t> factory(1024);
+	Mylib::Memory::PoolCoreSameType<uint32_t> factory(1024);
 	uint32_t i, correct;
 	uint32_t **v, **p;
 
@@ -17,7 +17,7 @@ void test_core ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		*p = factory.alloc();
+		*p = factory.allocate();
 		**p = i;
 		p++;
 	}
@@ -32,7 +32,7 @@ void test_core ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		factory.release(*p);
+		factory.deallocate(*p);
 		p++;
 	}
 
@@ -40,7 +40,7 @@ void test_core ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		*p = factory.alloc();
+		*p = factory.allocate();
 		**p = i;
 		p++;
 	}
@@ -56,7 +56,7 @@ void test_core ()
 
 void test_general ()
 {
-	Mylib::Alloc::Pool::Manager factory( { 10, 1, 14, 20, 9, 8 } );
+	Mylib::Memory::PoolManager factory( { 10, 1, 14, 20, 9, 8 } );
 	//datablock_alloc_t factory(34, 8);
 //exit(1);
 	uint32_t i, correct;
@@ -67,7 +67,7 @@ void test_general ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		*p = factory.alloc<uint32_t>();
+		*p = factory.allocate_type<uint32_t>(1);
 		**p = i;
 		p++;
 	}
@@ -82,7 +82,7 @@ void test_general ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		factory.release<uint32_t>(*p);
+		factory.deallocate_type<uint32_t>(*p, 1);
 		//factory.release(*p);
 		//factory.release(*p, sizeof(uint32_t));
 		p++;
@@ -92,7 +92,7 @@ void test_general ()
 
 	p = v;
 	for (i=0; i<n; i++) {
-		*p = factory.alloc<uint32_t>();
+		*p = factory.allocate_type<uint32_t>(1);
 		//*p = factory.alloc();
 		**p = i;
 		p++;

@@ -51,21 +51,21 @@ private:
 		Block *next_block;
 	};
 
-	OO_ENCAPSULATE_SCALAR_CONST_READONLY(size_t, type_size)
-
+	const size_t type_size;
 	const uint32_t chunks_per_block;
 	const uint32_t align;
 
-	const uint32_t chunks_size;
+	OO_ENCAPSULATE_SCALAR_CONST_READONLY(size_t, chunk_size)
 
 	Block *blocks = nullptr;
 	Chunk *free_chunks = nullptr;
 
 public:
-	Core (size_t type_size_, uint32_t chunks_per_block_, uint32_t align_);
-	~Core ();
+	PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const uint32_t align_);
+	~PoolCore ();
 
 	// allocates one element of size chunk_size
+	
 	[[nodiscard]] inline void* allocate ()
 	{
 		void *free_chunk;
@@ -80,7 +80,15 @@ public:
 	}
 
 	// free one element of size chunk_size
-	void deallocate (void *p);
+
+	inline void deallocate (void *p)
+	{
+		Chunk *chunk = static_cast<Chunk*>(p);
+
+		// we just add the just-freed chunk as the new head of the free_chunks list
+		chunk->next_chunk = this->free_chunks;
+		this->free_chunks = chunk;
+	}
 
 	static consteval size_t lowest_chunk_size ()
 	{
@@ -95,22 +103,22 @@ private:
 // ---------------------------------------------------
 
 template <typename T>
-class PoolCoreSameType: public PoolCore
+class PoolCoreSameType : public PoolCore
 {
 public:
-	PoolCoreSameType (uint32_t chunks_per_block_, uint32_t align_)
+	PoolCoreSameType (const uint32_t chunks_per_block_)
 		: PoolCore(sizeof(T), chunks_per_block_, calculate_alignment<T>())
 	{
 	}
 
 	[[nodiscard]] inline T* allocate ()
 	{
-		return static_cast<T*>( this->PoolCore::alloc() );
+		return static_cast<T*>( this->PoolCore::allocate() );
 	}
 
 	inline void deallocate (T *p)
 	{
-		this->PoolCore::release( static_cast<void*>(p) );
+		this->PoolCore::deallocate( static_cast<void*>(p) );
 	}
 };
 
@@ -130,11 +138,11 @@ private:
 
 public:
 	// max_block_size: max amount of memory to be allocated per malloc
-	Manager (std::vector<size_t>& list_type_sizes, const size_t max_block_size = default_block_size);
-	Manager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size = default_block_size);
-	Manager (const size_t max_type_size, const size_t step_size, const size_t max_block_size = default_block_size);
+	PoolManager (std::vector<size_t>& list_type_sizes, const size_t max_block_size = default_block_size);
+	PoolManager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size = default_block_size);
+	PoolManager (const size_t max_type_size, const size_t step_size, const size_t max_block_size = default_block_size);
 
-	~Manager ();
+	~PoolManager ();
 
 	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override final
 	{

@@ -4,8 +4,8 @@ CPPFLAGS = -I./include -Wall -ggdb -std=c++23
 all: pool stl timer trigger any bit math
 	@echo "My-lib compiled! yes!"
 
-pool: $(HEADERS) lib/pool-alloc.cpp tests/test-pool-alloc.cpp
-	g++ lib/pool-alloc.cpp tests/test-pool-alloc.cpp -o test-pool-alloc $(CPPFLAGS)
+pool: $(HEADERS) src/memory-pool.cpp tests/test-memory-pool.cpp
+	g++ src/memory-pool.cpp tests/test-memory-pool.cpp -o test-memory-pool $(CPPFLAGS)
 
 stl: $(HEADERS) lib/pool-alloc.cpp tests/test-stl-alloc.cpp
 	g++ lib/pool-alloc.cpp tests/test-stl-alloc.cpp -o test-stl-alloc $(CPPFLAGS)

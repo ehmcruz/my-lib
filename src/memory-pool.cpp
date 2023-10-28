@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include <my-lib/pool-alloc.h>
+#include <my-lib/memory-pool.h>
 
 namespace Mylib
 {
@@ -9,7 +9,7 @@ namespace Memory
 
 // ---------------------------------------------------
 
-PoolCore::PoolCore (size_t type_size_, uint32_t chunks_per_block_, uint32_t align_)
+PoolCore::PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const uint32_t align_)
 	: type_size(type_size_), chunks_per_block(chunks_per_block_), align(align_),
 	  chunk_size((type_size_ < lowest_chunk_size()) ? lowest_chunk_size() : type_size_)
 {
@@ -70,25 +70,16 @@ void PoolCore::alloc_chunks_for_block (Block *block)
 	this->free_chunks = block->chunks;
 }
 
-void PoolCore::deallocate (void *p)
-{
-	Chunk *chunk = static_cast<Chunk*>(p);
-
-	// we just add the just-freed chunk as the new head of the free_chunks list
-	chunk->next_chunk = this->free_chunks;
-	this->free_chunks = chunk;
-}
-
 // ---------------------------------------------------
 
 PoolManager::PoolManager (std::vector<size_t>& list_type_sizes, const size_t max_block_size)
 {
-	this->load(list_sizes, max_block_size);
+	this->load(list_type_sizes, max_block_size);
 }
 
 PoolManager::PoolManager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size)
 {
-	std::vector<size_t> v = list_sizes;
+	std::vector<size_t> v = list_type_sizes;
 	this->load(v, max_block_size);
 }
 
