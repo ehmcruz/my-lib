@@ -1,9 +1,8 @@
 #ifndef __MY_LIB_MACROS_HEADER_H__
 #define __MY_LIB_MACROS_HEADER_H__
 
-#include <iostream>
-#include <string>
 #include <type_traits>
+#include <utility>
 
 // ---------------------------------------------------
 
@@ -67,9 +66,9 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR, DATA) \
+#define OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
 	protected: \
-		TYPE VAR = DATA; \
+		TYPE VAR; \
 	public: \
 		inline TYPE get_##VAR () { \
 			return this->VAR; \
@@ -100,6 +99,34 @@
 	public: \
 		inline void set_##VAR (TYPE VAR) { \
 			this->VAR = VAR; \
+		} \
+	protected:
+
+// ---------------------------------------------------
+
+#define OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+	protected: \
+		TYPE VAR; \
+	public: \
+		inline const TYPE& get_ref_##VAR () const { \
+			return this->VAR; \
+		} \
+		inline TYPE get_copy_##VAR () const { \
+			return this->VAR; \
+		} \
+	protected:
+
+#define OO_ENCAPSULATE_OBJ(TYPE, VAR) \
+	OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+	public: \
+		inline TYPE& get_ref_##VAR () { \
+			return this->VAR; \
+		} \
+		inline void set_##VAR (const TYPE& VAR) { \
+			this->VAR = VAR; \
+		} \
+		inline void set_##VAR (TYPE&& VAR) { \
+			this->VAR = std::move(VAR); \
 		} \
 	protected:
 
