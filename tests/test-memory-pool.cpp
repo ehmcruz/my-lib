@@ -1,4 +1,7 @@
 #include <iostream>
+#include <list>
+#include <chrono>
+
 #include <cassert>
 
 #include <my-lib/memory-pool.h>
@@ -107,11 +110,103 @@ void test_general ()
 	std::cout << correct << " elements are correct again" << std::endl;
 }
 
+void test_stl ()
+{
+	Mylib::Memory::PoolManager factory(1024, 8);
+	Mylib::Memory::PoolAllocatorSTL<uint32_t> stl_pool_allocator(factory);
+	std::list<uint32_t, Mylib::Memory::PoolAllocatorSTL<uint32_t>> list(stl_pool_allocator);
+
+	auto start = std::chrono::system_clock::now();
+
+	uint32_t i, correct;
+
+	for (i=0; i<n; i++) {
+		list.push_back(i);
+	}
+
+	correct = 0;
+	i = 0;
+	for (auto el : list) {
+		if (el == i++)
+			correct++;
+	}
+
+	//std::cout << correct << " elements are correct" << std::endl;
+
+	list.clear();
+
+	for (i=0; i<n; i++) {
+		list.push_back(i);
+	}
+
+	correct = 0;
+	i = 0;
+	for (auto el : list) {
+		if (el == i++)
+			correct++;
+	}
+
+	auto end = std::chrono::system_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << elapsed.count() << " miliseconds" << std::endl;
+
+	std::cout << correct << " elements are correct again" << std::endl;
+}
+
+void benchmark_base_stl ()
+{
+	std::list<uint32_t> list;
+
+	auto start = std::chrono::system_clock::now();
+
+	uint32_t i, correct;
+
+	for (i=0; i<n; i++) {
+		list.push_back(i);
+	}
+
+	correct = 0;
+	i = 0;
+	for (auto el : list) {
+		if (el == i++)
+			correct++;
+	}
+
+	//std::cout << correct << " elements are correct" << std::endl;
+
+	list.clear();
+
+	for (i=0; i<n; i++) {
+		list.push_back(i);
+	}
+
+	correct = 0;
+	i = 0;
+	for (auto el : list) {
+		if (el == i++)
+			correct++;
+	}
+
+	auto end = std::chrono::system_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << elapsed.count() << " miliseconds" << std::endl;
+
+	std::cout << correct << " elements are correct again" << std::endl;
+}
+
 int main ()
 {
+	std::cout << "----------------------------------" << std::endl;
 	test_core();
-	std::cout << std::endl;
+
+	std::cout << "----------------------------------" << std::endl;
 	test_general();
+	
+	std::cout << "----------------------------------" << std::endl;
+	test_stl();
+
+	std::cout << "----------------------------------" << std::endl;
+	benchmark_base_stl();
 
 	return 0;
 }

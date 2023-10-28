@@ -147,6 +147,7 @@ public:
 	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override final
 	{
 		mylib_assert_exception_msg(count == 1, "PoolManager only supports allocation of one element at a time. Given ", count);
+//std::cout << "allocating..." << std::endl;
 
 		void *p;
 
@@ -163,6 +164,7 @@ public:
 	void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) override final
 	{
 		mylib_assert_exception_msg(count == 1, "PoolManager only supports deallocation of one element at a time. Given ", count);
+//std::cout << "deallocating..." << std::endl;
 
 		if (type_size <= this->max_type_size) [[likely]]
 			this->allocators_index[type_size]->deallocate(p);
@@ -188,17 +190,10 @@ public:
 	using value_type = T;
 	using size_type = std::size_t;
 	using difference_type = std::ptrdiff_t;
+	using propagate_on_container_move_assignment = std::true_type;
 
-#if __cplusplus >= 201103L
-// _GLIBCXX_RESOLVE_LIB_DEFECTS
-// 2103. propagate_on_container_move_assignment
-typedef std::true_type propagate_on_container_move_assignment;
-#endif
-
-private:
 	PoolManager& pool_manager;
 
-public:
 	PoolAllocatorSTL (PoolManager& pool_manager_)
 		: pool_manager(pool_manager_)
 	{
