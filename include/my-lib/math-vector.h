@@ -26,11 +26,11 @@ class VectorStorage__;
 
 // ---------------------------------------------------
 
-template<>
-class VectorStorage__<float, 2>
+template <typename T>
+class VectorStorage__<T, 2>
 {
 public:
-	using Type = float;
+	using Type = T;
 
 	union {
 		Type data[2];
@@ -59,11 +59,11 @@ public:
 
 // ---------------------------------------------------
 
-template<>
-class VectorStorage__<float, 3>
+template <typename T>
+class VectorStorage__<T, 3>
 {
 public:
-	using Type = float;
+	using Type = T;
 
 	union {
 		Type data[3];
@@ -94,11 +94,11 @@ public:
 
 // ---------------------------------------------------
 
-template<>
-class VectorStorage__<float, 4>
+template <typename T>
+class VectorStorage__<T, 4>
 {
 public:
-	using Type = float;
+	using Type = T;
 
 	union {
 		Type data[4];
