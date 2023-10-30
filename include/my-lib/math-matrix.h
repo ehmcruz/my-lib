@@ -130,7 +130,7 @@ auto operator* (const Ta& a_, const Tb& b_)
 	static_assert(Tb::get_nrows() == Tb::get_ncols());
 	static_assert(Ta::get_nrows() == Tb::get_nrows());
 
-	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_dim();
+	constexpr uint32_t dim = remove_type_qualifiers<Ta>::type::get_ncols();
 	
 	Matrix<Type, dim, dim> r_;
 	const Type *a, *b;
