@@ -80,7 +80,7 @@ public:
 	VectorStorage__ () = default;
 
 	VectorStorage__ (const Type x_, const Type y_, const Type z_)
-		: x(x_), y(y_), z(z)
+		: x(x_), y(y_), z(z_)
 	{
 	}
 
@@ -116,7 +116,7 @@ public:
 	VectorStorage__ () = default;
 
 	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_)
-		: x(x_), y(y_), z(z), w(w_)
+		: x(x_), y(y_), z(z_), w(w_)
 	{
 	}
 
