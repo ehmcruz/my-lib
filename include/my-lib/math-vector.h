@@ -140,12 +140,12 @@ public:
 
 	static_assert(sizeof(TParent) == (dim * sizeof(Type)));
 
-	inline float* get_raw ()
+	inline Type* get_raw ()
 	{
 		return this->data;
 	}
 
-	inline const float* get_raw () const
+	inline const Type* get_raw () const
 	{
 		return this->data;
 	}
