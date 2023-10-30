@@ -111,7 +111,7 @@
 		inline const TYPE& get_ref_##VAR () const { \
 			return this->VAR; \
 		} \
-		inline TYPE get_copy_##VAR () const { \
+		inline TYPE get_value_##VAR () const { \
 			return this->VAR; \
 		} \
 	protected:
