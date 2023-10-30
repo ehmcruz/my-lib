@@ -218,7 +218,7 @@ public:
 		return this->data[i];
 	}
 
-	inline const Type operator[] (const uint32_t i) const
+	inline Type operator[] (const uint32_t i) const
 	{
 		return this->data[i];
 	}
