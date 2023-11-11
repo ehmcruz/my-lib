@@ -110,7 +110,7 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 template <typename Tevent, typename Tfilter_, typename Tobj, typename Tfunc>
 auto make_filter_callback_object (Tfilter_&& filter, Tobj& obj, Tfunc callback)
 {
-	using Tfilter = remove_type_qualifiers<Tfilter_>::type;
+	using Tfilter = typename remove_type_qualifiers<Tfilter_>::type;
 
 	class DerivedCallback : public Callback<Tevent>
 	{
@@ -203,7 +203,7 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 template <typename Tevent, typename Tfilter_, typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
 auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfunc callback, const Tfirst_param& first_param, Args&&... args)
 {
-	using Tfilter = remove_type_qualifiers<Tfilter_>::type;
+	using Tfilter = typename remove_type_qualifiers<Tfilter_>::type;
 
 	//auto params = std::make_tuple(first_param, std::forward<Args>(args)...);
 	auto params = std::make_tuple(first_param, args...);

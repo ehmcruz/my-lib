@@ -123,7 +123,7 @@ template <typename Ta, typename Tb>
 requires is_Matrix<Ta> && is_Matrix<Tb> && std::same_as<typename Ta::Type, typename Tb::Type>
 auto operator* (const Ta& a_, const Tb& b_)
 {
-	using Type = Ta::Type;
+	using Type = typename Ta::Type;
 	
 	// only square matrices for now
 	static_assert(Ta::get_nrows() == Ta::get_ncols());
@@ -160,7 +160,7 @@ template <typename Tm, typename Tv>
 requires is_Matrix<Tm> && is_Vector<Tv> && std::same_as<typename Tm::Type, typename Tv::Type>
 auto operator* (const Tm& m_, const Tv& v_)
 {
-	using Type = Tm::Type;
+	using Type = typename Tm::Type;
 
 	// only square matrices for now
 	static_assert(Tm::get_nrows() == Tm::get_ncols());
