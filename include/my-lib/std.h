@@ -103,10 +103,13 @@ public:
 	}
 };
 
+#define mylib_throw_exception_msg(...) \
+	throw Mylib::Exception( Mylib::build_str_from_stream("exception throw at file ", __FILE__, " line ", __LINE__, '\n', __VA_ARGS__, '\n') )
+
 #define mylib_assert_exception_diecode_msg(bool_expr, die_code, ...) \
 	if (!(bool_expr)) [[unlikely]] { \
 		die_code \
-		throw Mylib::Exception( Mylib::build_str_from_stream("assert failed at file ", __FILE__, " line ", __LINE__, "\n", #bool_expr, "\n", __VA_ARGS__, "\n") ); \
+		mylib_throw_exception_msg("assert failed", '\n', #bool_expr, '\n', __VA_ARGS__); \
 	}
 
 #define mylib_assert_exception_msg(bool_expr, ...) mylib_assert_exception_diecode_msg(bool_expr, , __VA_ARGS__)
