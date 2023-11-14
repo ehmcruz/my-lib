@@ -3,11 +3,11 @@
 
 #include <my-lib/std.h>
 
-#define _MYLIB_ENUM_CLASS_TYPE_VALUES_
-	_MYLIB_ENUM_CLASS_TYPE_VALUE_(Value1)
+#define _MYLIB_ENUM_CLASS_TYPE_VALUES_ \
+	_MYLIB_ENUM_CLASS_TYPE_VALUE_(Value1) \
 	_MYLIB_ENUM_CLASS_TYPE_VALUE_(Value2)
 
-enum class Type {
+enum class Type : uint32_t {
 	#define _MYLIB_ENUM_CLASS_TYPE_VALUE_(V) V,
 	_MYLIB_ENUM_CLASS_TYPE_VALUES_
 	#undef _MYLIB_ENUM_CLASS_TYPE_VALUE_
@@ -26,7 +26,7 @@ const char* enum_class_to_str (const Type value)
 	return strs[ std::to_underlying(value) ];
 }
 
-std::ostream& operator << (std::ostream& out, const Type value)
+inline std::ostream& operator << (std::ostream& out, const Type value)
 {
 	out << enum_class_to_str(value);
 	return out;
