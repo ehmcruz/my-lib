@@ -48,20 +48,16 @@ private:
 		bool enabled;
 		TimerCallback *callback;
 		CallbackHandler *callback_handler;
-	};
 
-	struct Internal {
-		EventFull *event_full;
-
-		inline bool operator< (const Internal& rhs) const
+		inline bool operator< (const EventFull& rhs) const
 		{
-			return (this->event_full->time > rhs.event_full->time);
+			return (this->time > rhs.time);
 		}
 	};
 
 	using TallocEventFull = typename std::allocator_traits<Talloc>::template rebind_alloc<EventFull>;
 	TallocEventFull event_allocator;
-	std::vector<Internal> events; // we let the vector use its standard allocator
+	std::vector<EventFull*> events; // we let the vector use its standard allocator
 	Tget_current_time get_current_time_;
 
 public:
@@ -77,8 +73,8 @@ public:
 
 	~Timer ()
 	{
-		for (auto& data : this->events)
-			this->destroy_event(data.event_full);
+		for (auto *event : this->events)
+			this->destroy_event(event);
 	}
 
 	inline Ttime get_current_time () const
@@ -96,7 +92,7 @@ public:
 		const Ttime time = this->get_current_time();
 
 		while (!this->events.empty()) {
-			EventFull *event = this->events.front().event_full;
+			EventFull *event = this->events.front();
 
 			if (event->time <= time) {
 				this->pop();
@@ -163,8 +159,7 @@ public:
 private:
 	inline void push (EventFull *event)
 	{
-		Internal storage { .event_full = event };
-		this->events.push_back(storage);
+		this->events.push_back(event);
 		std::push_heap(this->events.begin(), this->events.end());
 	}
 
