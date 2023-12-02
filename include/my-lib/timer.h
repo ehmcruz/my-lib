@@ -6,6 +6,7 @@
 #include <functional>
 #include <algorithm>
 #include <memory>
+#include <functional>
 
 #include <cstdint>
 #include <cstdlib>
@@ -21,38 +22,34 @@ namespace Trigger
 
 // ---------------------------------------------------
 
-template <typename Ttime, typename Talloc=std::allocator<int>>
+template <typename Tget_current_time, typename Talloc=std::allocator<int>>
 class Timer
 {
 public:
+	using Ttime = decltype(std::declval<Tget_current_time>()());
+
 	struct Event {
 		Ttime time;
 		bool re_schedule;
 	};
 
+	struct Descriptor {
+		Event *ptr;
+	};
+
+private:
 	using TimerCallback = Callback<Event>;
 
 	struct CallbackHandler {
 		virtual void free_memory (Timer *timer, TimerCallback *ptr) = 0;
 	};
 
-	struct EventFull {
-		Ttime time;
+	struct EventFull : public Event {
+		bool enabled;
 		TimerCallback *callback;
 		CallbackHandler *callback_handler;
-		bool enabled;
-
-		inline Event to_Event () const
-		{
-			return Event { .time = this->time };
-		}
 	};
 
-	struct Descriptor {
-		EventFull *ptr;
-	};
-
-private:
 	struct Internal {
 		EventFull *event_full;
 
@@ -65,16 +62,16 @@ private:
 	using TallocEventFull = typename std::allocator_traits<Talloc>::template rebind_alloc<EventFull>;
 	TallocEventFull event_allocator;
 	std::vector<Internal> events; // we let the vector use its standard allocator
-	Ttime current_time;
+	Tget_current_time get_current_time_;
 
 public:
-	Timer (const Ttime& initial_time)
-		: current_time(initial_time)
+	Timer (Tget_current_time get_current_time__)
+		: get_current_time_(get_current_time__)
 	{
 	}
 
-	Timer (const Ttime& initial_time, const Talloc& allocator_)
-		: current_time(initial_time), event_allocator(allocator_)
+	Timer (Tget_current_time get_current_time__, const Talloc& allocator__)
+		: get_current_time_(get_current_time__), event_allocator(allocator__)
 	{
 	}
 
@@ -84,14 +81,19 @@ public:
 			this->destroy_event(data.event_full);
 	}
 
+	inline Ttime get_current_time () const
+	{
+		return this->get_current_time_();
+	}
+
 	inline uint32_t get_n_scheduled_events () const
 	{
 		return this->events.size();
 	}
 
-	void trigger_events (const Ttime& time)
+	void trigger_events ()
 	{
-		this->current_time = time;
+		Ttime time = this->get_current_time();
 
 		while (!this->events.empty()) {
 			EventFull *event = this->events.front().event_full;
@@ -101,16 +103,13 @@ public:
 
 				auto& c = *(event->callback);
 
-				Event user_event = event->to_Event();
-				user_event.re_schedule = false;
+				event->re_schedule = false;
 
 				if (event->enabled)
-					c(user_event);
+					c(*event);
 
-				if (user_event.re_schedule) {
-					event->time = user_event.time;
+				if (event->re_schedule)
 					this->push(event);
-				}
 				else
 					this->destroy_event(event);
 			}
@@ -119,8 +118,9 @@ public:
 		}
 	}
 
-	/* When creating the event listener by r-value ref,
-	   we allocate internal storage and copy the value to it.
+	/*
+		When creating the event listener by r-value ref,
+		we allocate internal storage and copy the value to it.
 	*/
 	template <typename Tcallback>
 	Descriptor schedule_event (const Ttime& time, const Tcallback& callback)
@@ -143,12 +143,11 @@ public:
 
 		Tc *persistent_callback = new (callback_allocator.allocate(1)) Tc(callback);
 		
-		EventFull *event = new (this->event_allocator.allocate(1)) EventFull {
-			.time = time,
-			.callback = persistent_callback,
-			.callback_handler = &my_callback_handler,
-			.enabled = true
-		};
+		EventFull *event = new (this->event_allocator.allocate(1)) EventFull;
+		event->time = time;
+		event->callback = persistent_callback;
+		event->callback_handler = &my_callback_handler;
+		event->enabled = true;
 
 		this->push(event);
 		
@@ -157,7 +156,8 @@ public:
 
 	inline void unschedule_event (Descriptor& descriptor)
 	{
-		descriptor.ptr->enabled = false; // better than rebuild the heap
+		EventFull *event = static_cast<EventFull*>(descriptor.ptr);
+		event->enabled = false; // better than rebuild the heap
 	}
 
 private:
