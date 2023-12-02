@@ -23,7 +23,7 @@ class Callback
 {
 public:
 	virtual void operator() (Tevent& event) = 0;
-	//virtual ~Callback () = default;
+	virtual ~Callback () = default;
 };
 
 // ---------------------------------------------------

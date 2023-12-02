@@ -43,6 +43,7 @@ constexpr void build_str_from_stream__ (std::ostringstream& str_stream)
 template <typename T, typename... Types>
 void build_str_from_stream__ (std::ostringstream& str_stream, T&& var1, Types&&... vars)
 {
+//	using namespace std;
 	str_stream << var1;
 	build_str_from_stream__(str_stream, vars...);
 }
@@ -64,6 +65,7 @@ constexpr void print_stream__ (std::ostream& out)
 template <typename T, typename... Types>
 void print_stream__ (std::ostream& out, T&& var1, Types&&... vars)
 {
+//	using namespace std;
 	out << var1;
 	print_stream__(out, vars...);
 }
