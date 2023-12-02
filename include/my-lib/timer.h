@@ -93,7 +93,7 @@ public:
 
 	void trigger_events ()
 	{
-		Ttime time = this->get_current_time();
+		const Ttime time = this->get_current_time();
 
 		while (!this->events.empty()) {
 			EventFull *event = this->events.front().event_full;
