@@ -1,13 +1,11 @@
 #ifndef __MY_LIB_TIMER_HEADER_H__
 #define __MY_LIB_TIMER_HEADER_H__
 
-#include <iostream>
 #include <vector>
-#include <functional>
 #include <algorithm>
 #include <memory>
-#include <functional>
 #include <utility>
+#include <variant>
 
 #include <cstdint>
 #include <cstdlib>
@@ -41,14 +39,15 @@ public:
 private:
 	using TimerCallback = Callback<Event>;
 
-	struct CallbackHandler {
+	struct FreeHandler {
 		virtual void free_memory (Timer *timer, TimerCallback *ptr) = 0;
 	};
 
 	struct EventFull : public Event {
-		bool enabled;
 		TimerCallback *callback;
-		CallbackHandler *callback_handler;
+		FreeHandler *free_handler;
+
+		bool enabled;
 
 		inline bool operator< (const EventFull& rhs) const
 		{
@@ -126,7 +125,7 @@ public:
 		using Tc = Tcallback;
 		using TallocTc = typename std::allocator_traits<TallocEventFull>::template rebind_alloc<Tc>;
 
-		struct MyCallbackHandler : public CallbackHandler {
+		struct MyFreeHandler : public FreeHandler {
 			virtual void free_memory (Timer *timer, TimerCallback *ptr) override
 			{
 				TallocTc callback_allocator(timer->event_allocator);
@@ -134,7 +133,7 @@ public:
 			}
 		};
 
-		static MyCallbackHandler my_callback_handler;
+		static MyFreeHandler my_free_handler;
 
 		TallocTc callback_allocator(this->event_allocator);
 
@@ -143,7 +142,7 @@ public:
 		EventFull *event = new (this->event_allocator.allocate(1)) EventFull;
 		event->time = time;
 		event->callback = persistent_callback;
-		event->callback_handler = &my_callback_handler;
+		event->free_handler = &my_free_handler;
 		event->enabled = true;
 
 		this->push(event);
@@ -172,7 +171,7 @@ private:
 
 	inline void destroy_event (EventFull *event)
 	{
-		event->callback_handler->free_memory(this, event->callback);
+		event->free_handler->free_memory(this, event->callback);
 		this->event_allocator.deallocate(event, 1);
 	}
 };

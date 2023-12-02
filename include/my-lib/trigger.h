@@ -252,13 +252,13 @@ public:
 	using Type = Tevent;
 	using EventCallback = Callback<Tevent>;
 
-	struct CallbackHandler {
+	struct FreeHandler {
 		virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) = 0;
 	};
 
 	struct Subscriber {
 		EventCallback *callback;
-		CallbackHandler *callback_handler;
+		FreeHandler *free_handler;
 		bool enabled;
 	};
 
@@ -282,7 +282,7 @@ public:
 	~EventHandler ()
 	{
 		for (auto& subscriber : this->subscribers)
-			subscriber.callback_handler->free_memory(this, subscriber.callback);
+			subscriber.free_handler->free_memory(this, subscriber.callback);
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -314,7 +314,7 @@ public:
 		using Tc = Tcallback;
 		using TallocTc = typename std::allocator_traits<TallocSubscriber>::template rebind_alloc<Tc>;
 
-		struct MyCallbackHandler : public CallbackHandler {
+		struct MyFreeHandler : public FreeHandler {
 			virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) override
 			{
 				TallocTc callback_allocator(event_handler->subscriber_allocator);
@@ -322,7 +322,7 @@ public:
 			}
 		};
 
-		static MyCallbackHandler my_callback_handler;
+		static MyFreeHandler my_free_handler;
 
 		TallocTc callback_allocator(this->subscriber_allocator);
 	
@@ -330,7 +330,7 @@ public:
 		
 		this->subscribers.push_back( Subscriber {
 			.callback = persistent_callback,
-			.callback_handler = &my_callback_handler,
+			.free_handler = &my_free_handler,
 			.enabled = true
 			} );
 
@@ -344,7 +344,7 @@ public:
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found)
-					subscriber.callback_handler->free_memory(this, subscriber.callback);
+					subscriber.free_handler->free_memory(this, subscriber.callback);
 				
 				return found;
 			}
