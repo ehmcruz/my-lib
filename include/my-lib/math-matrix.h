@@ -119,6 +119,24 @@ concept is_Matrix = is_Matrix4f<T>;
 
 // ---------------------------------------------------
 
+template <typename T, uint32_t nrows, uint32_t ncols>
+Matrix<T, nrows, ncols> gen_zero_matrix ()
+{
+	Matrix<T, nrows, ncols> m;
+	m.set_zero();
+	return m;
+}
+
+template <typename T, uint32_t dim>
+Matrix<T, dim, dim> gen_identity_matrix ()
+{
+	Matrix<T, dim, dim> m;
+	m.set_identity();
+	return m;
+}
+
+// ---------------------------------------------------
+
 template <typename Ta, typename Tb>
 requires is_Matrix<Ta> && is_Matrix<Tb> && std::same_as<typename Ta::Type, typename Tb::Type>
 auto operator* (const Ta& a_, const Tb& b_)

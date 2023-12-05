@@ -43,14 +43,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () = default;
+	VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_)
+	VectorStorage__ (const Type x_, const Type y_) noexcept
 		: x(x_), y(y_)
 	{
 	}
 
-	inline void set (const Type x, const Type y)
+	inline void set (const Type x, const Type y) noexcept
 	{
 		this->x = x;
 		this->y = y;
@@ -77,14 +77,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () = default;
+	VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_, const Type z_)
+	VectorStorage__ (const Type x_, const Type y_, const Type z_) noexcept
 		: x(x_), y(y_), z(z_)
 	{
 	}
 
-	inline void set (const Type x, const Type y, const Type z)
+	inline void set (const Type x, const Type y, const Type z) noexcept
 	{
 		this->x = x;
 		this->y = y;
@@ -113,14 +113,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () = default;
+	VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_)
+	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
 		: x(x_), y(y_), z(z_), w(w_)
 	{
 	}
 
-	inline void set (const Type x, const Type y, const Type z, const Type w)
+	inline void set (const Type x, const Type y, const Type z, const Type w) noexcept
 	{
 		this->x = x;
 		this->y = y;
@@ -140,12 +140,12 @@ public:
 
 	static_assert(sizeof(TParent) == (dim * sizeof(Type)));
 
-	inline Type* get_raw ()
+	inline Type* get_raw () noexcept
 	{
 		return this->data;
 	}
 
-	inline const Type* get_raw () const
+	inline const Type* get_raw () const noexcept
 	{
 		return this->data;
 	}
@@ -157,12 +157,12 @@ public:
 
 	// ------------------------ Constructors
 
-	Vector () = default;
+	Vector () noexcept = default;
 
 	using TParent::TParent;
 
 	template <uint32_t dim_other>
-	Vector (const Vector<T, dim_other>& other)
+	Vector (const Vector<T, dim_other>& other) noexcept
 	{
 		static_assert(dim_other <= dim);
 		for (uint32_t i = 0; i < dim_other; i++)
@@ -195,13 +195,13 @@ public:
 
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		inline Vector& operator OP (const Vector& other) \
+		inline Vector& operator OP (const Vector& other) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP other.data[i]; \
 			return *this; \
 		} \
-		inline Vector& operator OP (const Type s) \
+		inline Vector& operator OP (const Type s) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP s; \
@@ -213,29 +213,37 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	inline Type& operator[] (const uint32_t i)
+	inline Type& operator[] (const uint32_t i) noexcept
 	{
 		return this->data[i];
 	}
 
-	inline Type operator[] (const uint32_t i) const
+	inline Type operator[] (const uint32_t i) const noexcept
 	{
 		return this->data[i];
 	}
 
-	inline Type length () const
+	inline Type length () const noexcept
 	{
 		Type value = 0;
 		for (uint32_t i = 0; i < dim; i++)
 			value += this->data[i] * this->data[i];
 		return std::sqrt(value);
 	}
+
+	static constexpr Vector zero () noexcept
+	{
+		Vector v;
+		for (uint32_t i = 0; i < dim; i++)
+			v.data[i] = 0;
+		return v;
+	}
 };
 
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
 	template <typename T, uint32_t dim> \
-	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) \
+	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept \
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
@@ -243,7 +251,7 @@ public:
 		return r; \
 	} \
 	template <typename T, uint32_t dim> \
-	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) \
+	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
@@ -257,7 +265,7 @@ MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
 
 template <typename T, uint32_t dim> \
-inline Vector<T, dim> operator- (const Vector<T, dim>& v)
+inline Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 {
 	Vector<T, dim> r;
 	for (uint32_t i = 0; i < dim; i++) \
@@ -266,7 +274,7 @@ inline Vector<T, dim> operator- (const Vector<T, dim>& v)
 }
 
 template <typename T, uint32_t dim>
-inline T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b)
+inline T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
 {
 	T value = 0;
 	for (uint32_t i = 0; i < dim; i++)
@@ -329,7 +337,7 @@ concept is_Point = is_Vector<T>;
 //requires is_Vector<Ta> && is_Vector<Tb>
 //requires is_Point<T>;
 template <typename T, uint32_t dim>
-inline T distance (const Point<T, dim>& a, const Point<T, dim>& b)
+inline T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 {
 	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
 	return (a - b).length();
