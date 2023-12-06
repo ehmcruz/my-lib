@@ -1,6 +1,8 @@
 #ifndef __MY_LIB_MATH_HEADER_H__
 #define __MY_LIB_MATH_HEADER_H__
 
+#include <numeric>
+
 #include <my-lib/std.h>
 
 namespace Mylib
@@ -23,6 +25,12 @@ T base2_log_of_integer (const T value)
 	throw Mylib::Exception(Mylib::build_str_from_stream("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero"));
 
 	return 0;
+}
+
+auto radians_to_degrees (const auto radians) -> decltype(radians)
+{
+	using Type = decltype(radians);
+	return radians * static_cast<Type>(180) / std::numbers::pi_v<Type>;
 }
 
 // ---------------------------------------------------

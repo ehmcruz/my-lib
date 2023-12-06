@@ -231,6 +231,13 @@ public:
 		return std::sqrt(value);
 	}
 
+	void normalize () noexcept
+	{
+		const Type l = this->length();
+		for (uint32_t i = 0; i < dim; i++)
+			this->data[i] /= l;
+	}
+
 	static constexpr Vector zero () noexcept
 	{
 		Vector v;
@@ -273,13 +280,23 @@ inline Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 	return r;
 }
 
+// ---------------------------------------------------
+
 template <typename T, uint32_t dim>
-inline T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+constexpr T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
 {
 	T value = 0;
 	for (uint32_t i = 0; i < dim; i++)
 		value += a[i] * b[i];
 	return value;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
+{
+	return v / v.length();
 }
 
 // ---------------------------------------------------

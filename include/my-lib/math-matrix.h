@@ -16,6 +16,10 @@ namespace Mylib
 namespace Math
 {
 
+#ifdef MYLIB_MATH_BUILD_OPERATION
+#error nooooooooooo
+#endif
+
 // ---------------------------------------------------
 
 template <typename T, uint32_t nrows, uint32_t ncols>
@@ -41,6 +45,11 @@ public:
 		return get_nrows() * get_ncols();
 	}
 
+	consteval static T fp (const auto v)
+	{
+		return static_cast<T>(v);
+	}
+
 	inline T* get_raw ()
 	{
 		return this->data;
@@ -51,16 +60,44 @@ public:
 		return this->data;
 	}
 
-	inline T& operator() (const uint32_t row, const uint32_t col)
+	constexpr T& operator() (const uint32_t i)
+	{
+		return this->data[i];
+	}
+
+	constexpr const T operator() (const uint32_t i) const
+	{
+		return this->data[i];
+	}
+
+	constexpr T& operator() (const uint32_t row, const uint32_t col)
 	{
 		return this->data[row*get_ncols() + col];
 	}
 
-	inline const T operator() (const uint32_t row, const uint32_t col) const
+	constexpr const T operator() (const uint32_t row, const uint32_t col) const
 	{
 		return this->data[row*get_ncols() + col];
 	}
+
+	#undef MYLIB_MATH_BUILD_OPERATION
+	#define MYLIB_MATH_BUILD_OPERATION(OP) \
+		inline Matrix& operator OP (const Matrix& other) noexcept \
+		{ \
+			for (uint32_t i = 0; i < get_length(); i++) \
+				this->data[i] OP other.data[i]; \
+			return *this; \
+		} \
+		inline Matrix& operator OP (const Type s) noexcept \
+		{ \
+			for (uint32_t i = 0; i < get_length(); i++) \
+				this->data[i] OP s; \
+			return *this; \
+		}
 	
+	MYLIB_MATH_BUILD_OPERATION( += )
+	MYLIB_MATH_BUILD_OPERATION( -= )
+
 	void set_zero ()
 	{
 		for (uint32_t i = 0; i < get_length(); i++)
@@ -104,6 +141,76 @@ public:
 
 		for (uint32_t i = 0; i < vector_dim; i++)
 			this->data[i*ncols + last] = v[i];
+	}
+
+	void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
+		requires (nrows == 4 && ncols == 4)
+	{
+		const T c = std::cos(angle);
+		const T s = std::sin(angle);
+		
+		const T t = fp(1) - c;
+		//const T sh = std::sin(angle / fp(2));
+		//const T t = fp(2) * sh * sh;
+
+		const Vector<T, 3> axis = normalize(axis_);
+
+		// Rodrigues' rotation
+
+	#if 1
+		Matrix w;
+
+		w(0, 0) = 0;
+		w(0, 1) = -axis.z;
+		w(0, 2) = axis.y;
+		w(0, 3) = 0;
+
+		w(1, 0) = axis.z;
+		w(1, 1) = 0;
+		w(1, 2) = -axis.x;
+		w(1, 3) = 0;
+
+		w(2, 0) = -axis.y;
+		w(2, 1) = axis.x;
+		w(2, 2) = 0;
+		w(2, 3) = 0;
+
+		w(3, 0) = 0;
+		w(3, 1) = 0;
+		w(3, 2) = 0;
+		w(3, 3) = 1;
+
+		const Matrix w2 = w * w;
+
+		this->set_identity();
+		*this += w * s + w2 * t;
+	#else
+		const T x = axis.x;
+		const T y = axis.y;
+		const T z = axis.z;
+
+		auto& m = *this;
+
+		m(0, 0) = t*x*x + c;
+		m(0, 1) = t*x*y - s*z;
+		m(0, 2) = t*x*z + s*y;
+		m(0, 3) = 0;
+
+		m(1, 0) = t*x*y + s*z;
+		m(1, 1) = t*y*y + c;
+		m(1, 2) = t*y*z - s*x;
+		m(1, 3) = 0;
+
+		m(2, 0) = t*x*z - s*y;
+		m(2, 1) = t*y*z + s*x;
+		m(2, 2) = t*z*z + c;
+		m(2, 3) = 0;
+
+		m(3, 0) = 0;
+		m(3, 1) = 0;
+		m(3, 2) = 0;
+		m(3, 3) = 1;
+	#endif
 	}
 };
 
@@ -207,6 +314,53 @@ auto operator* (const Tm& m_, const Tv& v_)
 // ---------------------------------------------------
 
 template <typename T, uint32_t nrows, uint32_t ncols>
+Matrix<T, nrows, ncols> operator+ (const Matrix<T, nrows, ncols>& ma, const Matrix<T, nrows, ncols>& mb)
+{
+	Matrix<T, nrows, ncols> r;
+
+	for (uint32_t i = 0; i < (nrows*ncols); i++)
+		r(i) = ma(i) + mb(i);
+
+	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t nrows, uint32_t ncols>
+Matrix<T, nrows, ncols> operator* (const Matrix<T, nrows, ncols>& m, const T v)
+{
+	Matrix<T, nrows, ncols> r;
+
+	for (uint32_t i = 0; i < (nrows*ncols); i++)
+		r(i) = m(i) * v;
+
+	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+Matrix<T, 4, 4> gen_rotation_matrix (const Vector<T, 3>& axis, const T angle)
+{
+	Matrix<T, 4, 4> m;
+	m.set_rotation_matrix(axis, angle);
+	return m;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+Point<T, 3> rotate_around_vector (const Point<T, 3>& point, const Vector<T, 3>& axis, const T angle)
+{
+	Point<T, 4> rotated;
+	Point<T, 4> point4(point.x, point.y, point.z, 1);
+	rotated = gen_rotation_matrix(axis, angle) * point4;
+	return Point<T, 3>(rotated.x, rotated.y, rotated.z);
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t nrows, uint32_t ncols>
 std::ostream& operator << (std::ostream& out, const Matrix<T, nrows, ncols>& m)
 {
 	for (uint32_t i = 0; i < nrows; i++) {
@@ -219,6 +373,8 @@ std::ostream& operator << (std::ostream& out, const Matrix<T, nrows, ncols>& m)
 }
 
 // ---------------------------------------------------
+
+#undef MYLIB_MATH_BUILD_OPERATION
 
 } // end namespace Math
 } // end namespace Mylib
