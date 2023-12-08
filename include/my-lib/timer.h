@@ -26,7 +26,7 @@ template <typename Tget_current_time, typename Talloc=std::allocator<int>>
 class Timer
 {
 public:
-	using Ttime = decltype(std::declval<Tget_current_time>()());
+	using Ttime = typename remove_type_qualifiers< decltype(std::declval<Tget_current_time>()()) >::type;
 
 	static consteval bool debug ()
 	{
@@ -134,7 +134,7 @@ private:
 	struct Internal {
 		EventFull *event_full;
 
-		inline bool operator< (const Internal& rhs) const
+		inline bool operator< (const Internal& rhs) const noexcept
 		{
 			return (this->event_full->time > rhs.event_full->time);
 		}
@@ -233,7 +233,7 @@ public:
 		using TallocTc = typename std::allocator_traits<TallocEventFull>::template rebind_alloc<Tc>;
 
 		struct MyFreeHandler : public FreeHandler {
-			virtual void free_memory (Timer *timer, TimerCallback *ptr) override
+			virtual void free_memory (Timer *timer, TimerCallback *ptr) override final
 			{
 				TallocTc callback_allocator(timer->event_allocator);
 				callback_allocator.deallocate(static_cast<Tc*>(ptr), 1);

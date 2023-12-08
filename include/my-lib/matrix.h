@@ -12,7 +12,7 @@ namespace Mylib
 
 // ---------------------------------------------------
 
-template<typename T, uint32_t nrows, uint32_t ncols, bool bound_check = false>
+template <typename T, uint32_t nrows, uint32_t ncols, bool bound_check = false>
 class StaticMatrix
 {
 private:
@@ -37,7 +37,7 @@ public:
 	}
 
 	// move constructor
-	StaticMatrix (StaticMatrix&& other)
+	StaticMatrix (StaticMatrix&& other) noexcept
 	{
 		// shallow-copy
 		memcpy(this->storage, other.storage, nrows * ncols * sizeof(T));
@@ -51,7 +51,7 @@ public:
 	}
 
 	// move-assign operator
-	StaticMatrix& operator= (StaticMatrix&& other)
+	StaticMatrix& operator= (StaticMatrix&& other) noexcept
 	{
 		// shallow-copy
 		memcpy(this->storage, other.storage, nrows * ncols * sizeof(T));
@@ -68,20 +68,15 @@ public:
 		return ncols;
 	}
 
-	inline T* get_raw ()
+	inline T* get_raw () noexcept
 	{
 		return this->storage;
 	}
 
-	inline const T* get_raw () const
+	inline const T* get_raw () const noexcept
 	{
 		return this->storage;
 	}
-
-/*	inline const T* get_raw_const () const
-	{
-		return this->storage;
-	}*/
 
 	inline T& operator() (const uint32_t row, const uint32_t col)
 	{
@@ -104,7 +99,7 @@ public:
 
 // ---------------------------------------------------
 
-template<typename T, bool bound_check = false>
+template <typename T, bool bound_check = false>
 class Matrix
 {
 private:
@@ -149,7 +144,7 @@ private:
 	}
 
 public:
-	Matrix ()
+	Matrix () noexcept
 	{
 		this->storage = nullptr;
 	}
@@ -204,12 +199,12 @@ public:
 			this->storage[i] = v;
 	}
 
-	inline T* get_raw ()
+	inline T* get_raw () noexcept
 	{
 		return this->storage;
 	}
 
-	inline const T* get_raw_const () const
+	inline const T* get_raw_const () const noexcept
 	{
 		return this->storage;
 	}

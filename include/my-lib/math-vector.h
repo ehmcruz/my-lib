@@ -162,7 +162,7 @@ public:
 	using TParent::TParent;
 
 	template <uint32_t dim_other>
-	Vector (const Vector<T, dim_other>& other) noexcept
+	constexpr Vector (const Vector<T, dim_other>& other) noexcept
 	{
 		static_assert(dim_other <= dim);
 		for (uint32_t i = 0; i < dim_other; i++)
@@ -173,35 +173,19 @@ public:
 
 	// ------------------------ operator=
 
-/*	Vector& operator= (const Vector& other)
-	{
-		this->ivalue = other.ivalue;
-		return *this;
-	}
-
-	Vector& operator= (Vector&& other)
-	{
-		this->ivalue = other.ivalue;
-		return *this;
-	}
-
-	Vector& operator= (const float *v)
-	{
-		this->ivalue = *(reinterpret_cast<const uint64_t*>(v));
-		return *this;
-	}*/
+	// use default ones, so no need to define them
 
 	// ------------------------ Other stuff
 
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		inline Vector& operator OP (const Vector& other) noexcept \
+		constexpr Vector& operator OP (const Vector& other) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP other.data[i]; \
 			return *this; \
 		} \
-		inline Vector& operator OP (const Type s) noexcept \
+		constexpr Vector& operator OP (const Type s) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP s; \
@@ -210,20 +194,30 @@ public:
 	
 	MYLIB_MATH_BUILD_OPERATION( += )
 	MYLIB_MATH_BUILD_OPERATION( -= )
+
+	#undef MYLIB_MATH_BUILD_OPERATION
+	#define MYLIB_MATH_BUILD_OPERATION(OP) \
+		inline Vector& operator OP (const Type s) noexcept \
+		{ \
+			for (uint32_t i = 0; i < dim; i++) \
+				this->data[i] OP s; \
+			return *this; \
+		}
+	
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	inline Type& operator[] (const uint32_t i) noexcept
+	constexpr Type& operator[] (const uint32_t i) noexcept
 	{
 		return this->data[i];
 	}
 
-	inline Type operator[] (const uint32_t i) const noexcept
+	constexpr Type operator[] (const uint32_t i) const noexcept
 	{
 		return this->data[i];
 	}
 
-	inline Type length () const noexcept
+	constexpr Type length () const noexcept
 	{
 		Type value = 0;
 		for (uint32_t i = 0; i < dim; i++)
@@ -231,14 +225,14 @@ public:
 		return std::sqrt(value);
 	}
 
-	void normalize () noexcept
+	constexpr void normalize () noexcept
 	{
-		const Type l = this->length();
+		const Type len = this->length();
 		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] /= l;
+			this->data[i] /= len;
 	}
 
-	static constexpr Vector zero () noexcept
+	static consteval Vector zero () noexcept
 	{
 		Vector v;
 		for (uint32_t i = 0; i < dim; i++)
@@ -250,7 +244,7 @@ public:
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
 	template <typename T, uint32_t dim> \
-	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept \
+	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept \
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
@@ -258,7 +252,7 @@ public:
 		return r; \
 	} \
 	template <typename T, uint32_t dim> \
-	inline Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
+	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
@@ -268,11 +262,23 @@ public:
 
 MYLIB_MATH_BUILD_OPERATION( + )
 MYLIB_MATH_BUILD_OPERATION( - )
+
+#undef MYLIB_MATH_BUILD_OPERATION
+#define MYLIB_MATH_BUILD_OPERATION(OP) \
+	template <typename T, uint32_t dim> \
+	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
+	{ \
+		Vector<T, dim> r; \
+		for (uint32_t i = 0; i < dim; i++) \
+			r.data[i] = a.data[i] OP s; \
+		return r; \
+	}
+
 MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
 
 template <typename T, uint32_t dim> \
-inline Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
+constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 {
 	Vector<T, dim> r;
 	for (uint32_t i = 0; i < dim; i++) \
@@ -311,7 +317,7 @@ using Point2f = Vector2f;
 
 static_assert(sizeof(Vector2f) == (2 * sizeof(float)));
 
-template<typename T>
+template <typename T>
 concept is_Vector2f = std::same_as< typename remove_type_qualifiers<T>::type, Vector2f >;
 //concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
 //concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
@@ -324,7 +330,7 @@ using Point3f = Vector3f;
 
 static_assert(sizeof(Vector3f) == (3 * sizeof(float)));
 
-template<typename T>
+template <typename T>
 concept is_Vector3f = std::same_as< typename remove_type_qualifiers<T>::type, Vector3f >;
 //concept is_Vector2d = std::same_as<T, Vector2d> || std::same_as<T, Vector2d&> || std::same_as<T, Vector2d&&>;
 //concept is_Vector2d = std::same_as< Vector2d, typename std::remove_cv< typename std::remove_reference<T>::type >::type >;
@@ -337,15 +343,15 @@ using Point4f = Vector4f;
 
 static_assert(sizeof(Vector4f) == (4 * sizeof(float)));
 
-template<typename T>
+template <typename T>
 concept is_Vector4f = std::same_as< typename remove_type_qualifiers<T>::type, Vector4f >;
 
 // ---------------------------------------------------
 
-template<typename T>
+template <typename T>
 concept is_Vector = is_Vector2f<T> || is_Vector3f<T> || is_Vector4f<T>;
 
-template<typename T>
+template <typename T>
 concept is_Point = is_Vector<T>;
 
 // ---------------------------------------------------
@@ -354,7 +360,7 @@ concept is_Point = is_Vector<T>;
 //requires is_Vector<Ta> && is_Vector<Tb>
 //requires is_Point<T>;
 template <typename T, uint32_t dim>
-inline T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
+constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 {
 	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
 	return (a - b).length();

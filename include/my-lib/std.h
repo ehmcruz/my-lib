@@ -36,7 +36,7 @@ using size_t = std::size_t;
 
 // ---------------------------------------------------
 
-constexpr void build_str_from_stream__ (std::ostringstream& str_stream)
+constexpr void build_str_from_stream__ (std::ostringstream& str_stream) noexcept
 {
 }
 
@@ -58,7 +58,7 @@ std::string build_str_from_stream (Types&&... vars)
 
 // ---------------------------------------------------
 
-constexpr void print_stream__ (std::ostream& out)
+constexpr void print_stream__ (std::ostream& out) noexcept
 {
 }
 

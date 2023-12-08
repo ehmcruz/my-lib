@@ -10,7 +10,7 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline TYPE get_##VAR () const { \
+		inline TYPE get_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -18,7 +18,7 @@
 #define OO_ENCAPSULATE_SCALAR(TYPE, VAR) \
 	OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
 	public: \
-		inline void set_##VAR (const TYPE VAR) { \
+		inline void set_##VAR (const TYPE VAR) noexcept { \
 			this->VAR = VAR; \
 		} \
 	protected:
@@ -29,7 +29,7 @@
 	protected: \
 		const TYPE VAR; \
 	public: \
-		inline TYPE get_##VAR () const { \
+		inline TYPE get_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -40,7 +40,7 @@
 	protected: \
 		TYPE VAR = (DATA); \
 	public: \
-		inline TYPE get_##VAR () const { \
+		inline TYPE get_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -48,7 +48,7 @@
 #define OO_ENCAPSULATE_SCALAR_INIT(TYPE, VAR, DATA) \
 	OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	public: \
-		inline void set_##VAR (const TYPE VAR) { \
+		inline void set_##VAR (const TYPE VAR) noexcept { \
 			this->VAR = VAR; \
 		} \
 	protected:
@@ -59,7 +59,7 @@
 	protected: \
 		const TYPE VAR = (DATA); \
 	public: \
-		inline TYPE get_##VAR () const { \
+		inline TYPE get_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -70,7 +70,7 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline TYPE get_##VAR () { \
+		inline TYPE get_##VAR () noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -78,7 +78,7 @@
 #define OO_ENCAPSULATE_PTR(TYPE, VAR) \
 	OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
 	public: \
-		inline void set_##VAR (TYPE VAR) { \
+		inline void set_##VAR (TYPE VAR) noexcept { \
 			this->VAR = VAR; \
 		} \
 	protected:
@@ -89,7 +89,7 @@
 	protected: \
 		TYPE VAR = DATA; \
 	public: \
-		inline TYPE get_##VAR () { \
+		inline TYPE get_##VAR () noexcept { \
 			return this->VAR; \
 		} \
 	protected:
@@ -97,7 +97,7 @@
 #define OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
 	OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
 	public: \
-		inline void set_##VAR (TYPE VAR) { \
+		inline void set_##VAR (TYPE VAR) noexcept { \
 			this->VAR = VAR; \
 		} \
 	protected:
@@ -108,7 +108,7 @@
 	protected: \
 		TYPE VAR; \
 	public: \
-		inline const TYPE& get_ref_##VAR () const { \
+		inline const TYPE& get_ref_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
 		inline TYPE get_value_##VAR () const { \
@@ -119,7 +119,7 @@
 #define OO_ENCAPSULATE_OBJ(TYPE, VAR) \
 	OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
 	public: \
-		inline TYPE& get_ref_##VAR () { \
+		inline TYPE& get_ref_##VAR () noexcept { \
 			return this->VAR; \
 		} \
 		inline void set_##VAR (const TYPE& VAR) { \

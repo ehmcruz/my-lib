@@ -17,7 +17,7 @@ namespace Mylib
 // ---------------------------------------------------
 
 template <typename T>
-constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t blength)
+constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t blength) noexcept
 {
 	const T mask = (1 << blength) - 1;
 
@@ -25,7 +25,7 @@ constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t
 }
 
 template <typename T>
-constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const T bits)
+constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const T bits) noexcept
 {
 	const T mask = ((1 << blength) - 1) << bstart;
 
@@ -316,12 +316,12 @@ public:
 	using Type = T::Type;
 
 protected:
-	Type& storage ()
+	Type& storage () noexcept
 	{
 		return *reinterpret_cast<Type*>(this);
 	}
 
-	const Type& storage () const
+	const Type& storage () const noexcept
 	{
 		return *reinterpret_cast<const Type*>(this);
 	}

@@ -11,12 +11,11 @@
 struct BitField
 {
 	using Type = uint8_t;
-	
+
 	Type a : 2;
 	Type b : 2;
 	Type c : 4;
 };
-
 
 void test_bit_field ()
 {
@@ -31,6 +30,9 @@ void test_bit_field ()
 	std::cout << bitset << std::endl;
 
 	bitset.b = 1;
+	std::cout << bitset << std::endl;
+
+	bitset.c = 1;
 	std::cout << bitset << std::endl;
 }
 

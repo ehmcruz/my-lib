@@ -13,24 +13,28 @@ namespace Math
 // ---------------------------------------------------
 
 template <typename T>
-T base2_log_of_integer (const T value)
+constexpr T base2_log_of_integer (const T value)
 {
-	const uint32_t nbits = sizeof(T) * 8;
+	constexpr uint32_t nbits = sizeof(T) * 8;
 
 	for (uint32_t pos = 0; pos < nbits; pos++) {
 		if ((value >> pos) & 0x01)
 			return pos;
 	}
 
-	throw Mylib::Exception(Mylib::build_str_from_stream("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero"));
-
-	return 0;
+	mylib_throw_exception_msg("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero");
 }
 
-auto radians_to_degrees (const auto radians) -> decltype(radians)
+constexpr auto radians_to_degrees (const auto radians) noexcept -> decltype(radians)
 {
 	using Type = decltype(radians);
-	return radians * static_cast<Type>(180) / std::numbers::pi_v<Type>;
+	return (radians * static_cast<Type>(180)) / std::numbers::pi_v<Type>;
+}
+
+constexpr auto degrees_to_radians (const auto degrees) noexcept -> decltype(degrees)
+{
+	using Type = decltype(degrees);
+	return (degrees / static_cast<Type>(180)) * std::numbers::pi_v<Type>;
 }
 
 // ---------------------------------------------------
