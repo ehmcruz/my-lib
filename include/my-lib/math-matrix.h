@@ -232,36 +232,47 @@ public:
 		(*this)(3, 3) = 1;
 	}
 
+	/*
+		About perspective projection matrix:
+		https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
+		https://stackoverflow.com/questions/76304134/understanding-opengl-perspective-projection-matrix-setting-the-near-plane-below
+		https://github.com/google/mathfu/blob/master/include/mathfu/matrix.h
+	*/
+
 	constexpr void set_perspective_matrix (const T fovy,
 	                                       const T screen_width,
 										   const T screen_height,
 										   const T znear,
 										   const T zfar,
-										   const T handedness
+										   const T handedness = 1
 										   ) noexcept
 		requires (nrows == ncols && ncols == 4)
 	{
-		Matrix<T, 4, 4> m;
-
 		const T aspect = screen_width / screen_height;
+		const T zdist = (znear - zfar);
+		const T y = fp(1) / std::tan(fovy * fp(0.5));
 
 		auto& m = *this;
 
-		const T zdist = (znear - zfar);
-
-		m(0, 0) = fp(1) / (aspect * std::tan(fovy * fp(0.5)));
+		m(0, 0) = y / aspect;
 		m(0, 1) = 0;
 		m(0, 2) = 0;
 		m(0, 3) = 0;
 
 		m(1, 0) = 0;
-		m(1, 1) = fp(1) / std::tan(fovy * fp(0.5));
+		m(1, 1) = y;
 		m(1, 2) = 0;
 		m(1, 3) = 0;
 
 		m(2, 0) = 0;
 		m(2, 1) = 0;
-		m(2, 2) = zfar / zdist * handedness;
+		m(2, 2) = (zfar + znear) / zdist * handedness;
+		m(2, 3) = (fp(2) * znear * zfar) / zdist;
+
+		m(3, 0) = 0;
+		m(3, 1) = 0;
+		m(3, 2) = -1 * handedness;
+		m(3, 3) = 0;
 
 /* const T y = 1 / std::tan(fovy * static_cast<T>(.5));
   const T x = y / aspect;
@@ -270,24 +281,37 @@ public:
   return Matrix<T, 4, 4>
   (x, 0, 0, 0, 
    0, y, 0, 0,
-   0, 0, zfar_per_zdist * handedness, -1 * handedness,
-   0, 0, 2.0f * znear * zfar_per_zdist, 0);*/
+   0, 0, (zfar / (znear - zfar)) * handedness, -1 * handedness,
+   0, 0, 2.0f * znear * zfar / (znear - zfar), 0);*/
+	}
 
+	constexpr void transpose () noexcept
+	{
+		auto& m = *this;
+		for (uint32_t i = 0; i < nrows; i++) {
+			for (uint32_t j = i + 1; j < ncols; j++) {
+				const T tmp = m(i, j);
+				m(i, j) = m(j, i);
+				m(j, i) = tmp;
+			}
+		}
 	}
 };
 
 // ---------------------------------------------------
 
 template <typename T, uint32_t nrows, uint32_t ncols>
-Matrix<T, nrows, ncols> gen_zero_matrix () noexcept
+constexpr Matrix<T, nrows, ncols> gen_zero_matrix () noexcept
 {
 	Matrix<T, nrows, ncols> m;
 	m.set_zero();
 	return m;
 }
 
+// ---------------------------------------------------
+
 template <typename T, uint32_t dim>
-Matrix<T, dim, dim> gen_identity_matrix () noexcept
+constexpr Matrix<T, dim, dim> gen_identity_matrix () noexcept
 {
 	Matrix<T, dim, dim> m;
 	m.set_identity();
@@ -296,40 +320,75 @@ Matrix<T, dim, dim> gen_identity_matrix () noexcept
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t nrows_a, uint32_t ncols_a, uint32_t ncols_b>
-constexpr Matrix<T, nrows_a, ncols_b> operator* (const Matrix<T, nrows_a, ncols_a>& a,
-                                                 const Matrix<T, ncols_a, ncols_b>& b) noexcept
+template <typename T, uint32_t dim, uint32_t vector_dim>
+constexpr Matrix<T, dim, dim> gen_scale_matrix (const Vector<T, vector_dim>& v) noexcept
 {
-	Matrix<T, nrows_a, ncols_b> r;
+	static_assert(vector_dim <= dim);
 
-	r.set_zero();
+	Matrix<T, dim, dim> m;
+	m.set_scale(v);
+	return m;
+}
 
-	for (uint32_t i = 0; i < nrows_a; i++) {
-		for (uint32_t k = 0; k < ncols_a; k++) {
-			const T v = a(i, k);
+// ---------------------------------------------------
 
-			for (uint32_t j = 0; j < ncols_b; j++)
-				r(i, j) += v * b(k, j);
-		}
-	}
-	
-	return r;
+template <typename T, uint32_t dim, uint32_t vector_dim>
+constexpr Matrix<T, dim, dim> gen_translate_matrix (const Vector<T, vector_dim>& v) noexcept
+{
+	static_assert(vector_dim < dim);
+
+	Matrix<T, dim, dim> m;
+	m.set_translate(v);
+	return m;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr Matrix<T, 4, 4> gen_perspective_matrix (const T fovy,
+												  const T screen_width,
+												  const T screen_height,
+												  const T znear,
+												  const T zfar,
+												  const T handedness = 1
+												  ) noexcept
+{
+	Matrix<T, 4, 4> m;
+	m.set_perspective_matrix(fovy, screen_width, screen_height, znear, zfar, handedness);
+	return m;
+}
+
+//template <typename T, uint32_t dim>
+//Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept;
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+	requires (dim >= 2 && dim <= 3)
+Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept
+{
+	Matrix<T, dim, dim> m;
+	m.set_rotation_matrix(axis, angle);
+	return m;
+}
+
+template <typename T>
+Matrix<T, 4, 4> gen_rotation_matrix4 (const Vector<T, 3>& axis, const T angle) noexcept
+{
+	Matrix<T, 4, 4> m;
+	m.set_rotation_matrix(axis, angle);
+	return m;
 }
 
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-Vector<T, dim> operator* (const Matrix<T, dim, dim>& m, const Vector<T, dim>& v) noexcept
+Point<T, dim> rotate_around_vector (const Point<T, dim>& point, const Vector<T, dim>& axis, const T angle) noexcept
+	requires (dim >= 2 && dim <= 3)
 {
-	Vector<T, dim> r;
-
-	for (uint32_t i = 0; i < dim; i++) {
-		r[i] = 0;
-		for (uint32_t j = 0; j < dim; j++)
-			r[i] += m(i, j) * v[j];
-	}
-	
-	return r;
+	Point<T, dim> rotated;
+	rotated = gen_rotation_matrix<T, dim>(axis, angle) * point;
+	return rotated;
 }
 
 // ---------------------------------------------------
@@ -374,35 +433,55 @@ MYLIB_MATH_BUILD_OPERATION( / )
 
 // ---------------------------------------------------
 
-//template <typename T, uint32_t dim>
-//Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept;
-
-template <typename T, uint32_t dim>
-	requires (dim >= 2 && dim <= 3)
-Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept
+template <typename T, uint32_t nrows_a, uint32_t ncols_a, uint32_t ncols_b>
+constexpr Matrix<T, nrows_a, ncols_b> operator* (const Matrix<T, nrows_a, ncols_a>& a,
+                                                 const Matrix<T, ncols_a, ncols_b>& b) noexcept
 {
-	Matrix<T, dim, dim> m;
-	m.set_rotation_matrix(axis, angle);
-	return m;
-}
+	Matrix<T, nrows_a, ncols_b> r;
 
-template <typename T>
-Matrix<T, 4, 4> gen_rotation_matrix4 (const Vector<T, 3>& axis, const T angle) noexcept
-{
-	Matrix<T, 4, 4> m;
-	m.set_rotation_matrix(axis, angle);
-	return m;
+	r.set_zero();
+
+	for (uint32_t i = 0; i < nrows_a; i++) {
+		for (uint32_t k = 0; k < ncols_a; k++) {
+			const T v = a(i, k);
+
+			for (uint32_t j = 0; j < ncols_b; j++)
+				r(i, j) += v * b(k, j);
+		}
+	}
+	
+	return r;
 }
 
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-Point<T, dim> rotate_around_vector (const Point<T, dim>& point, const Vector<T, dim>& axis, const T angle) noexcept
-	requires (dim >= 2 && dim <= 3)
+Vector<T, dim> operator* (const Matrix<T, dim, dim>& m, const Vector<T, dim>& v) noexcept
 {
-	Point<T, dim> rotated;
-	rotated = gen_rotation_matrix<T, dim>(axis, angle) * point;
-	return rotated;
+	Vector<T, dim> r;
+
+	for (uint32_t i = 0; i < dim; i++) {
+		r[i] = 0;
+		for (uint32_t j = 0; j < dim; j++)
+			r[i] += m(i, j) * v[j];
+	}
+	
+	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t nrows, uint32_t ncols>
+constexpr Matrix<T, ncols, nrows> transpose (const Matrix<T, nrows, ncols>& m) noexcept
+{
+	Matrix<T, ncols, nrows> r;
+
+	for (uint32_t i = 0; i < nrows; i++) {
+		for (uint32_t j = 0; j < ncols; j++)
+			r(j, i) = m(i, j);
+	}
+	
+	return r;
 }
 
 // ---------------------------------------------------
