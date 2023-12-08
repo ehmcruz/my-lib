@@ -8,6 +8,32 @@
 
 #include <my-lib/bit.h>
 
+struct BitField
+{
+	using Type = uint8_t;
+	
+	Type a : 2;
+	Type b : 2;
+	Type c : 4;
+};
+
+
+void test_bit_field ()
+{
+	using MyBitSet = Mylib::BitSetWrapper<BitField>;
+
+	MyBitSet bitset;
+
+	std::cout << "------------------------------------" << std::endl;
+	std::cout << "Bit field test" << std::endl << std::endl;
+
+	bitset = 0;
+	std::cout << bitset << std::endl;
+
+	bitset.b = 1;
+	std::cout << bitset << std::endl;
+}
+
 int main ()
 {
 	using MyBitSet = Mylib::BitSet<8>;
@@ -59,6 +85,8 @@ int main ()
 	std::cout << "----------------------" << std::endl;
 	ss << bitset;
 	std::cout << ss.str() << std::endl;
+
+	test_bit_field();
 
 	return 0;
 }

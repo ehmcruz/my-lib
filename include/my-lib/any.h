@@ -35,10 +35,10 @@ private:
 	uint8_t data[ size() ];
 
 public:
-	Any () = default;
+	Any () noexcept = default;
 
 	template <typename T>
-	Any (const T& value)
+	Any (const T& value) noexcept
 	{
 		static_assert(sizeof(T) <= size());
 		memcpy(this, &value, sizeof(T));
@@ -47,7 +47,7 @@ public:
 	// -----------------------
 
 	template <typename T>
-	Any& operator= (const T& value)
+	Any& operator= (const T& value) noexcept
 	{
 		static_assert(sizeof(T) <= size());
 		memcpy(this, &value, sizeof(T));
@@ -58,7 +58,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	T& get_ref ()
+	T& get_ref () noexcept
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<T*>(this));
@@ -66,7 +66,7 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	const T& get_ref () const
+	const T& get_ref () const noexcept
 	{
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<const T*>(this));

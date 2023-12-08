@@ -10,6 +10,10 @@
 namespace Mylib
 {
 
+#ifdef MYLIB_BUILD_OPERATION
+#error nooooooooooo
+#endif
+
 // ---------------------------------------------------
 
 template <typename T>
@@ -33,40 +37,57 @@ constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t ble
 template <std::size_t storage_nbits>
 class BitSetStorage__;
 
-template<>
+template <>
 class BitSetStorage__<8>
 {
 public:
 	using Type = uint8_t;
 protected:
-	Type storage;
+	Type storage__;
 };
 
-template<>
+template <>
 class BitSetStorage__<16>
 {
 public:
 	using Type = uint16_t;
 protected:
-	Type storage;
+	Type storage__;
 };
 
-template<>
+template <>
 class BitSetStorage__<32>
 {
 public:
 	using Type = uint32_t;
 protected:
-	Type storage;
+	Type storage__;
 };
 
-template<>
+template <>
 class BitSetStorage__<64>
 {
 public:
 	using Type = uint64_t;
 protected:
-	Type storage;
+	Type storage__;
+};
+
+template <typename ParentType>
+class BitSetStorage_ : public ParentType
+{
+protected:
+	using Type = ParentType::Type;
+
+	Type& storage () noexcept
+	{
+		return this->storage__;
+	}
+
+	const Type& storage () const noexcept
+	{
+		return this->storage__;
+	}
 };
 
 consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
@@ -84,17 +105,14 @@ consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
 }
 
 /*
-	BitSet is based on std::bitset.
+	BitSet__ is based on std::bitset.
 	Differences:
 		- Only works for up tp 64 bits, but it is faster.
 		- Allows extraction and set of range of bits.
 */
 
-template <std::size_t nbits,
-          std::size_t storage_nbits = calc_bit_set_storage_nbits__(nbits),
-		  typename ParentType = BitSetStorage__<storage_nbits>
-		  >
-class BitSet : public ParentType
+template <typename ParentType, std::size_t nbits>
+class BitSet__ : public ParentType
 {
 public:
 	using Type = ParentType::Type;
@@ -104,23 +122,23 @@ public:
 	class reference
 	{
 	private:
-		BitSet& bitset;
+		BitSet__& bitset;
 		const std::size_t pos;
 		const std::size_t length;
 	public:
-		reference () = delete;
+		reference () noexcept = delete;
 		
-		reference (BitSet& bitset_, const std::size_t pos_, const std::size_t length_)
+		reference (BitSet__& bitset_, const std::size_t pos_, const std::size_t length_) noexcept
 			: bitset(bitset_), pos(pos_), length(length_)
 		{
 		}
 
-		reference (const reference& other)
+		reference (const reference& other) noexcept
 			: bitset(other.bitset), pos(other.pos), length(other.length)
 		{
 		}
 
-		reference& operator= (const Type value)
+		reference& operator= (const Type value) noexcept
 		{
 			this->bitset.set(this->pos, this->length, value);
 			return *this;
@@ -134,21 +152,21 @@ public:
 			return *this;
 		}
 
-		template <std::size_t nbits_other>
-		reference& operator= (const BitSet<nbits_other>& other)
+		template <typename Tother, std::size_t nbits_other>
+		reference& operator= (const BitSet__<Tother, nbits_other>& other)
 		{
 			mylib_assert_exception_msg(this->length == other.size(), "The length of both references must be the same. Given ", this->length, " and ", other.size(), ".");
 			this->bitset.set(this->pos, this->length, other.underlying());
 			return *this;
 		}
 
-		Type operator~ () const
+		Type operator~ () const noexcept
 		{
 			const Type mask = (1 << this->length) - 1;
 			return (~this->bitset.extract_underlying(this->pos, this->length)) & mask;
 		}
 
-		operator Type() const
+		operator Type() const noexcept
 		{
 			return this->bitset.extract_underlying(this->pos, this->length);
 		}
@@ -158,10 +176,8 @@ public:
 
 	static consteval std::size_t get_storage_nbits ()
 	{
-		return storage_nbits;
+		return sizeof(Type) * 8;
 	}
-
-	static_assert(storage_nbits == (sizeof(Type)*8));
 
 	static consteval std::size_t size ()
 	{
@@ -170,154 +186,156 @@ public:
 
 	// --------------------------
 
-	constexpr BitSet ()
+	constexpr BitSet__ () noexcept
 	{
-		this->storage = 0;
+		this->storage() = 0;
 	}
 
-	constexpr BitSet (const BitSet& other)
+	constexpr BitSet__ (const BitSet__& other) noexcept
 	{
-		this->storage = other.storage;
+		this->storage() = other.storage();
 	}
 
-	constexpr BitSet (const Type v)
+	constexpr BitSet__ (const Type v) noexcept
 	{
-		this->storage = v;
+		this->storage() = v;
 	}
 
 	// --------------------------
 
-	constexpr BitSet& operator= (const BitSet& other)
+	constexpr BitSet__& operator= (const BitSet__& other) noexcept
 	{
-		this->storage = other.storage;
+		this->storage() = other.storage();
 		return *this;
 	}
 
-	constexpr BitSet& operator= (const Type v)
+	constexpr BitSet__& operator= (const Type v) noexcept
 	{
-		this->storage = v;
+		this->storage() = v;
 		return *this;
 	}
 
 	// --------------------------
 
-	constexpr Type underlying () const
+	constexpr Type underlying () const noexcept
 	{
-		return this->storage;
+		return this->storage();
 	}
 
 	// --------------------------
 
-	constexpr bool operator[] (const std::size_t pos) const
+	constexpr bool operator[] (const std::size_t pos) const noexcept
 	{
-		return (this->storage >> pos) & 0x01;
+		return (this->storage() >> pos) & 0x01;
 	}
 
-	reference operator[] (const std::size_t pos)
+	reference operator[] (const std::size_t pos) noexcept
 	{
 		return reference(*this, pos, 1);
 	}
 
 	// --------------------------
 
-	constexpr Type operator() (const std::size_t ini, const std::size_t length) const
+	constexpr Type operator() (const std::size_t ini, const std::size_t length) const noexcept
 	{
-		return extract_bits(this->storage, ini, length);
+		return extract_bits(this->storage(), ini, length);
 	}
 
-	reference operator() (const std::size_t ini, const std::size_t length)
+	constexpr reference operator() (const std::size_t ini, const std::size_t length) noexcept
 	{
 		return reference(*this, ini, length);
 	}
 
 	// --------------------------
 
-	constexpr BitSet range (const std::size_t ini, const std::size_t end) const
+	constexpr BitSet__ extract (const std::size_t ini, const std::size_t length) const noexcept
 	{
-		return BitSet( extract_bits(this->storage, ini, end-ini+1) );
+		return BitSet__( extract_bits(this->storage(), ini, length) );
 	}
 
-	constexpr Type range_underlying (const std::size_t ini, const std::size_t end) const
+	constexpr Type extract_underlying (const std::size_t ini, const std::size_t length) const noexcept
 	{
-		return extract_bits(this->storage, ini, end-ini+1);
-	}
-
-	constexpr BitSet extract (const std::size_t ini, const std::size_t length) const
-	{
-		return BitSet( extract_bits(this->storage, ini, length) );
-	}
-
-	constexpr Type extract_underlying (const std::size_t ini, const std::size_t length) const
-	{
-		return extract_bits(this->storage, ini, length);
+		return extract_bits(this->storage(), ini, length);
 	}
 
 	// --------------------------
 
-	constexpr void set_by_range (const std::size_t ini, const std::size_t end, const Type v)
+	constexpr void set (const std::size_t ini, const std::size_t length, const Type v) noexcept
 	{
-		this->storage = set_bits(this->storage, ini, end-ini+1, v);
-	}
-
-	constexpr void set (const std::size_t ini, const std::size_t length, const Type v)
-	{
-		this->storage = set_bits(this->storage, ini, length, v);
+		this->storage() = set_bits(this->storage(), ini, length, v);
 	}
 
 	// --------------------------
 
-	constexpr BitSet& operator&= (const BitSet& other)
-	{
-		this->storage &= other.storage;
-		return *this;
-	}
+#ifdef MYLIB_BUILD_OPERATION
+	#undef MYLIB_BUILD_OPERATION
+#endif
 
-	constexpr BitSet& operator&= (const Type v)
-	{
-		this->storage &= v;
-		return *this;
-	}
+	#define MYLIB_BUILD_OPERATION(OP) \
+		constexpr BitSet__& operator OP (const BitSet__& other) noexcept \
+		{ \
+			this->storage() OP other.storage(); \
+			return *this; \
+		} \
+		constexpr BitSet__& operator OP (const Type v) noexcept \
+		{ \
+			this->storage() OP v; \
+			return *this; \
+		}
+	
+	MYLIB_BUILD_OPERATION( &= )
+	MYLIB_BUILD_OPERATION( |= )
+	MYLIB_BUILD_OPERATION( ^= )
 
-	// --------------------------
-
-	constexpr BitSet& operator|= (const BitSet& other)
-	{
-		this->storage |= other.storage;
-		return *this;
-	}
-
-	constexpr BitSet& operator|= (const Type v)
-	{
-		this->storage |= v;
-		return *this;
-	}
+	#undef MYLIB_BUILD_OPERATION
 
 	// --------------------------
 
-	constexpr BitSet& operator^= (const BitSet& other)
+	constexpr BitSet__ operator~ () const noexcept
 	{
-		this->storage ^= other.storage;
-		return *this;
-	}
-
-	constexpr BitSet& operator^= (const Type v)
-	{
-		this->storage ^= v;
-		return *this;
-	}
-
-	// --------------------------
-
-	constexpr BitSet operator~ () const
-	{
-		return BitSet(~this->storage);
+		return BitSet__(~this->storage());
 	}
 };
 
 // ---------------------------------------------------
 
 template <std::size_t nbits>
-std::ostream& operator << (std::ostream& out, const BitSet<nbits>& bitset)
+using BitSet = BitSet__<BitSetStorage_< BitSetStorage__<calc_bit_set_storage_nbits__(nbits)> >, nbits>;
+
+// ---------------------------------------------------
+
+template <typename ParentType>
+using BitSetT = BitSet__<ParentType, sizeof(ParentType) * 8>;
+
+// ---------------------------------------------------
+
+template <typename T>
+class BitSetWrapper__ : public T
+{
+public:
+	using Type = T::Type;
+
+protected:
+	Type& storage ()
+	{
+		return *reinterpret_cast<Type*>(this);
+	}
+
+	const Type& storage () const
+	{
+		return *reinterpret_cast<const Type*>(this);
+	}
+};
+
+// ---------------------------------------------------
+
+template <typename T>
+using BitSetWrapper = BitSetT< BitSetWrapper__<T> >;
+
+// ---------------------------------------------------
+
+template <typename ParentType, std::size_t nbits>
+std::ostream& operator << (std::ostream& out, const BitSet__<ParentType, nbits>& bitset)
 {
 	for (int32_t i = bitset.size(); i >= 0; i--)
 		out << bitset[i];
@@ -325,6 +343,10 @@ std::ostream& operator << (std::ostream& out, const BitSet<nbits>& bitset)
 }
 
 // ---------------------------------------------------
+
+#ifdef MYLIB_BUILD_OPERATION
+	#undef MYLIB_BUILD_OPERATION
+#endif
 
 } // end namespace Mylib
 
