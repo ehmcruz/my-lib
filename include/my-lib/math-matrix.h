@@ -278,6 +278,8 @@ public:
 
 	constexpr void transpose () noexcept
 	{
+		static_assert(nrows == ncols);
+		
 		auto& m = *this;
 		for (uint32_t i = 0; i < nrows; i++) {
 			for (uint32_t j = i + 1; j < ncols; j++) {
