@@ -232,6 +232,14 @@ public:
 			this->data[i] /= len;
 	}
 
+	constexpr void cross_product (const Vector& a, const Vector& b) noexcept
+	{
+		static_assert(dim == 3);
+		this->x = a.y * b.z - a.z * b.y;
+		this->y = a.z * b.x - a.x * b.z;
+		this->z = a.x * b.y - a.y * b.x;
+	}
+
 	static consteval Vector zero () noexcept
 	{
 		Vector v;
@@ -295,6 +303,16 @@ constexpr T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexc
 	for (uint32_t i = 0; i < dim; i++)
 		value += a[i] * b[i];
 	return value;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr Vector<T, 3> cross_product (const Vector<T, 3>& a, const Vector<T, 3>& b) noexcept
+{
+	Vector<T, 3> v;
+	v.cross_product(a, b);
+	return v;
 }
 
 // ---------------------------------------------------

@@ -75,7 +75,7 @@ public:
 		return this->data[row*get_ncols() + col];
 	}
 
-	constexpr const T operator() (const uint32_t row, const uint32_t col) const noexcept
+	constexpr T operator() (const uint32_t row, const uint32_t col) const noexcept
 	{
 		return this->data[row*get_ncols() + col];
 	}
@@ -110,6 +110,26 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
+	constexpr void operator *= (const Matrix& b) noexcept
+	{
+		static_assert(nrows == ncols);
+		constexpr uint32_t dim = nrows;
+
+		Matrix a (*this);
+		Matrix& r = *this;
+
+		r.set_zero();
+
+		for (uint32_t i = 0; i < dim; i++) {
+			for (uint32_t k = 0; k < dim; k++) {
+				const T v = a(i, k);
+
+				for (uint32_t j = 0; j < dim; j++)
+					r(i, j) += v * b(k, j);
+			}
+		}
+	}
+
 	constexpr void set_zero () noexcept
 	{
 		for (uint32_t i = 0; i < get_length(); i++)
@@ -122,8 +142,10 @@ public:
 
 		this->set_zero();
 		
+		auto& m = *this;
+
 		for (uint32_t i = 0; i < nrows; i++)
-			this->data[i*ncols + i] = 1;
+			m(i, i) = 1;
 	}
 
 	template <uint32_t vector_dim>
@@ -133,12 +155,14 @@ public:
 		static_assert(vector_dim <= nrows);
 
 		this->set_zero();
+
+		auto& m = *this;
 		
 		for (uint32_t i = 0; i < vector_dim; i++)
-			this->data[i*ncols + i] = v[i];
+			m(i, i) = v[i];
 		
 		for (uint32_t i = vector_dim; i < nrows; i++)
-			this->data[i*ncols + i] = 1;
+			m(i, i) = 1;
 	}
 
 	template <uint32_t vector_dim>
@@ -151,8 +175,10 @@ public:
 		
 		constexpr uint32_t last = ncols - 1;
 
+		auto& m = *this;
+
 		for (uint32_t i = 0; i < vector_dim; i++)
-			this->data[i*ncols + last] = v[i];
+			m(i, last) = v[i];
 	}
 
 	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
@@ -247,8 +273,9 @@ public:
 									const T zfar,
 									const T handedness = 1
 									) noexcept
-		requires (nrows == ncols && ncols == 4)
 	{
+		static_assert(nrows == ncols && nrows == 4);
+
 		const T aspect = screen_width / screen_height;
 		const T zdist = znear - zfar;
 		const T y = fp(1) / std::tan(fovy * fp(0.5));
@@ -276,10 +303,47 @@ public:
 		m(3, 3) = 0;
 	}
 
+	constexpr void set_look_at (const Vector<T, 3>& eye,
+	                            const Vector<T, 3>& at,
+								const Vector<T, 3>& world_up
+								) noexcept
+	{
+		static_assert(nrows == ncols && nrows == 4);
+
+		const Vector<T, 3> direction = normalize(eye - at);
+		const Vector<T, 3> right = normalize(cross_product(world_up, direction));
+		const Vector<T, 3> up = cross_product(direction, right);
+
+		auto& m = *this;
+
+		m(0, 0) = right.x;
+		m(0, 1) = right.y;
+		m(0, 2) = right.z;
+		m(0, 3) = 0;
+
+		m(1, 0) = up.x;
+		m(1, 1) = up.y;
+		m(1, 2) = up.z;
+		m(1, 3) = 0;
+
+		m(2, 0) = direction.x;
+		m(2, 1) = direction.y;
+		m(2, 2) = direction.z;
+		m(2, 3) = 0;
+
+		m(3, 0) = 0;
+		m(3, 1) = 0;
+		m(3, 2) = 0;
+		m(3, 3) = 1;
+
+		m *= gen_translate_matrix<T, 4>(-eye);
+//std::cout << "ohhhhhhhhhhhh: " << std::endl << mm << std::endl;
+	}
+
 	constexpr void transpose () noexcept
 	{
 		static_assert(nrows == ncols);
-		
+
 		auto& m = *this;
 		for (uint32_t i = 0; i < nrows; i++) {
 			for (uint32_t j = i + 1; j < ncols; j++) {
@@ -353,6 +417,19 @@ constexpr Matrix<T, 4, 4> gen_perspective_matrix (const T fovy,
 
 //template <typename T, uint32_t dim>
 //Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept;
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr Matrix<T, 4, 4> gen_look_at_matrix (const Vector<T, 3>& eye,
+	                        				  const Vector<T, 3>& at,
+											  const Vector<T, 3>& world_up
+											  ) noexcept
+{
+	Matrix<T, 4, 4> m;
+	m.set_look_at(eye, at, world_up);
+	return m;
+}
 
 // ---------------------------------------------------
 
