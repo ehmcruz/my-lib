@@ -453,11 +453,11 @@ Matrix<T, 4, 4> gen_rotation_matrix4 (const Vector<T, 3>& axis, const T angle) n
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-Point<T, dim> rotate_around_vector (const Point<T, dim>& point, const Vector<T, dim>& axis, const T angle) noexcept
+Vector<T, dim> rotate_around_axis (const Vector<T, dim>& v, const Vector<T, dim>& axis, const T angle) noexcept
 	requires (dim >= 2 && dim <= 3)
 {
-	Point<T, dim> rotated;
-	rotated = gen_rotation_matrix<T, dim>(axis, angle) * point;
+	Vector<T, dim> rotated;
+	rotated = gen_rotation_matrix<T, dim>(axis, angle) * v;
 	return rotated;
 }
 

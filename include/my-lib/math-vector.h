@@ -240,12 +240,48 @@ public:
 		this->z = a.x * b.y - a.y * b.x;
 	}
 
+	// requires math-matrix.h
+	constexpr void rotate_around_axis (const Vector<T, dim>& axis, const T angle) noexcept
+		requires (dim == 3)
+	{
+		*this = gen_rotation_matrix<T, dim>(axis, angle) * (*this);
+	}
+
+	constexpr void set_zero () noexcept
+	{
+		for (uint32_t i = 0; i < dim; i++)
+			this->data[i] = 0;
+	}
+
 	static consteval Vector zero () noexcept
 	{
 		Vector v;
-		for (uint32_t i = 0; i < dim; i++)
-			v.data[i] = 0;
+		v.set_zero();
 		return v;
+	}
+
+	static constexpr Vector up () noexcept
+		requires (dim == 3)
+	{
+		return Vector(0, 1, 0);
+	}
+
+	static constexpr Vector down () noexcept
+		requires (dim == 3)
+	{
+		return Vector(0, -1, 0);
+	}
+
+	static constexpr Vector left () noexcept
+		requires (dim == 3)
+	{
+		return Vector(-1, 0, 0);
+	}
+
+	static constexpr Vector right () noexcept
+		requires (dim == 3)
+	{
+		return Vector(1, 0, 0);
 	}
 };
 

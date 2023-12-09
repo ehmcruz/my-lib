@@ -22,7 +22,7 @@ template <typename T, uint32_t dim>
 class Line
 {
 public:
-	Point<T, dim> base;
+	Point<T, dim> base_point;
 	Vector<T, dim> direction;
 };
 
