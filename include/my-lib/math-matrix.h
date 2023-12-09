@@ -237,19 +237,20 @@ public:
 		https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
 		https://stackoverflow.com/questions/76304134/understanding-opengl-perspective-projection-matrix-setting-the-near-plane-below
 		https://github.com/google/mathfu/blob/master/include/mathfu/matrix.h
+		https://github.com/g-truc/glm
 	*/
 
-	constexpr void set_perspective_matrix (const T fovy,
-	                                       const T screen_width,
-										   const T screen_height,
-										   const T znear,
-										   const T zfar,
-										   const T handedness = 1
-										   ) noexcept
+	constexpr void set_perspective (const T fovy,
+	                                const T screen_width,
+									const T screen_height,
+									const T znear,
+									const T zfar,
+									const T handedness = 1
+									) noexcept
 		requires (nrows == ncols && ncols == 4)
 	{
 		const T aspect = screen_width / screen_height;
-		const T zdist = (znear - zfar);
+		const T zdist = znear - zfar;
 		const T y = fp(1) / std::tan(fovy * fp(0.5));
 
 		auto& m = *this;
@@ -268,21 +269,11 @@ public:
 		m(2, 1) = 0;
 		m(2, 2) = (zfar + znear) / zdist * handedness;
 		m(2, 3) = (fp(2) * znear * zfar) / zdist;
-
+		
 		m(3, 0) = 0;
 		m(3, 1) = 0;
 		m(3, 2) = -1 * handedness;
 		m(3, 3) = 0;
-
-/* const T y = 1 / std::tan(fovy * static_cast<T>(.5));
-  const T x = y / aspect;
-  const T zdist = (znear - zfar);
-  const T zfar_per_zdist = zfar / zdist;
-  return Matrix<T, 4, 4>
-  (x, 0, 0, 0, 
-   0, y, 0, 0,
-   0, 0, (zfar / (znear - zfar)) * handedness, -1 * handedness,
-   0, 0, 2.0f * znear * zfar / (znear - zfar), 0);*/
 	}
 
 	constexpr void transpose () noexcept
@@ -354,7 +345,7 @@ constexpr Matrix<T, 4, 4> gen_perspective_matrix (const T fovy,
 												  ) noexcept
 {
 	Matrix<T, 4, 4> m;
-	m.set_perspective_matrix(fovy, screen_width, screen_height, znear, zfar, handedness);
+	m.set_perspective(fovy, screen_width, screen_height, znear, zfar, handedness);
 	return m;
 }
 
