@@ -74,10 +74,10 @@ public:
 
 	// T must be explicitly set when calling
 	template <typename T>
-	T get_value () noexcept
+	T get_value () const noexcept
 	{
 		static_assert(sizeof(T) <= size());
-		return *(reinterpret_cast<T*>(this));
+		return *(reinterpret_cast<const T*>(this));
 	}
 };
 
