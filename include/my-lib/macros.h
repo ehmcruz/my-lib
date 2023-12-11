@@ -104,9 +104,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
-	protected: \
-		TYPE VAR; \
+#define OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR) \
 	public: \
 		inline const TYPE& get_ref_##VAR () const noexcept { \
 			return this->VAR; \
@@ -116,8 +114,7 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_OBJ(TYPE, VAR) \
-	OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+#define OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR) \
 	public: \
 		inline TYPE& get_ref_##VAR () noexcept { \
 			return this->VAR; \
@@ -129,6 +126,24 @@
 			this->VAR = std::move(VAR); \
 		} \
 	protected:
+
+#define OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+	protected: \
+		TYPE VAR; \
+	OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
+
+#define OO_ENCAPSULATE_OBJ(TYPE, VAR) \
+	OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+	OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
+
+#define OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
+	protected: \
+		TYPE VAR = (DATA); \
+	OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
+
+#define OO_ENCAPSULATE_OBJ_INIT(TYPE, VAR, DATA) \
+	OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
+	OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
 
 // ---------------------------------------------------
 
