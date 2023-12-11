@@ -71,6 +71,14 @@ public:
 		static_assert(sizeof(T) <= size());
 		return *(reinterpret_cast<const T*>(this));
 	}
+
+	// T must be explicitly set when calling
+	template <typename T>
+	T get_value () noexcept
+	{
+		static_assert(sizeof(T) <= size());
+		return *(reinterpret_cast<T*>(this));
+	}
 };
 
 // ---------------------------------------------------
