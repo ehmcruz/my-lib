@@ -16,6 +16,10 @@ namespace Mylib
 namespace Trigger
 {
 
+#ifdef MYLIB_TRIGGER_BASE_OPERATIONS
+#error nooooooooooo
+#endif
+
 // ---------------------------------------------------
 
 template <typename Tevent>
@@ -24,7 +28,20 @@ class Callback
 public:
 	virtual void operator() (Tevent& event) = 0;
 	virtual ~Callback () = default;
+	virtual std::size_t get_size () const noexcept = 0; // returns object size
+	virtual uint32_t get_alignment () const noexcept = 0; // returns object alignment
 };
+
+#define MYLIB_TRIGGER_BASE_OPERATIONS \
+	public: \
+		virtual std::size_t get_size () const noexcept override \
+		{ \
+			return sizeof(*this); \
+		} \
+		virtual uint32_t get_alignment () const noexcept override \
+		{ \
+			return alignof(decltype(*this)); \
+		}
 
 // ---------------------------------------------------
 
@@ -57,6 +74,8 @@ auto make_callback_function (Tfunc callback)
 			std::apply(this->callback_function, built_params);*/
 			std::invoke(this->callback_function, event);
 		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(callback);
@@ -94,6 +113,8 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 			std::apply(this->callback_function, built_params);*/
 			std::invoke(this->callback_function, this->obj, event);
 		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(obj, callback);
@@ -137,6 +158,8 @@ auto make_filter_callback_object (Tfilter_&& filter, Tobj& obj, Tfunc callback)
 				std::invoke(this->callback_function, this->obj, event, this->filter);
 			}
 		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(filter, obj, callback);
@@ -184,6 +207,8 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 			std::apply(this->callback_function, built_params);
 			//std::invoke(this->callback_function, *(this->obj));
 		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(obj, callback, params);
@@ -238,6 +263,8 @@ auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfun
 				//std::invoke(this->callback_function, *(this->obj));
 			}
 		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(filter, obj, callback, params);
@@ -353,6 +380,8 @@ public:
 };
 
 // ---------------------------------------------------
+
+#undef MYLIB_TRIGGER_BASE_OPERATIONS
 
 } // end namespace Trigger
 } // end namespace Mylib
