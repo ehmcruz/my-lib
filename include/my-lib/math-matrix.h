@@ -115,7 +115,7 @@ public:
 		static_assert(nrows == ncols);
 		constexpr uint32_t dim = nrows;
 
-		Matrix a (*this);
+		const Matrix a (*this);
 		Matrix& r = *this;
 
 		r.set_zero();
