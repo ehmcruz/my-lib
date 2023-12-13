@@ -147,7 +147,7 @@ public:
 	{
 	}
 
-	Timer (Tget_current_time get_current_time__, const Memory::Manager& memory_manager_)
+	Timer (Tget_current_time get_current_time__, Memory::Manager& memory_manager_)
 		: get_current_time_(get_current_time__),
 		  memory_manager(memory_manager_)
 	{

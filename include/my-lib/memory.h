@@ -178,7 +178,7 @@ public:
 // ---------------------------------------------------
 
 inline DefaultManager default_manager;
-inline AllocatorSTL<int> default_allocator_stl(default_manager);
+//inline AllocatorSTL<int> default_allocator_stl(default_manager);
 
 // ---------------------------------------------------
 

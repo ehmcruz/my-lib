@@ -315,7 +315,7 @@ public:
 	{
 	}
 
-	EventHandler (const Memory::Manager& memory_manager_)
+	EventHandler (Memory::Manager& memory_manager_)
 		: memory_manager(memory_manager_),
 		  subscriber_allocator(memory_manager),
 		  subscribers(subscriber_allocator)
