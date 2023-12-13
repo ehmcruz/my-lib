@@ -95,6 +95,72 @@ public:
 
 // ---------------------------------------------------
 
+/*
+	Custom STL allocator interface for Memory::Manager.
+	Based on GCC Standard C++ Library.
+	<include>/c++/11/ext/new_allocator.h
+
+	Requires that the number of elements to be allocated at a time is 1.
+*/
+
+template <typename T>
+class AllocatorSTL
+{
+public:
+	using value_type = T;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+	using propagate_on_container_move_assignment = std::true_type;
+
+	Manager& manager;
+
+	AllocatorSTL (Manager& manager_)
+		: manager(manager_)
+	{
+	}
+
+	AllocatorSTL (const AllocatorSTL& other)
+		: manager(other.manager)
+	{
+	}
+
+	template <typename Tother>
+	AllocatorSTL (const AllocatorSTL<Tother>& other)
+		: manager(other.manager)
+	{
+	}
+
+	[[nodiscard]] T* allocate (const size_type n, const void* = static_cast<const void*>(0))
+	{
+	#if __cplusplus >= 201103L
+		static_assert(sizeof(T) != 0, "cannot allocate incomplete types");
+	#endif
+
+		return this->manager.allocate_type<T>(n);
+	}
+
+	void deallocate (T *p, const size_type n)
+	{
+		this->manager.deallocate_type<T>(p, n);
+	}
+
+	template<typename Tother>
+	friend constexpr bool operator== (const AllocatorSTL&, const AllocatorSTL<Tother>&) noexcept
+	{
+		return true;
+	}
+
+	#if __cpp_impl_three_way_comparison < 201907L
+	template <typename Tother>
+	friend constexpr bool operator!= (const AllocatorSTL&, const AllocatorSTL<_Up>&) noexcept
+	{
+		return false;
+	}
+	#endif
+};
+
+// ---------------------------------------------------
+
 class DefaultManager : public Manager
 {
 public:
@@ -108,6 +174,11 @@ public:
 		m_deallocate(p, type_size * count, align);
 	}
 };
+
+// ---------------------------------------------------
+
+inline DefaultManager default_manager;
+inline AllocatorSTL<int> default_allocator_stl(default_manager);
 
 // ---------------------------------------------------
 

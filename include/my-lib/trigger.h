@@ -10,6 +10,7 @@
 
 #include <my-lib/macros.h>
 #include <my-lib/std.h>
+#include <my-lib/memory.h>
 
 namespace Mylib
 {
@@ -30,17 +31,28 @@ public:
 	virtual ~Callback () = default;
 	virtual std::size_t get_size () const noexcept = 0; // returns object size
 	virtual uint32_t get_alignment () const noexcept = 0; // returns object alignment
+	virtual Callback<Tevent>* make_copy (Memory::Manager& memory_manager) const = 0;
+	virtual void deconstruct_free_memory (Memory::Manager& memory_manager) = 0;
 };
 
 #define MYLIB_TRIGGER_BASE_OPERATIONS \
 	public: \
-		virtual std::size_t get_size () const noexcept override \
+		std::size_t get_size () const noexcept override final \
 		{ \
 			return sizeof(*this); \
 		} \
-		virtual uint32_t get_alignment () const noexcept override \
+		uint32_t get_alignment () const noexcept override final \
 		{ \
 			return alignof(decltype(*this)); \
+		} \
+		Callback<Tevent>* make_copy (Memory::Manager& memory_manager) const override final \
+		{ \
+			return new (memory_manager.allocate(this->get_size(), 1, this->get_alignment())) DerivedCallback(*this); \
+		} \
+		void deconstruct_free_memory (Memory::Manager& memory_manager) override final \
+		{ \
+			this->~DerivedCallback(); \
+			memory_manager.deallocate(this, this->get_size(), 1, this->get_alignment()); \
 		}
 
 // ---------------------------------------------------
@@ -272,20 +284,15 @@ auto make_filter_callback_object_with_params (Tfilter_&& filter, Tobj& obj, Tfun
 
 // ---------------------------------------------------
 
-template <typename Tevent, typename Talloc=std::allocator<int>>
+template <typename Tevent>
 class EventHandler
 {
 public:
 	using Type = Tevent;
 	using EventCallback = Callback<Tevent>;
 
-	struct FreeHandler {
-		virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) = 0;
-	};
-
 	struct Subscriber {
 		EventCallback *callback;
-		FreeHandler *free_handler;
 		bool enabled;
 	};
 
@@ -294,22 +301,31 @@ public:
 	};
 
 private:
-	using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
+	Memory::Manager& memory_manager;
+	//using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
+	using TallocSubscriber = Memory::AllocatorSTL<Subscriber>;
 	TallocSubscriber subscriber_allocator;
 	std::list<Subscriber, TallocSubscriber> subscribers;
 
 public:
-	EventHandler () = default;
+	EventHandler ()
+		: memory_manager(Memory::default_manager),
+		  subscriber_allocator(memory_manager),
+		  subscribers(subscriber_allocator)
+	{
+	}
 
-	EventHandler (const Talloc& allocator_)
-		: subscriber_allocator(allocator_), subscribers(allocator_)
+	EventHandler (const Memory::Manager& memory_manager_)
+		: memory_manager(memory_manager_),
+		  subscriber_allocator(memory_manager),
+		  subscribers(subscriber_allocator)
 	{
 	}
 
 	~EventHandler ()
 	{
 		for (auto& subscriber : this->subscribers)
-			subscriber.free_handler->free_memory(this, subscriber.callback);
+			subscriber.callback->deconstruct_free_memory(this->memory_manager);
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -332,32 +348,11 @@ public:
 	/* When creating the event listener by r-value ref,
 	   we allocate internal storage and copy the value to it.
 	*/
-	template <typename Tcallback>
-	Descriptor subscribe (const Tcallback& callback)
+	Descriptor subscribe (const EventCallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		//std::cout << "here R-VALUE " << callback.filter.myself->get_name() << std::endl;
-		//using Tc = Mylib::remove_type_qualifiers< decltype(callback) >::type;
-		using Tc = Tcallback;
-		using TallocTc = typename std::allocator_traits<TallocSubscriber>::template rebind_alloc<Tc>;
-
-		struct MyFreeHandler : public FreeHandler {
-			virtual void free_memory (EventHandler *event_handler, EventCallback *ptr) override
-			{
-				TallocTc callback_allocator(event_handler->subscriber_allocator);
-				callback_allocator.deallocate(static_cast<Tc*>(ptr), 1);
-			}
-		};
-
-		static MyFreeHandler my_free_handler;
-
-		TallocTc callback_allocator(this->subscriber_allocator);
-	
-		Tc *persistent_callback = new (callback_allocator.allocate(1)) Tc(callback);
-		
 		this->subscribers.push_back( Subscriber {
-			.callback = persistent_callback,
-			.free_handler = &my_free_handler,
+			.callback = callback.make_copy(this->memory_manager),
 			.enabled = true
 			} );
 
@@ -371,7 +366,7 @@ public:
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found)
-					subscriber.free_handler->free_memory(this, subscriber.callback);
+					subscriber.callback->deconstruct_free_memory(this->memory_manager);
 				
 				return found;
 			}

@@ -14,6 +14,7 @@
 #include <my-lib/macros.h>
 #include <my-lib/std.h>
 #include <my-lib/trigger.h>
+#include <my-lib/memory.h>
 
 namespace Mylib
 {
@@ -22,7 +23,7 @@ namespace Trigger
 
 // ---------------------------------------------------
 
-template <typename Tget_current_time, typename Talloc=std::allocator<int>>
+template <typename Tget_current_time>
 class Timer
 {
 public:
@@ -79,7 +80,7 @@ public:
 				auto& promise = handler.promise();
 				Coroutine coro = promise.get_return_object();
 
-				EventFull *event = new (this->timer.event_allocator.allocate(1)) EventFull;
+				EventFull *event = new (this->timer.memory_manager.allocate_type<EventFull>(1)) EventFull;
 				event->time = this->time;
 				event->var_callback = EventCoroutine {
 					.coro = coro,
@@ -105,13 +106,8 @@ private:
 
 	using TimerCallback = Callback<Event>;
 
-	struct FreeHandler {
-		virtual void free_memory (Timer *timer, TimerCallback *ptr) = 0;
-	};
-
 	struct EventCallback {
 		TimerCallback *callback;
-		FreeHandler *free_handler;
 	};
 
 	struct EventCoroutine {
@@ -140,19 +136,20 @@ private:
 		}
 	};
 
-	using TallocEventFull = typename std::allocator_traits<Talloc>::template rebind_alloc<EventFull>;
-	TallocEventFull event_allocator;
-	std::vector<Internal> events; // we let the vector use its standard allocator
 	Tget_current_time get_current_time_;
+	Memory::Manager& memory_manager;
+	std::vector<Internal> events; // we let the vector use its standard allocator
 
 public:
 	Timer (Tget_current_time get_current_time__)
-		: get_current_time_(get_current_time__)
+		: get_current_time_(get_current_time__),
+		  memory_manager(Memory::default_manager)
 	{
 	}
 
-	Timer (Tget_current_time get_current_time__, const Talloc& allocator__)
-		: get_current_time_(get_current_time__), event_allocator(allocator__)
+	Timer (Tget_current_time get_current_time__, const Memory::Manager& memory_manager_)
+		: get_current_time_(get_current_time__),
+		  memory_manager(memory_manager_)
 	{
 	}
 
@@ -225,32 +222,13 @@ public:
 		When creating the event listener by r-value ref,
 		we allocate internal storage and copy the value to it.
 	*/
-	template <typename Tcallback>
-	Descriptor schedule_event (const Ttime& time, const Tcallback& callback)
+	Descriptor schedule_event (const Ttime& time, const TimerCallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		using Tc = Tcallback;
-		using TallocTc = typename std::allocator_traits<TallocEventFull>::template rebind_alloc<Tc>;
-
-		struct MyFreeHandler : public FreeHandler {
-			virtual void free_memory (Timer *timer, TimerCallback *ptr) override final
-			{
-				TallocTc callback_allocator(timer->event_allocator);
-				callback_allocator.deallocate(static_cast<Tc*>(ptr), 1);
-			}
-		};
-
-		static MyFreeHandler my_free_handler;
-
-		TallocTc callback_allocator(this->event_allocator);
-
-		Tc *persistent_callback = new (callback_allocator.allocate(1)) Tc(callback);
-		
-		EventFull *event = new (this->event_allocator.allocate(1)) EventFull;
+		EventFull *event = new (this->memory_manager.allocate_type<EventFull>(1)) EventFull;
 		event->time = time;
 		event->var_callback = EventCallback {
-			.callback = persistent_callback,
-			.free_handler = &my_free_handler
+			.callback = callback.make_copy(this->memory_manager),
 		},
 		event->enabled = true;
 
@@ -305,9 +283,9 @@ private:
 	{
 		if (std::holds_alternative<EventCallback>(event->var_callback)) {
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
-			callback.free_handler->free_memory(this, callback.callback);
+			callback.callback->deconstruct_free_memory(this->memory_manager);
 		}
-		this->event_allocator.deallocate(event, 1);
+		this->memory_manager.deallocate_type<EventFull>(event, 1);
 	}
 };
 
