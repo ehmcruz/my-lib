@@ -5,7 +5,7 @@ all: pool timer trigger any bit math
 	@echo "My-lib compiled! yes!"
 
 pool: $(HEADERS) src/memory-pool.cpp tests/test-memory-pool.cpp
-	g++ -O2 src/memory-pool.cpp tests/test-memory-pool.cpp -o test-memory-pool $(CPPFLAGS)
+	g++ -O3 src/memory-pool.cpp tests/test-memory-pool.cpp -o test-memory-pool $(CPPFLAGS)
 
 timer: $(HEADERS) tests/test-timer.cpp
 	g++ tests/test-timer.cpp -o test-timer $(CPPFLAGS)

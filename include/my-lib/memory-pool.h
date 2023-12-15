@@ -4,6 +4,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <vector>
+//#include <mutex>
 
 #include <cstdint>
 #include <cstdlib>
@@ -60,6 +61,12 @@ private:
 	Block *blocks = nullptr;
 	Chunk *free_chunks = nullptr;
 
+	// The mutex had a huge impact on performance.
+	// Let's leave it off while I try to find a better solution.
+	// One possible solution is to have an allocator per thread.
+	// Problem: if one thread deallocates memory of another thread.
+	//std::mutex mutex;
+
 public:
 	PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const uint32_t align_);
 	~PoolCore ();
@@ -70,11 +77,15 @@ public:
 	{
 		void *free_chunk;
 
+		//this->mutex.lock();
+
 		if (this->free_chunks == nullptr) [[unlikely]]
 			this->alloc_new_block();
 
 		free_chunk = this->free_chunks;
 		this->free_chunks = this->free_chunks->next_chunk;
+
+		//this->mutex.unlock();
 
 		return free_chunk;
 	}
@@ -85,9 +96,13 @@ public:
 	{
 		Chunk *chunk = static_cast<Chunk*>(p);
 
+		//this->mutex.lock();
+
 		// we just add the just-freed chunk as the new head of the free_chunks list
 		chunk->next_chunk = this->free_chunks;
 		this->free_chunks = chunk;
+
+		//this->mutex.unlock();
 	}
 
 	static consteval size_t lowest_chunk_size ()

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <list>
 #include <chrono>
+#include <mutex>
 
 #include <cassert>
 
@@ -113,8 +114,8 @@ void test_general ()
 void test_stl ()
 {
 	Mylib::Memory::PoolManager factory(1024, 8);
-	Mylib::Memory::PoolAllocatorSTL<uint32_t> stl_pool_allocator(factory);
-	std::list<uint32_t, Mylib::Memory::PoolAllocatorSTL<uint32_t>> list(stl_pool_allocator);
+	Mylib::Memory::AllocatorSTL<uint32_t> stl_pool_allocator(factory);
+	std::list<uint32_t, Mylib::Memory::AllocatorSTL<uint32_t>> list(stl_pool_allocator);
 
 	auto start = std::chrono::system_clock::now();
 
@@ -202,10 +203,10 @@ int main ()
 	std::cout << "----------------------------------" << std::endl;
 	test_general();
 	
-	std::cout << "----------------------------------" << std::endl;
+	std::cout << "---------------------------------- memory pool STL" << std::endl;
 	test_stl();
 
-	std::cout << "----------------------------------" << std::endl;
+	std::cout << "---------------------------------- base STL" << std::endl;
 	benchmark_base_stl();
 
 	return 0;

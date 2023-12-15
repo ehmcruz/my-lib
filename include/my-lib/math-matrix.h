@@ -262,8 +262,16 @@ public:
 		About perspective projection matrix:
 		https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
 		https://stackoverflow.com/questions/76304134/understanding-opengl-perspective-projection-matrix-setting-the-near-plane-below
-		https://github.com/google/mathfu/blob/master/include/mathfu/matrix.h
+		
+		https://github.com/google/mathfu
+			File include/mathfu/matrix.h
+			Function PerspectiveHelper
+			Uses another matrix, but we can use as reference.
+		
 		https://github.com/g-truc/glm
+			File glm/ext/matrix_clip_space.inl
+			Function perspectiveRH_NO
+			We implemented this one.
 	*/
 
 	constexpr void set_perspective (const T fovy,
@@ -299,7 +307,7 @@ public:
 		
 		m(3, 0) = 0;
 		m(3, 1) = 0;
-		m(3, 2) = -1 * handedness;
+		m(3, 2) = fp(-1) * handedness;
 		m(3, 3) = 0;
 	}
 
