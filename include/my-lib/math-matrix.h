@@ -311,9 +311,22 @@ public:
 		m(3, 3) = 0;
 	}
 
+	/*
+		About look-at matrix:
+		
+		https://github.com/google/mathfu
+			File include/mathfu/matrix.h
+			Function LookAtHelper
+		
+		https://github.com/g-truc/glm
+			File glm/ext/matrix_transform.inl
+			Function lookAtRH
+	*/
+
 	constexpr void set_look_at (const Vector<T, 3>& eye,
 	                            const Vector<T, 3>& at,
-								const Vector<T, 3>& world_up
+								const Vector<T, 3>& world_up,
+								const T handedness = 1
 								) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
