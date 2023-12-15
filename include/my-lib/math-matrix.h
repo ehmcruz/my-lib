@@ -321,6 +321,11 @@ public:
 		https://github.com/g-truc/glm
 			File glm/ext/matrix_transform.inl
 			Function lookAtRH
+
+			The above functions were generating either a black screen
+			or a mirrored image.
+			So I modified them a bit.
+			My code is working fine for Opengl.
 	*/
 
 	constexpr void set_look_at (const Vector<T, 3>& eye,
@@ -339,25 +344,29 @@ public:
 		m(0, 0) = right.x;
 		m(0, 1) = right.y;
 		m(0, 2) = right.z;
-		m(0, 3) = -dot_product(right, eye);
+		m(0, 3) = 0; //-dot_product(right, eye);
 
 		m(1, 0) = up.x;
 		m(1, 1) = up.y;
 		m(1, 2) = up.z;
-		m(1, 3) = -dot_product(up, eye);
+		m(1, 3) = 0; //-dot_product(up, eye);
 
 		m(2, 0) = -direction.x;
 		m(2, 1) = -direction.y;
 		m(2, 2) = -direction.z;
-		m(2, 3) = dot_product(direction, eye);
+		m(2, 3) = 0; //dot_product(direction, eye);
 
 		m(3, 0) = 0;
 		m(3, 1) = 0;
 		m(3, 2) = 0;
 		m(3, 3) = 1;
 
-		//m *= gen_translate_matrix<T, 4>(-eye);
-//std::cout << "ohhhhhhhhhhhh: " << std::endl << mm << std::endl;
+		// You can choose between:
+		// Uncomment the dot products and comment the below translation.
+		// Or leave as it is.
+		// As as it is is less eficient, but it's easier to understand.
+
+		m *= gen_translate_matrix<T, 4>(Vector<T, 3>(eye.x, eye.y, -eye.z));
 	}
 
 	constexpr void transpose () noexcept
