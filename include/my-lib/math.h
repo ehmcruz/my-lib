@@ -37,6 +37,12 @@ constexpr auto degrees_to_radians (const auto degrees) noexcept -> decltype(degr
 	return (degrees / static_cast<Type>(180)) * std::numbers::pi_v<Type>;
 }
 
+template <typename Tout>
+constexpr Tout round_to_nearest (const auto v) noexcept
+{
+	return static_cast<Tout>(v + static_cast<decltype(v)>(0.5));
+}
+
 // ---------------------------------------------------
 
 } // end namespace Math
