@@ -325,13 +325,12 @@ public:
 
 	constexpr void set_look_at (const Vector<T, 3>& eye,
 	                            const Vector<T, 3>& at,
-								const Vector<T, 3>& world_up,
-								const T handedness = 1
+								const Vector<T, 3>& world_up
 								) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
 
-		const Vector<T, 3> direction = normalize(eye - at);
+		const Vector<T, 3> direction = normalize(at - eye);
 		const Vector<T, 3> right = normalize(cross_product(world_up, direction));
 		const Vector<T, 3> up = cross_product(direction, right);
 
@@ -340,24 +339,24 @@ public:
 		m(0, 0) = right.x;
 		m(0, 1) = right.y;
 		m(0, 2) = right.z;
-		m(0, 3) = 0;
+		m(0, 3) = -dot_product(right, eye);
 
 		m(1, 0) = up.x;
 		m(1, 1) = up.y;
 		m(1, 2) = up.z;
-		m(1, 3) = 0;
+		m(1, 3) = -dot_product(up, eye);
 
-		m(2, 0) = direction.x;
-		m(2, 1) = direction.y;
-		m(2, 2) = direction.z;
-		m(2, 3) = 0;
+		m(2, 0) = -direction.x;
+		m(2, 1) = -direction.y;
+		m(2, 2) = -direction.z;
+		m(2, 3) = dot_product(direction, eye);
 
 		m(3, 0) = 0;
 		m(3, 1) = 0;
 		m(3, 2) = 0;
 		m(3, 3) = 1;
 
-		m *= gen_translate_matrix<T, 4>(-eye);
+		//m *= gen_translate_matrix<T, 4>(-eye);
 //std::cout << "ohhhhhhhhhhhh: " << std::endl << mm << std::endl;
 	}
 
