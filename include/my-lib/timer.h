@@ -80,7 +80,7 @@ public:
 				auto& promise = handler.promise();
 				Coroutine coro = promise.get_return_object();
 
-				EventFull *event = new (this->timer.memory_manager.allocate_type<EventFull>(1)) EventFull;
+				EventFull *event = new (this->timer.memory_manager.template allocate_type<EventFull>(1)) EventFull;
 				event->time = this->time;
 				event->var_callback = EventCoroutine {
 					.coro = coro,
@@ -225,7 +225,7 @@ public:
 	Descriptor schedule_event (const Ttime& time, const TimerCallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		EventFull *event = new (this->memory_manager.allocate_type<EventFull>(1)) EventFull;
+		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
 		event->time = time;
 		event->var_callback = EventCallback {
 			.callback = callback.make_copy(this->memory_manager),
@@ -285,7 +285,7 @@ private:
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
 			callback.callback->deconstruct_free_memory(this->memory_manager);
 		}
-		this->memory_manager.deallocate_type<EventFull>(event, 1);
+		this->memory_manager.template deallocate_type<EventFull>(event, 1);
 	}
 };
 

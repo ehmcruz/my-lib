@@ -136,12 +136,12 @@ public:
 		static_assert(sizeof(T) != 0, "cannot allocate incomplete types");
 	#endif
 
-		return this->manager.allocate_type<T>(n);
+		return this->manager.template allocate_type<T>(n);
 	}
 
 	void deallocate (T *p, const size_type n)
 	{
-		this->manager.deallocate_type<T>(p, n);
+		this->manager.template deallocate_type<T>(p, n);
 	}
 
 	template<typename Tother>

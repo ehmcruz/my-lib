@@ -2,6 +2,7 @@
 #define __MY_LIB_MATH_HEADER_H__
 
 #include <numeric>
+#include <numbers>
 
 #include <my-lib/std.h>
 
