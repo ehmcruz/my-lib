@@ -427,10 +427,10 @@ std::ostream& operator << (std::ostream& out, const Vector<T, dim>& v)
 {
 	out << "[";
 	
-	for (uint32_t i = 0; i < v.get_dim(); i++) {
+	for (uint32_t i = 0; i < dim; i++) {
 		out << v[i];
 		
-		if (i < (v.get_dim()-1))
+		if (i < (dim-1))
 			out << ", ";
 	}
 
