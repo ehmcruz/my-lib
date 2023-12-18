@@ -25,6 +25,17 @@
 
 // ---------------------------------------------------
 
+#define OO_ENCAPSULATE_SCALAR_REACT(TYPE, VAR, REACT) \
+	OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
+	public: \
+		inline void set_##VAR (const TYPE VAR) noexcept { \
+			this->VAR = VAR; \
+			REACT; \
+		} \
+	protected:
+
+// ---------------------------------------------------
+
 #define OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
 	protected: \
 		const TYPE VAR; \
