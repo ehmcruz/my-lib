@@ -43,14 +43,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_) noexcept
+	constexpr VectorStorage__ (const Type x_, const Type y_) noexcept
 		: x(x_), y(y_)
 	{
 	}
 
-	inline void set (const Type x, const Type y) noexcept
+	constexpr void set (const Type x, const Type y) noexcept
 	{
 		this->x = x;
 		this->y = y;
@@ -77,14 +77,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_, const Type z_) noexcept
+	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_) noexcept
 		: x(x_), y(y_), z(z_)
 	{
 	}
 
-	inline void set (const Type x, const Type y, const Type z) noexcept
+	constexpr void set (const Type x, const Type y, const Type z) noexcept
 	{
 		this->x = x;
 		this->y = y;
@@ -113,14 +113,14 @@ public:
 		//uint64_t ivalue;
 	};
 
-	VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept = default;
 
-	VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
+	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
 		: x(x_), y(y_), z(z_), w(w_)
 	{
 	}
 
-	inline void set (const Type x, const Type y, const Type z, const Type w) noexcept
+	constexpr void set (const Type x, const Type y, const Type z, const Type w) noexcept
 	{
 		this->x = x;
 		this->y = y;
