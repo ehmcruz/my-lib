@@ -225,6 +225,13 @@ public:
 		return std::sqrt(value);
 	}
 
+	constexpr void set_length (const Type len) noexcept
+	{
+		const Type ratio = len / this->length();
+		for (uint32_t i = 0; i < dim; i++)
+			this->data[i] *= ratio;
+	}
+
 	constexpr void normalize () noexcept
 	{
 		const Type len = this->length();
