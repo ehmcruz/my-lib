@@ -366,7 +366,7 @@ public:
 		// Or leave as it is.
 		// As as it is is less eficient, but it's easier to understand.
 
-		m *= gen_translate_matrix<T, 4>(Vector<T, 3>(eye.x, eye.y, -eye.z));
+		m *= gen_translate_matrix<T, 4>(-eye);
 	}
 
 	constexpr void transpose () noexcept
