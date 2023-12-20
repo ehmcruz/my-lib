@@ -158,6 +158,20 @@
 
 // ---------------------------------------------------
 
+#define MYLIB_DELETE_COPY_MOVE_CONSTRUCTOR(CLASS) \
+	CLASS (const CLASS&) = delete; \
+	CLASS (CLASS&&) = delete;
+
+#define MYLIB_DELETE_COPY_MOVE_ASSIGN(CLASS) \
+	CLASS& operator= (const CLASS&) = delete; \
+	CLASS& operator= (CLASS&&) = delete;
+
+#define MYLIB_DELETE_COPY_MOVE_CONSTRUCTOR_ASSIGN(CLASS) \
+	MYLIB_DELETE_COPY_MOVE_CONSTRUCTOR(CLASS) \
+	MYLIB_DELETE_COPY_MOVE_ASSIGN(CLASS)
+
+// ---------------------------------------------------
+
 #if defined(__GNUC__) || defined(__clang__)
 	#define MYLIB_ALIGN_STRUCT(V)   __attribute__((aligned(V)))
 #elif defined(_MSC_VER)
