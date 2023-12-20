@@ -292,6 +292,13 @@ public:
 	}
 };
 
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+using Point = Vector<T, dim>;
+
+// ---------------------------------------------------
+
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
 	template <typename T, uint32_t dim> \
@@ -369,7 +376,19 @@ constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-using Point = Vector<T, dim>;
+constexpr Vector<T, dim> with_length (const Vector<T, dim>& v, const T len) noexcept
+{
+	return v * (len / v.length());
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
+{
+	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
+	return (a - b).length();
+}
 
 // ---------------------------------------------------
 
@@ -414,18 +433,6 @@ concept is_Vector = is_Vector2f<T> || is_Vector3f<T> || is_Vector4f<T>;
 
 template <typename T>
 concept is_Point = is_Vector<T>;
-
-// ---------------------------------------------------
-
-//template <typename T>
-//requires is_Vector<Ta> && is_Vector<Tb>
-//requires is_Point<T>;
-template <typename T, uint32_t dim>
-constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
-{
-	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
-	return (a - b).length();
-}
 
 // ---------------------------------------------------
 
