@@ -4,6 +4,7 @@
 #include <concepts>
 #include <type_traits>
 #include <ostream>
+#include <utility>
 
 #include <cmath>
 
@@ -28,6 +29,11 @@ class Quaternion
 public:
 	using Type = T;
 	using Vector = Mylib::Math::Vector<T, 3>;
+
+	consteval static Type fp (const auto v)
+	{
+		return static_cast<Type>(v);
+	}
 
 	// We store in this format (x, y, z, w), where x,y,z are the vector part,
 	// and w is the scalar part, so that we can use the same memory layout
@@ -141,11 +147,50 @@ public:
 		return std::sqrt(this->length_squared());
 	}
 
-	constexpr void normalize () noexcept
+	// ---------------------------------------------------
+
+	/*
+		Converts the quaternion to a pair of a normalized axis-vector and an angle.
+		It considers the quaternion as a rotation quaternion (unit quaternion length=1).
+	*/
+
+	std::pair<Vector, T> to_axis_angle () const noexcept
+	{
+		std::pair<Vector, T> r;
+		Vector& axis = r.first;
+		T& angle = r.second;
+
+		const T length = this->v.length();
+
+		if (length == fp(0)) [[unlikely]]
+			axis.set(1, 0, 0);
+		else
+			axis = this->v / length; // normalize
+		
+		angle = std::acos(this->w) * fp(2);
+
+		return r;
+
+/*		const T angle = std::acos(this->w) * 2;
+		const T s = std::sqrt(1 - this->w * this->w);
+
+		if (s < 0.001f)
+			return std::make_pair(Vector(1, 0, 0), 0);
+
+		return std::make_pair(this->v / s, angle);*/
+	}
+
+	// ---------------------------------------------------
+
+	// normalize returns the length before normalization.
+	// Got the idea from the MathFu library.
+
+	constexpr Type normalize () noexcept
 	{
 		const Type len = this->length();
 		for (uint32_t i = 0; i < 4; i++)
 			this->data[i] /= len;
+		return len;
 	}
 
 	constexpr void conjugate () noexcept
@@ -293,12 +338,26 @@ constexpr Quaternion<T> invert (const Quaternion<T>& q) noexcept
 // ---------------------------------------------------
 
 template <typename T>
-constexpr Quaternion<T> operator* (const Quaternion<T>& a, const Quaternion<T>& b) noexcept
+constexpr Quaternion<T> operator* (const Quaternion<T>& q1, const Quaternion<T>& q2) noexcept
 {
 	Quaternion<T> r;
-	r.s = a.s * b.s - dot_product(a.v, b.v);
-	r.v = (b.v * a.s) + (a.v * b.s) + cross_product(a.v, b.v);
+	r.x = (q1.w * q2.x) + (q1.x * q2.w) + (q1.y * q2.z) - (q1.z * q2.y);
+	r.y = (q1.w * q2.y) - (q1.x * q2.z) + (q1.y * q2.w) + (q1.z * q2.x);
+	r.z = (q1.w * q2.z) + (q1.x * q2.y) - (q1.y * q2.x) + (q1.z * q2.w);
+	r.w = (q1.w * q2.w) - (q1.x * q2.x) - (q1.y * q2.y) - (q1.z * q2.z);
+	//r.v = (b.v * a.w) + (a.v * b.w) + cross_product(a.v, b.v);
+	//r.w = a.w * b.w - dot_product(a.v, b.v);
 	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr Vector<T, 3> rotate (const Quaternion<T>& q, const Vector<T, 3>& v) noexcept
+{
+	const Quaternion<T> v_(v); // create a pure quaternion from the vector
+	const Quaternion<T> r = (q * v_) * conjugate(q);
+	return r.v;
 }
 
 // ---------------------------------------------------

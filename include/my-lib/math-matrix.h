@@ -462,11 +462,11 @@ public:
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-Vector<T, dim> rotate_around_axis (const Vector<T, dim>& v, const Vector<T, dim>& axis, const T angle) noexcept
+Vector<T, dim> rotate (const Vector<T, dim>& axis, const T angle, const Vector<T, dim>& v) noexcept
 	requires (dim >= 2 && dim <= 3)
 {
 	Vector<T, dim> rotated;
-	rotated = gen_rotation_matrix<T, dim>(axis, angle) * v;
+	rotated = Matrix<T, dim, dim>::rotation(axis, angle) * v;
 	return rotated;
 }
 

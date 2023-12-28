@@ -155,9 +155,14 @@ public:
 		return dim;
 	}
 
+	consteval static Type fp (const auto v)
+	{
+		return static_cast<Type>(v);
+	}
+
 	// ------------------------ Constructors
 
-	Vector () noexcept = default;
+	constexpr Vector () noexcept = default;
 
 	using TParent::TParent;
 
@@ -237,11 +242,15 @@ public:
 			this->data[i] *= ratio;
 	}
 
-	constexpr void normalize () noexcept
+	// normalize returns the length of the vector before normalization.
+	// Got the idea from the MathFu library.
+
+	constexpr Type normalize () noexcept
 	{
 		const Type len = this->length();
 		for (uint32_t i = 0; i < dim; i++)
 			this->data[i] /= len;
+		return len;
 	}
 
 	constexpr void cross_product (const Vector& a, const Vector& b) noexcept
@@ -252,11 +261,11 @@ public:
 		this->z = a.x * b.y - a.y * b.x;
 	}
 
-	// requires math-matrix.h
-	constexpr void rotate_around_axis (const Vector<T, dim>& axis, const T angle) noexcept
+	// requires math-quaternion.h
+	constexpr void rotate (const Vector<T, dim>& axis, const T angle) noexcept
 		requires (dim == 3)
 	{
-		*this = gen_rotation_matrix<T, dim>(axis, angle) * (*this);
+		*this = rotation(axis, angle) * (*this);
 	}
 
 	constexpr void set_zero () noexcept
