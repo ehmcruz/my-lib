@@ -32,5 +32,7 @@ int main ()
 	m.set_translate(v1);
 	std::cout << m << std::endl;
 
+	Matrix4f m2 = ;
+
 	return 0;
 }

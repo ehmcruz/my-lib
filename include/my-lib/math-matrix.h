@@ -110,10 +110,12 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	constexpr void operator *= (const Matrix& b) noexcept
+	constexpr Matrix& operator *= (const Matrix& b) noexcept
 	{
 		static_assert(nrows == ncols);
-		constexpr uint32_t dim = nrows;
+		*this = *this * b;
+
+/*		constexpr uint32_t dim = nrows;
 
 		const Matrix a (*this);
 		Matrix& r = *this;
@@ -127,7 +129,9 @@ public:
 				for (uint32_t j = 0; j < dim; j++)
 					r(i, j) += v * b(k, j);
 			}
-		}
+		}*/
+
+		return *this;
 	}
 
 	constexpr void set_zero () noexcept
@@ -366,7 +370,7 @@ public:
 		// Or leave as it is.
 		// As as it is is less eficient, but it's easier to understand.
 
-		m *= gen_translate_matrix<T, 4>(-eye);
+		m *= translate(-eye);
 	}
 
 	constexpr void transpose () noexcept
@@ -382,102 +386,84 @@ public:
 			}
 		}
 	}
+
+	// ---------------------------------------------------
+
+	static consteval Matrix zero () noexcept
+	{
+		Matrix m;
+		m.set_zero();
+		return m;
+	}
+
+	static consteval Matrix identity () noexcept
+	{
+		static_assert(nrows == ncols);
+		Matrix m;
+		m.set_identity();
+		return m;
+	}
+
+	template <uint32_t vector_dim>
+	static constexpr Matrix scale (const Vector<T, vector_dim>& v) noexcept
+	{
+		static_assert(nrows == ncols);
+		static_assert(vector_dim <= nrows);
+		Matrix m;
+		m.set_scale(v);
+		return m;
+	}
+
+	template <uint32_t vector_dim>
+	static constexpr Matrix translate (const Vector<T, vector_dim>& v) noexcept
+	{
+		static_assert(nrows == ncols);
+		static_assert(vector_dim < nrows);
+
+		Matrix m;
+		m.set_translate(v);
+		return m;
+	}
+
+	static constexpr Matrix perspective (const T fovy,
+								         const T screen_width,
+								         const T screen_height,
+								         const T znear,
+								         const T zfar,
+								         const T handedness = 1
+								         ) noexcept
+	{
+		static_assert(nrows == ncols && nrows == 4);
+		Matrix m;
+		m.set_perspective(fovy, screen_width, screen_height, znear, zfar, handedness);
+		return m;
+	}
+
+	static constexpr Matrix look_at (const Vector<T, 3>& eye,
+							         const Vector<T, 3>& at,
+							         const Vector<T, 3>& world_up
+							         ) noexcept
+	{
+		static_assert(nrows == ncols && nrows == 4);
+		Matrix m;
+		m.set_look_at(eye, at, world_up);
+		return m;
+	}
+
+	static constexpr Matrix rotation (const Vector<T, nrows>& axis, const T angle) noexcept
+	{
+		static_assert(nrows == ncols);
+		Matrix m;
+		m.set_rotation_matrix(axis, angle);
+		return m;
+	}
 };
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t nrows, uint32_t ncols>
-constexpr Matrix<T, nrows, ncols> gen_zero_matrix () noexcept
-{
-	Matrix<T, nrows, ncols> m;
-	m.set_zero();
-	return m;
-}
-
-// ---------------------------------------------------
-
-template <typename T, uint32_t dim>
-constexpr Matrix<T, dim, dim> gen_identity_matrix () noexcept
-{
-	Matrix<T, dim, dim> m;
-	m.set_identity();
-	return m;
-}
-
-// ---------------------------------------------------
-
-template <typename T, uint32_t dim, uint32_t vector_dim>
-constexpr Matrix<T, dim, dim> gen_scale_matrix (const Vector<T, vector_dim>& v) noexcept
-{
-	static_assert(vector_dim <= dim);
-
-	Matrix<T, dim, dim> m;
-	m.set_scale(v);
-	return m;
-}
-
-// ---------------------------------------------------
-
-template <typename T, uint32_t dim, uint32_t vector_dim>
-constexpr Matrix<T, dim, dim> gen_translate_matrix (const Vector<T, vector_dim>& v) noexcept
-{
-	static_assert(vector_dim < dim);
-
-	Matrix<T, dim, dim> m;
-	m.set_translate(v);
-	return m;
-}
-
-// ---------------------------------------------------
-
-template <typename T>
-constexpr Matrix<T, 4, 4> gen_perspective_matrix (const T fovy,
-												  const T screen_width,
-												  const T screen_height,
-												  const T znear,
-												  const T zfar,
-												  const T handedness = 1
-												  ) noexcept
-{
-	Matrix<T, 4, 4> m;
-	m.set_perspective(fovy, screen_width, screen_height, znear, zfar, handedness);
-	return m;
-}
 
 //template <typename T, uint32_t dim>
 //Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept;
-
-// ---------------------------------------------------
-
-template <typename T>
-constexpr Matrix<T, 4, 4> gen_look_at_matrix (const Vector<T, 3>& eye,
-	                        				  const Vector<T, 3>& at,
-											  const Vector<T, 3>& world_up
-											  ) noexcept
-{
-	Matrix<T, 4, 4> m;
-	m.set_look_at(eye, at, world_up);
-	return m;
-}
-
-// ---------------------------------------------------
-
-template <typename T, uint32_t dim>
-	requires (dim >= 2 && dim <= 3)
-Matrix<T, dim, dim> gen_rotation_matrix (const Vector<T, dim>& axis, const T angle) noexcept
-{
-	Matrix<T, dim, dim> m;
-	m.set_rotation_matrix(axis, angle);
-	return m;
-}
-
-template <typename T>
-Matrix<T, 4, 4> gen_rotation_matrix4 (const Vector<T, 3>& axis, const T angle) noexcept
-{
-	Matrix<T, 4, 4> m;
-	m.set_rotation_matrix(axis, angle);
-	return m;
-}
 
 // ---------------------------------------------------
 

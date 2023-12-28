@@ -197,7 +197,7 @@ public:
 
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		inline Vector& operator OP (const Type s) noexcept \
+		constexpr Vector& operator OP (const Type s) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
 				this->data[i] OP s; \
