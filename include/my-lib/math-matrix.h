@@ -5,6 +5,8 @@
 #include <concepts>
 #include <type_traits>
 #include <ostream>
+#include <utility>
+#include <initializer_list>
 
 #include <cmath>
 
@@ -60,6 +62,18 @@ public:
 		return this->data;
 	}
 
+	// ------------------------ Constructors
+
+	constexpr Matrix () noexcept = default;
+
+	constexpr Matrix (const std::initializer_list<T> values) noexcept
+	{
+		for (uint32_t i = 0; const auto v : values)
+			this->data[i++] = v;
+	}
+
+	// -------------------------------------
+
 	constexpr T& operator() (const uint32_t i) noexcept
 	{
 		return this->data[i];
@@ -114,23 +128,6 @@ public:
 	{
 		static_assert(nrows == ncols);
 		*this = *this * b;
-
-/*		constexpr uint32_t dim = nrows;
-
-		const Matrix a (*this);
-		Matrix& r = *this;
-
-		r.set_zero();
-
-		for (uint32_t i = 0; i < dim; i++) {
-			for (uint32_t k = 0; k < dim; k++) {
-				const T v = a(i, k);
-
-				for (uint32_t j = 0; j < dim; j++)
-					r(i, j) += v * b(k, j);
-			}
-		}*/
-
 		return *this;
 	}
 
@@ -379,11 +376,8 @@ public:
 
 		auto& m = *this;
 		for (uint32_t i = 0; i < nrows; i++) {
-			for (uint32_t j = i + 1; j < ncols; j++) {
-				const T tmp = m(i, j);
-				m(i, j) = m(j, i);
-				m(j, i) = tmp;
-			}
+			for (uint32_t j = i + 1; j < ncols; j++)
+				std::swap(m(i, j), m(j, i));
 		}
 	}
 

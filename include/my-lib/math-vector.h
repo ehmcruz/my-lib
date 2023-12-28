@@ -217,12 +217,17 @@ public:
 		return this->data[i];
 	}
 
-	constexpr Type length () const noexcept
+	constexpr Type length_squared () const noexcept
 	{
 		Type value = 0;
 		for (uint32_t i = 0; i < dim; i++)
 			value += this->data[i] * this->data[i];
-		return std::sqrt(value);
+		return value;
+	}
+
+	constexpr Type length () const noexcept
+	{
+		return std::sqrt(this->length_squared());
 	}
 
 	constexpr void set_length (const Type len) noexcept
