@@ -261,13 +261,6 @@ public:
 		this->z = a.x * b.y - a.y * b.x;
 	}
 
-	// requires math-quaternion.h
-	constexpr void rotate (const Vector<T, dim>& axis, const T angle) noexcept
-		requires (dim == 3)
-	{
-		*this = rotation(axis, angle) * (*this);
-	}
-
 	constexpr void set_zero () noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)

@@ -48,7 +48,12 @@ int main ()
 	mt.transpose();
 	std::cout << mt << std::endl;
 
-	Quaternionf q1(1.0f, 2.0f, 3.0f, 4.0f);
+	Vector3f axis = Vector3f(0.3f, 1.0f, 0.0f);
+	float angle = degrees_to_radians(90.0f);
+	Matrix3f m3 = Matrix3f::rotation(axis, angle);
+	Quaternionf q1 = Quaternionf::rotation(axis, angle);
+	Vector3f v2 = Vector3f(1.0f, 0.0f, 0.0f);
+	std::cout << "Vector rotated with matrix: " << (m3 * v2) << " Vector rotated with quaternion: " << rotate(q1, v2) << std::endl;
 
 	return 0;
 }

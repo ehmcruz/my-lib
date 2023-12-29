@@ -182,6 +182,15 @@ public:
 
 	// ---------------------------------------------------
 
+	void set_rotation (const Vector& axis, const T angle) noexcept
+	{
+		const T half_angle = angle / fp(2);
+		this->v = Mylib::Math::normalize(axis) * std::sin(half_angle);
+		this->w = std::cos(half_angle);
+	}
+
+	// ---------------------------------------------------
+
 	// normalize returns the length before normalization.
 	// Got the idea from the MathFu library.
 
@@ -248,6 +257,13 @@ public:
 	{
 		Quaternion q;
 		q.set_identity();
+		return q;
+	}
+
+	static constexpr Quaternion rotation (const Vector& axis, const T angle) noexcept
+	{
+		Quaternion q;
+		q.set_rotation(axis, angle);
 		return q;
 	}
 };
@@ -341,12 +357,16 @@ template <typename T>
 constexpr Quaternion<T> operator* (const Quaternion<T>& q1, const Quaternion<T>& q2) noexcept
 {
 	Quaternion<T> r;
+
+	// Hamilton product
+
 	r.x = (q1.w * q2.x) + (q1.x * q2.w) + (q1.y * q2.z) - (q1.z * q2.y);
 	r.y = (q1.w * q2.y) - (q1.x * q2.z) + (q1.y * q2.w) + (q1.z * q2.x);
 	r.z = (q1.w * q2.z) + (q1.x * q2.y) - (q1.y * q2.x) + (q1.z * q2.w);
 	r.w = (q1.w * q2.w) - (q1.x * q2.x) - (q1.y * q2.y) - (q1.z * q2.z);
 	//r.v = (b.v * a.w) + (a.v * b.w) + cross_product(a.v, b.v);
 	//r.w = a.w * b.w - dot_product(a.v, b.v);
+
 	return r;
 }
 

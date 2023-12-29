@@ -239,24 +239,23 @@ public:
 	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
 		requires (nrows == ncols && ncols == 4)
 	{
-		Matrix<T, 3, 3> m;
-
-		m.set_rotation_matrix(axis_, angle);
+		const Matrix<T, 3, 3> m = Matrix<T, 3, 3>::rotation(axis_, angle);
+		auto& self = *this;
 
 		for (uint32_t i = 0; i < 3; i++) {
 			for (uint32_t j = 0; j < 3; j++)
-				this->data[i*ncols + j] = m(i, j);
+				self(i, j) = m(i, j);
 		}
 
-		(*this)(0, 3) = 0;
-		(*this)(1, 3) = 0;
-		(*this)(2, 3) = 0;
+		self(0, 3) = 0;
+		self(1, 3) = 0;
+		self(2, 3) = 0;
 
-		(*this)(3, 0) = 0;
-		(*this)(3, 1) = 0;
-		(*this)(3, 2) = 0;
+		self(3, 0) = 0;
+		self(3, 1) = 0;
+		self(3, 2) = 0;
 
-		(*this)(3, 3) = 1;
+		self(3, 3) = 1;
 	}
 
 	/*
