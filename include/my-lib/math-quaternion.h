@@ -385,7 +385,7 @@ constexpr Vector<T, 3> rotate (const Quaternion<T>& q, const Vector<T, 3>& v) no
 template <typename T>
 std::ostream& operator << (std::ostream& out, const Quaternion<T>& q)
 {
-	out << "[" << q.s << ", " << q.v.x << ", " << q.v.y << ", " << q.v.z << "]";
+	out << "[" << q.x << ", " << q.y << ", " << q.z << ", " << q.w << "]";
 	return out;
 }
 
