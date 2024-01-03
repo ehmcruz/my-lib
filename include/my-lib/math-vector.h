@@ -253,6 +253,12 @@ public:
 		return len;
 	}
 
+	constexpr void abs () noexcept
+	{
+		for (uint32_t i = 0; i < dim; i++)
+			this->data[i] = std::abs(this->data[i]);
+	}
+
 	constexpr void cross_product (const Vector& a, const Vector& b) noexcept
 	{
 		static_assert(dim == 3);
@@ -374,6 +380,16 @@ constexpr Vector<T, 3> cross_product (const Vector<T, 3>& a, const Vector<T, 3>&
 
 // ---------------------------------------------------
 
+template <typename T, uint32_t dim>
+constexpr Vector<T, dim> abs (const Vector<T, dim>& v) noexcept
+{
+	Vector<T, dim> r;
+	for (uint32_t i = 0; i < dim; i++)
+		r[i] = std::abs(v[i]);
+	return r;
+}
+
+// ---------------------------------------------------
 template <typename T, uint32_t dim>
 constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
 {
