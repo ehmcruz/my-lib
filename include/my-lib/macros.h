@@ -36,17 +36,6 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
-	protected: \
-		const TYPE VAR; \
-	public: \
-		constexpr TYPE get_##VAR () const noexcept { \
-			return this->VAR; \
-		} \
-	protected:
-
-// ---------------------------------------------------
-
 #define OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		TYPE VAR = (DATA); \
