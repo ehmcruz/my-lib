@@ -25,11 +25,13 @@ constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t
 }
 
 template <typename T>
-constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const T bits) noexcept
+constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const T value) noexcept
 {
-	const T mask = ((1 << blength) - 1) << bstart;
+	const T mask = (1 << blength) - 1;
+	const T shifted_mask = mask << bstart;
+	const T safe_value = value & mask;
 
-	return (v & ~mask) | (bits << bstart);
+	return (v & ~shifted_mask) | (safe_value << bstart);
 }
 
 // ---------------------------------------------------
@@ -77,7 +79,7 @@ template <typename ParentType>
 class BitSetStorage_ : public ParentType
 {
 protected:
-	using Type = ParentType::Type;
+	using Type = typename ParentType::Type;
 
 	Type& storage () noexcept
 	{
@@ -115,7 +117,7 @@ template <typename ParentType, std::size_t nbits>
 class BitSet__ : public ParentType
 {
 public:
-	using Type = ParentType::Type;
+	using Type = typename ParentType::Type;
 
 	// --------------------------
 
@@ -174,12 +176,12 @@ public:
 
 	// --------------------------
 
-	static consteval std::size_t get_storage_nbits ()
+	constexpr std::size_t get_storage_nbits () const noexcept
 	{
 		return sizeof(Type) * 8;
 	}
 
-	static consteval std::size_t size ()
+	constexpr std::size_t size () const noexcept
 	{
 		return nbits;
 	}
@@ -229,21 +231,54 @@ public:
 		return (this->storage() >> pos) & 0x01;
 	}
 
-	reference operator[] (const std::size_t pos) noexcept
+	template <typename Tenum>
+	requires std::is_enum_v<Tenum>
+	constexpr bool operator[] (const Tenum pos) const noexcept
+	{
+		return (this->storage() >> std::to_underlying(pos)) & 0x01;
+	}
+
+	constexpr reference operator[] (const std::size_t pos) noexcept
 	{
 		return reference(*this, pos, 1);
+	}
+
+	template <typename Tenum>
+	requires std::is_enum_v<Tenum>
+	constexpr reference operator[] (const Tenum pos) noexcept
+	{
+		return reference(*this, std::to_underlying(pos), 1);
 	}
 
 	// --------------------------
 
 	constexpr Type operator() (const std::size_t ini, const std::size_t length) const noexcept
 	{
+//std::cout << "aquuuuuuui " << ini << " length " << length << " s " << this->storage() << " x " << std::endl;
+std::cout << "aquuuuuuui ";
+std::cout << this->storage() << std::endl;
 		return extract_bits(this->storage(), ini, length);
+	}
+
+	template <typename TenumA, typename TenumB>
+	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
+	constexpr Type operator() (const TenumA ini, const TenumB length) const noexcept
+	{
+//std::cout << "aaaaa [" << std::to_underlying(ini) << "," << std::to_underlying(length) << "] " << this->storage() << "K" << std::endl;
+//		return extract_bits(this->storage(), std::to_underlying(ini), std::to_underlying(length));
+	return 0;
 	}
 
 	constexpr reference operator() (const std::size_t ini, const std::size_t length) noexcept
 	{
 		return reference(*this, ini, length);
+	}
+
+	template <typename TenumA, typename TenumB>
+	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
+	constexpr reference operator() (const TenumA ini, const TenumB length) noexcept
+	{
+		return reference(*this, std::to_underlying(ini), std::to_underlying(length));
 	}
 
 	// --------------------------
@@ -313,7 +348,7 @@ template <typename T>
 class BitSetWrapper__ : public T
 {
 public:
-	using Type = T::Type;
+	using Type = typename T::Type;
 
 protected:
 	Type& storage () noexcept
