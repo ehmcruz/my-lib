@@ -38,7 +38,7 @@ void test_bit_field ()
 
 void test_enum ()
 {
-	using MyBitSet = Mylib::BitSet<8>;
+	using MyBitSet = Mylib::BitSet<16>;
 
 	enum class menumc : uint8_t
 	{
@@ -75,14 +75,12 @@ void test_enum ()
 	const MyBitSet cset(bitset);
 	std::cout << "bit xa: " << cset[xa] << std::endl;
 	std::cout << "bit b: " << cset[menumc::b] << std::endl;
-	//std::cout << "bit [d, b]:" << cset(menumc::d, menumc::c) << std::endl;
-	std::cout << "bit [d, b]: " << cset(4, 2) << std::endl;
-	//std::cout << "bit b: " << cset[menumc::b] << std::endl;
+	std::cout << "bit [d, b]:" << cset(menumc::d, menumc::c) << std::endl;
 }
 
 int main ()
 {
-	using MyBitSet = Mylib::BitSet<8>;
+	using MyBitSet = Mylib::BitSet<16>;
 
 	MyBitSet bitset;
 	bool bit;
@@ -132,7 +130,7 @@ int main ()
 	ss << bitset;
 	std::cout << ss.str() << std::endl;
 
-//	test_bit_field();
+	test_bit_field();
 	test_enum();
 
 	return 0;

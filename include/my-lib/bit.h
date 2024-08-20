@@ -25,13 +25,29 @@ constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t
 }
 
 template <typename T>
-constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const T value) noexcept
+constexpr T extract_bits (const T v, const auto bstart, const auto blength) noexcept
+	requires std::is_enum_v<decltype(bstart)> && std::is_enum_v<decltype(blength)>
+{
+	return extract_bits(v, std::to_underlying(bstart), std::to_underlying(blength));
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
 {
 	const T mask = (1 << blength) - 1;
 	const T shifted_mask = mask << bstart;
-	const T safe_value = value & mask;
+	const T safe_value = static_cast<T>(value) & mask;
 
 	return (v & ~shifted_mask) | (safe_value << bstart);
+}
+
+template <typename T>
+constexpr T set_bits (const T v, const auto bstart, const auto blength, const auto value) noexcept
+	requires std::is_enum_v<decltype(bstart)> && std::is_enum_v<decltype(blength)>
+{
+	return set_bits(v, std::to_underlying(bstart), std::to_underlying(blength), value);
 }
 
 // ---------------------------------------------------
@@ -235,7 +251,7 @@ public:
 	requires std::is_enum_v<Tenum>
 	constexpr bool operator[] (const Tenum pos) const noexcept
 	{
-		return (this->storage() >> std::to_underlying(pos)) & 0x01;
+		return (*this)[std::to_underlying(pos)];
 	}
 
 	constexpr reference operator[] (const std::size_t pos) noexcept
@@ -247,16 +263,13 @@ public:
 	requires std::is_enum_v<Tenum>
 	constexpr reference operator[] (const Tenum pos) noexcept
 	{
-		return reference(*this, std::to_underlying(pos), 1);
+		return (*this)[std::to_underlying(pos)];
 	}
 
 	// --------------------------
 
 	constexpr Type operator() (const std::size_t ini, const std::size_t length) const noexcept
 	{
-//std::cout << "aquuuuuuui " << ini << " length " << length << " s " << this->storage() << " x " << std::endl;
-std::cout << "aquuuuuuui ";
-std::cout << this->storage() << std::endl;
 		return extract_bits(this->storage(), ini, length);
 	}
 
@@ -264,9 +277,7 @@ std::cout << this->storage() << std::endl;
 	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
 	constexpr Type operator() (const TenumA ini, const TenumB length) const noexcept
 	{
-//std::cout << "aaaaa [" << std::to_underlying(ini) << "," << std::to_underlying(length) << "] " << this->storage() << "K" << std::endl;
-//		return extract_bits(this->storage(), std::to_underlying(ini), std::to_underlying(length));
-	return 0;
+		return (*this)(std::to_underlying(ini), std::to_underlying(length));
 	}
 
 	constexpr reference operator() (const std::size_t ini, const std::size_t length) noexcept
@@ -278,7 +289,7 @@ std::cout << this->storage() << std::endl;
 	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
 	constexpr reference operator() (const TenumA ini, const TenumB length) noexcept
 	{
-		return reference(*this, std::to_underlying(ini), std::to_underlying(length));
+		return (*this)(std::to_underlying(ini), std::to_underlying(length));
 	}
 
 	// --------------------------
