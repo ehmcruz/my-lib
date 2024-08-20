@@ -34,20 +34,20 @@ constexpr T extract_bits (const T v, const auto bstart, const auto blength) noex
 // ---------------------------------------------------
 
 template <typename T>
-constexpr T set_bits (const T v, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
+constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
 {
 	const T mask = (1 << blength) - 1;
 	const T shifted_mask = mask << bstart;
 	const T safe_value = static_cast<T>(value) & mask;
 
-	return (v & ~shifted_mask) | (safe_value << bstart);
+	return (src & ~shifted_mask) | (safe_value << bstart);
 }
 
 template <typename T>
-constexpr T set_bits (const T v, const auto bstart, const auto blength, const auto value) noexcept
+constexpr T set_bits (const T src, const auto bstart, const auto blength, const auto value) noexcept
 	requires std::is_enum_v<decltype(bstart)> && std::is_enum_v<decltype(blength)>
 {
-	return set_bits(v, std::to_underlying(bstart), std::to_underlying(blength), value);
+	return set_bits(src, std::to_underlying(bstart), std::to_underlying(blength), value);
 }
 
 // ---------------------------------------------------
