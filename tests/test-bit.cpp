@@ -69,13 +69,13 @@ void test_enum ()
 	bitset[menumc::b] = 1;
 	std::cout << bitset << std::endl;
 
-	bitset(menumc::d, menumc::c) = 3;
+	bitset[{std::to_underlying(menumc::d), std::to_underlying(menumc::c)}] = 3;
 	std::cout << bitset << std::endl;
 
 	const MyBitSet cset(bitset);
 	std::cout << "bit xa: " << cset[xa] << std::endl;
 	std::cout << "bit b: " << cset[menumc::b] << std::endl;
-	std::cout << "bit [d, b]:" << cset(menumc::d, menumc::c) << std::endl;
+	std::cout << "bit [d, b]:" << cset[{std::to_underlying(menumc::d), std::to_underlying(menumc::c)}] << std::endl;
 }
 
 int main ()
@@ -86,47 +86,47 @@ int main ()
 	bool bit;
 	MyBitSet::Type bits;
 
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- a" << std::endl;
 	bitset = 0x04;
 	std::cout << bitset << std::endl;
 
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- b" << std::endl;
 	bitset[0] = 1;
 	std::cout << bitset << std::endl;
 
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- c" << std::endl;
 	const MyBitSet cset(4);
 	bit = cset[0];
 	std::cout << bit << std::endl;
 
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- d" << std::endl;
 	bit = bitset[0];
 	std::cout << bit << std::endl;
 
-	std::cout << "----------------------" << std::endl;
-	bits = ~bitset(0, 2);
+	std::cout << "---------------------- e" << std::endl;
+	bits = (~bitset(0, 2)).underlying();
 	std::cout << static_cast<uint64_t>(bits) << std::endl;
 
-	std::cout << "----------------------" << std::endl;
-	bitset(0, 2) = 0b0011;
+	std::cout << "---------------------- f" << std::endl;
+	bitset[{0, 2}] = 0b0011;
 	bitset[2] = 0;
 	std::cout << bitset << std::endl;
 
-	std::cout << "----------------------" << std::endl;
-	bitset(0, 2) = bitset(2, 2);
+	std::cout << "---------------------- g" << std::endl;
+	bitset[{0, 2}] = bitset(2, 2);
 	std::cout << bitset << std::endl;
 
-	std::cout << "----------------------" << std::endl;
-	bitset(1, 3) = cset(0, 3);
+	std::cout << "---------------------- h" << std::endl;
+	bitset[{1, 3}] = cset(0, 3);
 	std::cout << bitset << std::endl;
 
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- i" << std::endl;
 	const Mylib::BitSet<3> bs (0b101);
-	bitset(1, 3) = bs;
+	bitset[{1, 3}] = bs;
 	std::cout << bitset << std::endl;
 
 	std::stringstream ss;
-	std::cout << "----------------------" << std::endl;
+	std::cout << "---------------------- j" << std::endl;
 	ss << bitset;
 	std::cout << ss.str() << std::endl;
 

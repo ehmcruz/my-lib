@@ -1,6 +1,8 @@
 #ifndef __MY_LIB_BIT_HEADER_H__
 #define __MY_LIB_BIT_HEADER_H__
 
+#include <concepts>
+#include <type_traits>
 #include <ostream>
 
 #include <cstdint>
@@ -16,12 +18,26 @@ namespace Mylib
 
 // ---------------------------------------------------
 
+struct BitField
+{
+	uint16_t ini;
+	uint16_t length;
+};
+
+// ---------------------------------------------------
+
 template <typename T>
 constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t blength) noexcept
 {
 	const T mask = (1 << blength) - 1;
 
 	return (v >> bstart) & mask;
+}
+
+template <typename T>
+constexpr T extract_bits (const T v, const BitField field) noexcept
+{
+	return extract_bits(v, field.ini, field.length);
 }
 
 template <typename T>
@@ -34,13 +50,27 @@ constexpr T extract_bits (const T v, const auto bstart, const auto blength) noex
 // ---------------------------------------------------
 
 template <typename T>
-constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
+constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const std::integral auto value) noexcept
 {
 	const T mask = (1 << blength) - 1;
 	const T shifted_mask = mask << bstart;
 	const T safe_value = static_cast<T>(value) & mask;
 
 	return (src & ~shifted_mask) | (safe_value << bstart);
+}
+
+template <typename T>
+constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
+	requires (std::is_integral_v<decltype(value)> == false)
+{
+	const T value_ = value; // call conversion operator
+	return set_bits(src, bstart, blength, value_);
+}
+
+template <typename T>
+constexpr T set_bits (const T src, const BitField field, const auto value) noexcept
+{
+	return set_bits(src, field.ini, field.length, value);
 }
 
 template <typename T>
@@ -91,6 +121,8 @@ protected:
 	Type storage__;
 };
 
+// ---------------------------------------------------
+
 template <typename ParentType>
 class BitSetStorage_ : public ParentType
 {
@@ -102,13 +134,15 @@ protected:
 		return this->storage__;
 	}
 
-	const Type& storage () const noexcept
+	const Type storage () const noexcept
 	{
 		return this->storage__;
 	}
 };
 
-consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
+// ---------------------------------------------------
+
+consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits) noexcept
 {
 	if (nbits <= 8)
 		return 8;
@@ -121,6 +155,8 @@ consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits)
 	else
 		return 0;
 }
+
+// ---------------------------------------------------
 
 /*
 	BitSet__ is based on std::bitset.
@@ -141,8 +177,9 @@ public:
 	{
 	private:
 		BitSet__& bitset;
-		const std::size_t pos;
-		const std::size_t length;
+		const uint32_t pos;
+		const uint32_t length;
+
 	public:
 		reference () noexcept = delete;
 		
@@ -164,7 +201,7 @@ public:
 
 		reference& operator= (const reference& other)
 		{
-			mylib_assert_exception_msg(this->length == other.length, "The length of both references must be the same. Given ", this->length, " and ", other.length, ".");
+			//mylib_assert_exception_msg(this->length == other.length, "The length of both references must be the same. Given ", this->length, " and ", other.length, ".");
 			const Type value = other.bitset.extract_underlying(other.pos, other.length);
 			this->bitset.set(this->pos, this->length, value);
 			return *this;
@@ -173,7 +210,7 @@ public:
 		template <typename Tother, std::size_t nbits_other>
 		reference& operator= (const BitSet__<Tother, nbits_other>& other)
 		{
-			mylib_assert_exception_msg(this->length == other.size(), "The length of both references must be the same. Given ", this->length, " and ", other.size(), ".");
+			//mylib_assert_exception_msg(this->length == other.size(), "The length of both references must be the same. Given ", this->length, " and ", other.size(), ".");
 			this->bitset.set(this->pos, this->length, other.underlying());
 			return *this;
 		}
@@ -268,28 +305,35 @@ public:
 
 	// --------------------------
 
-	constexpr Type operator() (const std::size_t ini, const std::size_t length) const noexcept
+	constexpr Type operator[] (const BitField field) const noexcept
 	{
-		return extract_bits(this->storage(), ini, length);
+		return extract_bits(this->storage(), field.ini, field.length);
+	}
+
+	constexpr reference operator[] (const BitField field) noexcept
+	{
+		return reference(*this, field.ini, field.length);
+	}
+
+	// --------------------------
+
+	constexpr BitSet__ operator() (const std::size_t ini, const std::size_t length) const noexcept
+	{
+		return BitSet__(extract_bits(this->storage(), ini, length));
 	}
 
 	template <typename TenumA, typename TenumB>
 	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
-	constexpr Type operator() (const TenumA ini, const TenumB length) const noexcept
+	constexpr BitSet__ operator() (const TenumA ini, const TenumB length) const noexcept
 	{
 		return (*this)(std::to_underlying(ini), std::to_underlying(length));
 	}
 
-	constexpr reference operator() (const std::size_t ini, const std::size_t length) noexcept
-	{
-		return reference(*this, ini, length);
-	}
+	// --------------------------
 
-	template <typename TenumA, typename TenumB>
-	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
-	constexpr reference operator() (const TenumA ini, const TenumB length) noexcept
+	constexpr BitSet__ operator() (const BitField field) const noexcept
 	{
-		return (*this)(std::to_underlying(ini), std::to_underlying(length));
+		return (*this)(field.ini, field.length);
 	}
 
 	// --------------------------
@@ -306,7 +350,7 @@ public:
 
 	// --------------------------
 
-	constexpr void set (const std::size_t ini, const std::size_t length, const Type v) noexcept
+	constexpr void set (const std::size_t ini, const std::size_t length, const auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), ini, length, v);
 	}
@@ -379,6 +423,12 @@ template <typename T>
 using BitSetWrapper = BitSetT< BitSetWrapper__<T> >;
 
 // ---------------------------------------------------
+
+inline std::ostream& operator << (std::ostream& out, const BitField field)
+{
+	out << '{' << field.ini << ',' << field.length << '}';
+	return out;
+}
 
 template <typename ParentType, std::size_t nbits>
 std::ostream& operator << (std::ostream& out, const BitSet__<ParentType, nbits>& bitset)
