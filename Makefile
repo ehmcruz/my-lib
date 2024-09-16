@@ -22,5 +22,8 @@ bit: $(HEADERS) tests/test-bit.cpp
 math: $(HEADERS) tests/test-math.cpp
 	g++ tests/test-math.cpp -o test-math $(CPPFLAGS)
 
+matrix: $(HEADERS) tests/test-matrix.cpp
+	g++ tests/test-matrix.cpp -o test-matrix $(CPPFLAGS)
+
 clean:
 	- rm -rf test-pool-alloc test-stl-alloc test-timer

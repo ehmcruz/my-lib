@@ -199,16 +199,6 @@ public:
 	
 	MYLIB_MATH_BUILD_OPERATION( += )
 	MYLIB_MATH_BUILD_OPERATION( -= )
-
-	#undef MYLIB_MATH_BUILD_OPERATION
-	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		constexpr Vector& operator OP (const Type s) noexcept \
-		{ \
-			for (uint32_t i = 0; i < dim; i++) \
-				this->data[i] OP s; \
-			return *this; \
-		}
-	
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
@@ -333,20 +323,9 @@ using Point = Vector<T, dim>;
 
 MYLIB_MATH_BUILD_OPERATION( + )
 MYLIB_MATH_BUILD_OPERATION( - )
-
-#undef MYLIB_MATH_BUILD_OPERATION
-#define MYLIB_MATH_BUILD_OPERATION(OP) \
-	template <typename T, uint32_t dim> \
-	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
-	{ \
-		Vector<T, dim> r; \
-		for (uint32_t i = 0; i < dim; i++) \
-			r.data[i] = a.data[i] OP s; \
-		return r; \
-	}
-
 MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
+
 
 template <typename T, uint32_t dim> \
 constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
