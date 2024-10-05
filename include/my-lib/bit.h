@@ -433,7 +433,7 @@ inline std::ostream& operator << (std::ostream& out, const BitField field)
 template <typename ParentType, std::size_t nbits>
 std::ostream& operator << (std::ostream& out, const BitSet__<ParentType, nbits>& bitset)
 {
-	for (int32_t i = bitset.size(); i >= 0; i--)
+	for (int32_t i = bitset.size() - 1; i >= 0; i--)
 		out << bitset[i];
 	return out;
 }

@@ -130,6 +130,10 @@ int main ()
 	ss << bitset;
 	std::cout << ss.str() << std::endl;
 
+	std::cout << "---------------------- k" << std::endl;
+	uint32_t v = 0xFFFFFFFF;
+	std::cout << Mylib::BitSet<32>(Mylib::extract_bits(v, 0, 31)) << std::endl;
+
 	test_bit_field();
 	test_enum();
 
