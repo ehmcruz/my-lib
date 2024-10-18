@@ -64,6 +64,15 @@
 		} \
 	protected:
 
+#define OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
+	protected: \
+		const TYPE VAR; \
+	public: \
+		constexpr TYPE get_##VAR () const noexcept { \
+			return this->VAR; \
+		} \
+	protected:
+
 // ---------------------------------------------------
 
 #define OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
