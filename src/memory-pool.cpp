@@ -72,14 +72,15 @@ void PoolCore::alloc_chunks_for_block (Block *block)
 
 // ---------------------------------------------------
 
-PoolManager::PoolManager (std::vector<size_t>& list_type_sizes, const size_t max_block_size)
+PoolManager::PoolManager (const std::span<size_t> list_type_sizes, const size_t max_block_size)
 {
-	this->load(list_type_sizes, max_block_size);
+	std::vector<size_t> v(list_type_sizes.begin(), list_type_sizes.end());
+	this->load(v, max_block_size);
 }
 
 PoolManager::PoolManager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size)
 {
-	std::vector<size_t> v = list_type_sizes;
+	std::vector<size_t> v(list_type_sizes);
 	this->load(v, max_block_size);
 }
 

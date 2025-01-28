@@ -6,7 +6,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
 	protected: \
 		TYPE VAR; \
 	public: \
@@ -15,8 +15,8 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_SCALAR(TYPE, VAR) \
-	OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
 	public: \
 		constexpr void set_##VAR (const TYPE VAR) noexcept { \
 			this->VAR = VAR; \
@@ -25,18 +25,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_SCALAR_REACT(TYPE, VAR, REACT) \
-	OO_ENCAPSULATE_SCALAR_READONLY(TYPE, VAR) \
-	public: \
-		inline void set_##VAR (const TYPE VAR) noexcept { \
-			this->VAR = VAR; \
-			REACT; \
-		} \
-	protected:
-
-// ---------------------------------------------------
-
-#define OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		TYPE VAR = (DATA); \
 	public: \
@@ -45,8 +34,8 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_SCALAR_INIT(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR_INIT(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_SCALAR_INIT_READONLY(TYPE, VAR, DATA) \
 	public: \
 		constexpr void set_##VAR (const TYPE VAR) noexcept { \
 			this->VAR = VAR; \
@@ -55,7 +44,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_SCALAR_CONST_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR_CONST_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		const TYPE VAR = (DATA); \
 	public: \
@@ -64,7 +53,7 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_SCALAR_CONST_READONLY(TYPE, VAR) \
 	protected: \
 		const TYPE VAR; \
 	public: \
@@ -75,7 +64,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
 	protected: \
 		TYPE VAR; \
 	public: \
@@ -84,8 +73,8 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_PTR(TYPE, VAR) \
-	OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_PTR(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_PTR_READONLY(TYPE, VAR) \
 	public: \
 		constexpr void set_##VAR (TYPE VAR) noexcept { \
 			this->VAR = VAR; \
@@ -94,17 +83,17 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
-		TYPE VAR = DATA; \
+		TYPE VAR = (DATA); \
 	public: \
 		constexpr TYPE get_##VAR () noexcept { \
 			return this->VAR; \
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_PTR_INIT(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_PTR_INIT_READONLY(TYPE, VAR, DATA) \
 	public: \
 		constexpr void set_##VAR (TYPE VAR) noexcept { \
 			this->VAR = VAR; \
@@ -113,7 +102,7 @@
 
 // ---------------------------------------------------
 
-#define OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR) \
 	public: \
 		constexpr const TYPE& get_ref_##VAR () const noexcept { \
 			return this->VAR; \
@@ -123,9 +112,12 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR) \
 	public: \
 		constexpr TYPE& get_ref_##VAR () noexcept { \
+			return this->VAR; \
+		} \
+		inline TYPE get_value_##VAR () const { \
 			return this->VAR; \
 		} \
 		inline void set_##VAR (const TYPE& VAR) { \
@@ -136,23 +128,23 @@
 		} \
 	protected:
 
-#define OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+#define MYLIB_OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
 	protected: \
 		TYPE VAR; \
-	OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
+	MYLIB_OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
 
-#define OO_ENCAPSULATE_OBJ(TYPE, VAR) \
-	OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
-	OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
+#define MYLIB_OO_ENCAPSULATE_OBJ(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
 
-#define OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
+#define MYLIB_OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		TYPE VAR = (DATA); \
-	OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
+	MYLIB_OO_ENCAPSULATE_OBJ_READONLY_FUNCTIONS(TYPE, VAR)
 
-#define OO_ENCAPSULATE_OBJ_INIT(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
-	OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
+#define MYLIB_OO_ENCAPSULATE_OBJ_INIT(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
 
 // ---------------------------------------------------
 

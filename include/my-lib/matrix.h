@@ -39,36 +39,22 @@ public:
 		return this->storage;
 	}
 
-	// first: row
-	// second: column
-	inline T& operator[] (const std::pair<uint32_t, uint32_t> p)
-	{
-		if constexpr (bound_check) {
-			mylib_assert_exception(p.first < nrows)
-			mylib_assert_exception(p.second < ncols)
-		}
-		return this->storage[p.first*ncols + p.second];
-	}
-
-	// first: row
-	// second: column
-	inline const T& operator[] (const std::pair<uint32_t, uint32_t> p) const
-	{
-		if constexpr (bound_check) {
-			mylib_assert_exception(p.first < nrows)
-			mylib_assert_exception(p.second < ncols)
-		}
-		return this->storage[p.first*ncols + p.second];
-	}
-
 	inline T& operator[] (const uint32_t row, const uint32_t col)
 	{
-		return (*this)[ { row, col } ];
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < nrows)
+			mylib_assert_exception(col < ncols)
+		}
+		return this->storage[row*ncols + col];
 	}
 
 	inline const T& operator[] (const uint32_t row, const uint32_t col) const
 	{
-		return (*this)[ { row, col } ];
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < nrows)
+			mylib_assert_exception(col < ncols)
+		}
+		return this->storage[row*ncols + col];
 	}
 };
 
@@ -79,8 +65,8 @@ class Matrix
 {
 private:
 	T *storage;
-	OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, nrows)
-	OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, ncols)
+	MYLIB_OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, nrows)
+	MYLIB_OO_ENCAPSULATE_SCALAR_READONLY(uint32_t, ncols)
 
 	void alloc (const uint32_t nrows, const uint32_t ncols)
 	{
@@ -104,7 +90,7 @@ private:
 	{
 		this->alloc(other.nrows, other.ncols);
 		const uint32_t size = this->nrows * this->ncols;
-		for (uint32_t i=0; i<size; i++)
+		for (uint32_t i = 0; i < size; i++)
 			this->storage[i] = other.storage[i];
 	}
 
@@ -179,41 +165,27 @@ public:
 		return this->storage;
 	}
 
-	inline const T* get_raw_const () const noexcept
+	inline const T* get_raw () const noexcept
 	{
 		return this->storage;
 	}
 
-	// first: row
-	// second: column
-	inline T& operator[] (const std::pair<uint32_t, uint32_t> p)
-	{
-		if constexpr (bound_check) {
-			mylib_assert_exception(p.first < this->nrows)
-			mylib_assert_exception(p.second < this->ncols)
-		}
-		return this->storage[p.first*this->ncols + p.second];
-	}
-
-	// first: row
-	// second: column
-	inline const T& operator[] (const std::pair<uint32_t, uint32_t> p) const
-	{
-		if constexpr (bound_check) {
-			mylib_assert_exception(p.first < this->nrows)
-			mylib_assert_exception(p.second < this->ncols)
-		}
-		return this->storage[p.first*this->ncols + p.second];
-	}
-
 	inline T& operator[] (const uint32_t row, const uint32_t col)
 	{
-		return (*this)[ { row, col } ];
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
+		return this->storage[row*this->ncols + col];
 	}
 
 	inline const T& operator[] (const uint32_t row, const uint32_t col) const
 	{
-		return (*this)[ { row, col } ];
+		if constexpr (bound_check) {
+			mylib_assert_exception(row < this->nrows)
+			mylib_assert_exception(col < this->ncols)
+		}
+		return this->storage[row*this->ncols + col];
 	}
 };
 

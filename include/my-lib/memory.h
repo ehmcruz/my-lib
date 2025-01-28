@@ -54,7 +54,7 @@ inline void m_deallocate (void *p, const size_t size, const uint32_t align)
 // ---------------------------------------------------
 
 template <typename T>
-consteval uint32_t calculate_alignment ()
+constexpr uint32_t calculate_alignment () noexcept
 {
 	if constexpr (alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__)
 		return __STDCPP_DEFAULT_NEW_ALIGNMENT__;
@@ -113,6 +113,8 @@ public:
 	using propagate_on_container_move_assignment = std::true_type;
 
 	Manager& manager;
+
+	AllocatorSTL () = delete;
 
 	AllocatorSTL (Manager& manager_)
 		: manager(manager_)

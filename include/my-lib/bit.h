@@ -20,64 +20,64 @@ namespace Mylib
 
 struct BitField
 {
-	uint16_t ini;
-	uint16_t length;
+	uint16_t bpos;    // bit start position
+	uint16_t blength;  // bit length
 };
 
 // ---------------------------------------------------
 
 template <typename T>
-constexpr T extract_bits (const T v, const std::size_t bstart, const std::size_t blength) noexcept
+constexpr T extract_bits (const T v, const std::size_t bpos, const std::size_t blength) noexcept
 {
 	const T mask = (1 << blength) - 1;
 
-	return (v >> bstart) & mask;
+	return (v >> bpos) & mask;
 }
 
 template <typename T>
 constexpr T extract_bits (const T v, const BitField field) noexcept
 {
-	return extract_bits(v, field.ini, field.length);
+	return extract_bits(v, field.bpos, field.blength);
 }
 
 template <typename T>
-constexpr T extract_bits (const T v, const auto bstart, const auto blength) noexcept
-	requires std::is_enum_v<decltype(bstart)> && std::is_enum_v<decltype(blength)>
+constexpr T extract_bits (const T v, const auto bpos, const auto blength) noexcept
+	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
 {
-	return extract_bits(v, std::to_underlying(bstart), std::to_underlying(blength));
+	return extract_bits(v, std::to_underlying(bpos), std::to_underlying(blength));
 }
 
 // ---------------------------------------------------
 
 template <typename T>
-constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const std::integral auto value) noexcept
+constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t blength, const std::integral auto value) noexcept
 {
 	const T mask = (1 << blength) - 1;
-	const T shifted_mask = mask << bstart;
+	const T shifted_mask = mask << bpos;
 	const T safe_value = static_cast<T>(value) & mask;
 
-	return (src & ~shifted_mask) | (safe_value << bstart);
+	return (src & ~shifted_mask) | (safe_value << bpos);
 }
 
 template <typename T>
-constexpr T set_bits (const T src, const std::size_t bstart, const std::size_t blength, const auto value) noexcept
+constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t blength, const auto value) noexcept
 	requires (std::is_integral_v<decltype(value)> == false)
 {
 	const T value_ = value; // call conversion operator
-	return set_bits(src, bstart, blength, value_);
+	return set_bits(src, bpos, blength, value_);
 }
 
 template <typename T>
 constexpr T set_bits (const T src, const BitField field, const auto value) noexcept
 {
-	return set_bits(src, field.ini, field.length, value);
+	return set_bits(src, field.bpos, field.blength, value);
 }
 
 template <typename T>
-constexpr T set_bits (const T src, const auto bstart, const auto blength, const auto value) noexcept
-	requires std::is_enum_v<decltype(bstart)> && std::is_enum_v<decltype(blength)>
+constexpr T set_bits (const T src, const auto bpos, const auto blength, const auto value) noexcept
+	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
 {
-	return set_bits(src, std::to_underlying(bstart), std::to_underlying(blength), value);
+	return set_bits(src, std::to_underlying(bpos), std::to_underlying(blength), value);
 }
 
 // ---------------------------------------------------
@@ -142,7 +142,7 @@ protected:
 
 // ---------------------------------------------------
 
-consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits) noexcept
+constexpr std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits) noexcept
 {
 	if (nbits <= 8)
 		return 8;
@@ -211,7 +211,7 @@ public:
 		reference& operator= (const BitSet__<Tother, nbits_other>& other)
 		{
 			//mylib_assert_exception_msg(this->length == other.size(), "The length of both references must be the same. Given ", this->length, " and ", other.size(), ".");
-			this->bitset.set(this->pos, this->length, other.underlying());
+			this->bitset.set(this->pos, this->length, other.to_underlying());
 			return *this;
 		}
 
@@ -272,7 +272,7 @@ public:
 
 	// --------------------------
 
-	constexpr Type underlying () const noexcept
+	constexpr Type to_underlying () const noexcept
 	{
 		return this->storage();
 	}
@@ -307,52 +307,64 @@ public:
 
 	constexpr Type operator[] (const BitField field) const noexcept
 	{
-		return extract_bits(this->storage(), field.ini, field.length);
+		return extract_bits(this->storage(), field.bpos, field.blength);
 	}
 
 	constexpr reference operator[] (const BitField field) noexcept
 	{
-		return reference(*this, field.ini, field.length);
+		return reference(*this, field.bpos, field.blength);
 	}
 
 	// --------------------------
 
-	constexpr BitSet__ operator() (const std::size_t ini, const std::size_t length) const noexcept
+	constexpr Type operator[] (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return BitSet__(extract_bits(this->storage(), ini, length));
+		return extract_bits(this->storage(), pos, length);
+	}
+
+	constexpr reference operator[] (const std::size_t pos, const std::size_t length) noexcept
+	{
+		return reference(*this, pos, length);
+	}
+
+	// --------------------------
+
+	constexpr BitSet__ operator() (const std::size_t pos, const std::size_t length) const noexcept
+	{
+		return BitSet__(extract_bits(this->storage(), pos, length));
 	}
 
 	template <typename TenumA, typename TenumB>
 	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
-	constexpr BitSet__ operator() (const TenumA ini, const TenumB length) const noexcept
+	constexpr BitSet__ operator() (const TenumA pos, const TenumB length) const noexcept
 	{
-		return (*this)(std::to_underlying(ini), std::to_underlying(length));
+		return (*this)(std::to_underlying(pos), std::to_underlying(length));
 	}
 
 	// --------------------------
 
 	constexpr BitSet__ operator() (const BitField field) const noexcept
 	{
-		return (*this)(field.ini, field.length);
+		return (*this)(field.bpos, field.blength);
 	}
 
 	// --------------------------
 
-	constexpr BitSet__ extract (const std::size_t ini, const std::size_t length) const noexcept
+	constexpr BitSet__ extract (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return BitSet__( extract_bits(this->storage(), ini, length) );
+		return BitSet__( extract_bits(this->storage(), pos, length) );
 	}
 
-	constexpr Type extract_underlying (const std::size_t ini, const std::size_t length) const noexcept
+	constexpr Type extract_underlying (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return extract_bits(this->storage(), ini, length);
+		return extract_bits(this->storage(), pos, length);
 	}
 
 	// --------------------------
 
-	constexpr void set (const std::size_t ini, const std::size_t length, const auto v) noexcept
+	constexpr void set (const std::size_t pos, const std::size_t length, const auto v) noexcept
 	{
-		this->storage() = set_bits(this->storage(), ini, length, v);
+		this->storage() = set_bits(this->storage(), pos, length, v);
 	}
 
 	// --------------------------
@@ -426,7 +438,7 @@ using BitSetWrapper = BitSetT< BitSetWrapper__<T> >;
 
 inline std::ostream& operator << (std::ostream& out, const BitField field)
 {
-	out << '{' << field.ini << ',' << field.length << '}';
+	out << '{' << field.bpos << ',' << field.blength << '}';
 	return out;
 }
 

@@ -32,22 +32,22 @@ private:
 public:
 	using Type = T;
 
-	consteval static uint32_t get_nrows ()
+	constexpr static uint32_t get_nrows () noexcept
 	{
 		return nrows;
 	}
 
-	consteval static uint32_t get_ncols ()
+	constexpr static uint32_t get_ncols () noexcept
 	{
 		return ncols;
 	}
 
-	consteval static uint32_t get_length ()
+	constexpr static uint32_t get_length () noexcept
 	{
-		return get_nrows() * get_ncols();
+		return nrows * ncols;
 	}
 
-	consteval static T fp (const auto v)
+	constexpr static T fp (const auto v) noexcept
 	{
 		return static_cast<T>(v);
 	}
@@ -74,24 +74,24 @@ public:
 
 	// -------------------------------------
 
-	constexpr T& operator() (const uint32_t i) noexcept
+	constexpr T& operator[] (const uint32_t i) noexcept
 	{
 		return this->data[i];
 	}
 
-	constexpr const T operator() (const uint32_t i) const noexcept
+	constexpr const T operator[] (const uint32_t i) const noexcept
 	{
 		return this->data[i];
 	}
 
-	constexpr T& operator() (const uint32_t row, const uint32_t col) noexcept
+	constexpr T& operator[] (const uint32_t row, const uint32_t col) noexcept
 	{
-		return this->data[row*get_ncols() + col];
+		return this->data[row*ncols + col];
 	}
 
-	constexpr T operator() (const uint32_t row, const uint32_t col) const noexcept
+	constexpr T operator[] (const uint32_t row, const uint32_t col) const noexcept
 	{
-		return this->data[row*get_ncols() + col];
+		return this->data[row*ncols + col];
 	}
 
 	#undef MYLIB_MATH_BUILD_OPERATION
@@ -146,7 +146,7 @@ public:
 		auto& m = *this;
 
 		for (uint32_t i = 0; i < nrows; i++)
-			m(i, i) = 1;
+			m[i, i] = 1;
 	}
 
 	template <uint32_t vector_dim>
@@ -160,10 +160,10 @@ public:
 		auto& m = *this;
 		
 		for (uint32_t i = 0; i < vector_dim; i++)
-			m(i, i) = v[i];
+			m[i, i] = v[i];
 		
 		for (uint32_t i = vector_dim; i < nrows; i++)
-			m(i, i) = 1;
+			m[i, i] = 1;
 	}
 
 	template <uint32_t vector_dim>
@@ -179,7 +179,7 @@ public:
 		auto& m = *this;
 
 		for (uint32_t i = 0; i < vector_dim; i++)
-			m(i, last) = v[i];
+			m[i, last] = v[i];
 	}
 
 	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
@@ -199,17 +199,17 @@ public:
 	#if 1
 		Matrix w;
 
-		w(0, 0) = 0;
-		w(0, 1) = -axis.z;
-		w(0, 2) = axis.y;
+		w[0, 0] = 0;
+		w[0, 1] = -axis.z;
+		w[0, 2] = axis.y;
 
-		w(1, 0) = axis.z;
-		w(1, 1) = 0;
-		w(1, 2) = -axis.x;
+		w[1, 0] = axis.z;
+		w[1, 1] = 0;
+		w[1, 2] = -axis.x;
 
-		w(2, 0) = -axis.y;
-		w(2, 1) = axis.x;
-		w(2, 2) = 0;
+		w[2, 0] = -axis.y;
+		w[2, 1] = axis.x;
+		w[2, 2] = 0;
 
 		const Matrix w2 = w * w;
 
@@ -244,18 +244,18 @@ public:
 
 		for (uint32_t i = 0; i < 3; i++) {
 			for (uint32_t j = 0; j < 3; j++)
-				self(i, j) = m(i, j);
+				self[i, j] = m[i, j];
 		}
 
-		self(0, 3) = 0;
-		self(1, 3) = 0;
-		self(2, 3) = 0;
+		self[0, 3] = 0;
+		self[1, 3] = 0;
+		self[2, 3] = 0;
 
-		self(3, 0) = 0;
-		self(3, 1) = 0;
-		self(3, 2) = 0;
+		self[3, 0] = 0;
+		self[3, 1] = 0;
+		self[3, 2] = 0;
 
-		self(3, 3) = 1;
+		self[3, 3] = 1;
 	}
 
 	/*
@@ -290,25 +290,25 @@ public:
 
 		auto& m = *this;
 
-		m(0, 0) = y / aspect;
-		m(0, 1) = 0;
-		m(0, 2) = 0;
-		m(0, 3) = 0;
+		m[0, 0] = y / aspect;
+		m[0, 1] = 0;
+		m[0, 2] = 0;
+		m[0, 3] = 0;
 
-		m(1, 0) = 0;
-		m(1, 1) = y;
-		m(1, 2) = 0;
-		m(1, 3) = 0;
+		m[1, 0] = 0;
+		m[1, 1] = y;
+		m[1, 2] = 0;
+		m[1, 3] = 0;
 
-		m(2, 0) = 0;
-		m(2, 1) = 0;
-		m(2, 2) = (zfar + znear) / zdist * handedness;
-		m(2, 3) = (fp(2) * znear * zfar) / zdist;
+		m[2, 0] = 0;
+		m[2, 1] = 0;
+		m[2, 2] = (zfar + znear) / zdist * handedness;
+		m[2, 3] = (fp(2) * znear * zfar) / zdist;
 		
-		m(3, 0) = 0;
-		m(3, 1) = 0;
-		m(3, 2) = fp(-1) * handedness;
-		m(3, 3) = 0;
+		m[3, 0] = 0;
+		m[3, 1] = 0;
+		m[3, 2] = fp(-1) * handedness;
+		m[3, 3] = 0;
 	}
 
 	/*
@@ -341,25 +341,25 @@ public:
 
 		auto& m = *this;
 
-		m(0, 0) = right.x;
-		m(0, 1) = right.y;
-		m(0, 2) = right.z;
-		m(0, 3) = 0; //-dot_product(right, eye);
+		m[0, 0] = right.x;
+		m[0, 1] = right.y;
+		m[0, 2] = right.z;
+		m[0, 3] = 0; //-dot_product(right, eye);
 
-		m(1, 0) = up.x;
-		m(1, 1) = up.y;
-		m(1, 2) = up.z;
-		m(1, 3) = 0; //-dot_product(up, eye);
+		m[1, 0] = up.x;
+		m[1, 1] = up.y;
+		m[1, 2] = up.z;
+		m[1, 3] = 0; //-dot_product(up, eye);
 
-		m(2, 0) = -direction.x;
-		m(2, 1) = -direction.y;
-		m(2, 2) = -direction.z;
-		m(2, 3) = 0; //dot_product(direction, eye);
+		m[2, 0] = -direction.x;
+		m[2, 1] = -direction.y;
+		m[2, 2] = -direction.z;
+		m[2, 3] = 0; //dot_product(direction, eye);
 
-		m(3, 0) = 0;
-		m(3, 1) = 0;
-		m(3, 2) = 0;
-		m(3, 3) = 1;
+		m[3, 0] = 0;
+		m[3, 1] = 0;
+		m[3, 2] = 0;
+		m[3, 3] = 1;
 
 		// You can choose between:
 		// Uncomment the dot products and comment the below translation.
@@ -376,20 +376,20 @@ public:
 		auto& m = *this;
 		for (uint32_t i = 0; i < nrows; i++) {
 			for (uint32_t j = i + 1; j < ncols; j++)
-				std::swap(m(i, j), m(j, i));
+				std::swap(m[i, j], m[j, i]);
 		}
 	}
 
 	// ---------------------------------------------------
 
-	static consteval Matrix zero () noexcept
+	static constexpr Matrix zero () noexcept
 	{
 		Matrix m;
 		m.set_zero();
 		return m;
 	}
 
-	static consteval Matrix identity () noexcept
+	static constexpr Matrix identity () noexcept
 	{
 		static_assert(nrows == ncols);
 		Matrix m;
@@ -478,7 +478,7 @@ Vector<T, dim> rotate (const Vector<T, dim>& axis, const T angle, const Vector<T
 	{ \
 		Matrix<T, nrows, ncols> r; \
 		for (uint32_t i = 0; i < (nrows*ncols); i++) \
-			r(i) = ma(i) OP mb(i); \
+			r[i] = ma[i] OP mb[i]; \
 		return r; \
 	} \
 	template <typename T, uint32_t nrows, uint32_t ncols> \
@@ -486,7 +486,7 @@ Vector<T, dim> rotate (const Vector<T, dim>& axis, const T angle, const Vector<T
 	{ \
 		Matrix<T, nrows, ncols> r; \
 		for (uint32_t i = 0; i < (nrows*ncols); i++) \
-			r(i) = ma(i) OP v; \
+			r[i] = ma[i] OP v; \
 		return r; \
 	}
 	
@@ -502,7 +502,7 @@ MYLIB_MATH_BUILD_OPERATION( - )
 	{ \
 		Matrix<T, nrows, ncols> r; \
 		for (uint32_t i = 0; i < (nrows*ncols); i++) \
-			r(i) = m(i) OP v; \
+			r[i] = m[i] OP v; \
 		return r; \
 	}
 	
@@ -521,10 +521,10 @@ constexpr Matrix<T, nrows_a, ncols_b> operator* (const Matrix<T, nrows_a, ncols_
 
 	for (uint32_t i = 0; i < nrows_a; i++) {
 		for (uint32_t k = 0; k < ncols_a; k++) {
-			const T v = a(i, k);
+			const T v = a[i, k];
 
 			for (uint32_t j = 0; j < ncols_b; j++)
-				r(i, j) += v * b(k, j);
+				r[i, j] += v * b[k, j];
 		}
 	}
 	
@@ -541,7 +541,7 @@ Vector<T, dim> operator* (const Matrix<T, dim, dim>& m, const Vector<T, dim>& v)
 	for (uint32_t i = 0; i < dim; i++) {
 		r[i] = 0;
 		for (uint32_t j = 0; j < dim; j++)
-			r[i] += m(i, j) * v[j];
+			r[i] += m[i, j] * v[j];
 	}
 	
 	return r;
@@ -556,7 +556,7 @@ constexpr Matrix<T, ncols, nrows> transpose (const Matrix<T, nrows, ncols>& m) n
 
 	for (uint32_t i = 0; i < nrows; i++) {
 		for (uint32_t j = 0; j < ncols; j++)
-			r(j, i) = m(i, j);
+			r[j, i] = m[i, j];
 	}
 	
 	return r;
@@ -569,7 +569,7 @@ std::ostream& operator << (std::ostream& out, const Matrix<T, nrows, ncols>& m)
 {
 	for (uint32_t i = 0; i < nrows; i++) {
 		for (uint32_t j = 0; j < ncols; j++)
-			out << m(i, j) << ", ";
+			out << m[i, j] << ", ";
 		out << std::endl;
 	}
 

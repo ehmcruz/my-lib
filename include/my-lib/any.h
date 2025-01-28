@@ -24,7 +24,7 @@ template <uint32_t minimum_storage_size, uint32_t alignment=__STDCPP_DEFAULT_NEW
 class MYLIB_ALIGN_STRUCT(alignment) Any
 {
 public:
-	consteval static uint32_t size ()
+	constexpr static uint32_t size () noexcept
 	{
 		return ((minimum_storage_size % alignment) == 0)
 		? minimum_storage_size
@@ -36,6 +36,7 @@ private:
 
 public:
 	Any () noexcept = default;
+	Any (const Any& other) noexcept = default;
 
 	template <typename T>
 	Any (const T& value) noexcept
@@ -45,6 +46,8 @@ public:
 	}
 
 	// -----------------------
+
+	Any& operator= (const Any& other) noexcept = default;
 
 	template <typename T>
 	Any& operator= (const T& value) noexcept

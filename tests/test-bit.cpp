@@ -104,7 +104,7 @@ int main ()
 	std::cout << bit << std::endl;
 
 	std::cout << "---------------------- e" << std::endl;
-	bits = (~bitset(0, 2)).underlying();
+	bits = (~bitset(0, 2)).to_underlying();
 	std::cout << static_cast<uint64_t>(bits) << std::endl;
 
 	std::cout << "---------------------- f" << std::endl;
@@ -116,14 +116,22 @@ int main ()
 	bitset[{0, 2}] = bitset(2, 2);
 	std::cout << bitset << std::endl;
 
+	bitset = 0;
+
 	std::cout << "---------------------- h" << std::endl;
-	bitset[{1, 3}] = cset(0, 3);
+	bitset[{1, 3}] = 0b101;
 	std::cout << bitset << std::endl;
 
+#ifdef __cpp_multidimensional_subscript
+	bitset = 0;
+
 	std::cout << "---------------------- i" << std::endl;
-	const Mylib::BitSet<3> bs (0b101);
-	bitset[{1, 3}] = bs;
+	const Mylib::BitSet<3> bs (0b111);
+	bitset[2, 3] = bs;
 	std::cout << bitset << std::endl;
+#else
+	#warning "Multidimensional subscripts are not supported"
+#endif
 
 	std::stringstream ss;
 	std::cout << "---------------------- j" << std::endl;

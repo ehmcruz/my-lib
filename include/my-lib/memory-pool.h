@@ -4,6 +4,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <vector>
+#include <span>
 //#include <mutex>
 
 #include <cstdint>
@@ -56,7 +57,7 @@ private:
 	const uint32_t chunks_per_block;
 	const uint32_t align;
 
-	OO_ENCAPSULATE_SCALAR_CONST_READONLY(size_t, chunk_size)
+	MYLIB_OO_ENCAPSULATE_SCALAR_CONST_READONLY(size_t, chunk_size)
 
 	Block *blocks = nullptr;
 	Chunk *free_chunks = nullptr;
@@ -105,7 +106,7 @@ public:
 		//this->mutex.unlock();
 	}
 
-	static consteval size_t lowest_chunk_size ()
+	static constexpr size_t lowest_chunk_size () noexcept
 	{
 		return sizeof(void*);
 	}
@@ -153,7 +154,7 @@ private:
 
 public:
 	// max_block_size: max amount of memory to be allocated per malloc
-	PoolManager (std::vector<size_t>& list_type_sizes, const size_t max_block_size = default_block_size);
+	PoolManager (const std::span<size_t> list_type_sizes, const size_t max_block_size = default_block_size);
 	PoolManager (std::initializer_list<size_t> list_type_sizes, const size_t max_block_size = default_block_size);
 	PoolManager (const size_t max_type_size, const size_t step_size, const size_t max_block_size = default_block_size);
 

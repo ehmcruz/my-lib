@@ -150,12 +150,12 @@ public:
 		return this->data;
 	}
 
-	consteval static uint32_t get_dim ()
+	constexpr static uint32_t get_dim () noexcept
 	{
 		return dim;
 	}
 
-	consteval static Type fp (const auto v)
+	constexpr static Type fp (const auto v) noexcept
 	{
 		return static_cast<Type>(v);
 	}
@@ -263,7 +263,7 @@ public:
 			this->data[i] = 0;
 	}
 
-	static consteval Vector zero () noexcept
+	static constexpr Vector zero () noexcept
 	{
 		Vector v;
 		v.set_zero();
