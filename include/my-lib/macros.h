@@ -107,9 +107,6 @@
 		constexpr const TYPE& get_ref_##VAR () const noexcept { \
 			return this->VAR; \
 		} \
-		inline TYPE get_value_##VAR () const { \
-			return this->VAR; \
-		} \
 	protected:
 
 #define MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR) \
@@ -117,6 +114,10 @@
 		constexpr TYPE& get_ref_##VAR () noexcept { \
 			return this->VAR; \
 		} \
+	protected:
+
+#define MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS_COPY_MOVE(TYPE, VAR) \
+	public: \
 		inline TYPE get_value_##VAR () const { \
 			return this->VAR; \
 		} \
@@ -137,6 +138,10 @@
 	MYLIB_OO_ENCAPSULATE_OBJ_READONLY(TYPE, VAR) \
 	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
 
+#define MYLIB_OO_ENCAPSULATE_OBJ_WITH_COPY_MOVE(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_OBJ(TYPE, VAR) \
+	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS_COPY_MOVE(TYPE, VAR)
+
 #define MYLIB_OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
 	protected: \
 		TYPE VAR = (DATA); \
@@ -145,6 +150,10 @@
 #define MYLIB_OO_ENCAPSULATE_OBJ_INIT(TYPE, VAR, DATA) \
 	MYLIB_OO_ENCAPSULATE_OBJ_INIT_READONLY(TYPE, VAR, DATA) \
 	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS(TYPE, VAR)
+
+#define MYLIB_OO_ENCAPSULATE_OBJ_INIT_WITH_COPY_MOVE(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_OBJ_INIT(TYPE, VAR, DATA) \
+	MYLIB_OO_ENCAPSULATE_OBJ_FUNCTIONS_COPY_MOVE(TYPE, VAR)
 
 // ---------------------------------------------------
 
