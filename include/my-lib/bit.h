@@ -20,7 +20,7 @@ namespace Mylib
 
 struct BitField
 {
-	uint16_t bpos;    // bit start position
+	uint16_t bpos;     // bit start position
 	uint16_t blength;  // bit length
 };
 
