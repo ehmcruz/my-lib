@@ -30,7 +30,7 @@ public:
 	using Type = T;
 	using Vector = Mylib::Math::Vector<T, 3>;
 
-	consteval static Type fp (const auto v)
+	constexpr static Type fp (const auto v) noexcept
 	{
 		return static_cast<Type>(v);
 	}
@@ -246,14 +246,14 @@ public:
 
 	// ---------------------------------------------------
 
-	static consteval Quaternion zero () noexcept
+	static constexpr Quaternion zero () noexcept
 	{
 		Quaternion q;
 		q.set_zero();
 		return q;
 	}
 
-	static consteval Quaternion identity () noexcept
+	static constexpr Quaternion identity () noexcept
 	{
 		Quaternion q;
 		q.set_identity();
