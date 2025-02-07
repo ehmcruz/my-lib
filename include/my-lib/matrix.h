@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <span>
+
 #include <my-lib/std.h>
 #include <my-lib/macros.h>
 
@@ -186,6 +188,11 @@ public:
 			mylib_assert_exception(col < this->ncols)
 		}
 		return this->storage[row*this->ncols + col];
+	}
+
+	inline std::span<T> to_span () noexcept
+	{
+		return std::span<T>(this->storage, this->nrows * this->ncols);
 	}
 };
 
