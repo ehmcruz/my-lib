@@ -262,6 +262,7 @@ public:
 		About perspective projection matrix:
 		https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
 		https://stackoverflow.com/questions/76304134/understanding-opengl-perspective-projection-matrix-setting-the-near-plane-below
+		https://stackoverflow.com/questions/4124041/is-opengl-coordinate-system-left-handed-or-right-handed
 		
 		https://github.com/google/mathfu
 			File include/mathfu/matrix.h
@@ -341,9 +342,9 @@ public:
 
 		auto& m = *this;
 
-		m[0, 0] = right.x;
-		m[0, 1] = right.y;
-		m[0, 2] = right.z;
+		m[0, 0] = -right.x;
+		m[0, 1] = -right.y;
+		m[0, 2] = -right.z;
 		m[0, 3] = 0; //-dot_product(right, eye);
 
 		m[1, 0] = up.x;
