@@ -269,30 +269,6 @@ public:
 		v.set_zero();
 		return v;
 	}
-
-	static constexpr Vector up () noexcept
-		requires (dim == 3)
-	{
-		return Vector(0, 1, 0);
-	}
-
-	static constexpr Vector down () noexcept
-		requires (dim == 3)
-	{
-		return Vector(0, -1, 0);
-	}
-
-	static constexpr Vector left () noexcept
-		requires (dim == 3)
-	{
-		return Vector(-1, 0, 0);
-	}
-
-	static constexpr Vector right () noexcept
-		requires (dim == 3)
-	{
-		return Vector(1, 0, 0);
-	}
 };
 
 // ---------------------------------------------------
