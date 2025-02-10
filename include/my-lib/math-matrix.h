@@ -259,6 +259,8 @@ public:
 	}
 
 	/*
+		Perspective projection matrix
+
 		About perspective projection matrix:
 		https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
 		https://stackoverflow.com/questions/76304134/understanding-opengl-perspective-projection-matrix-setting-the-near-plane-below
@@ -267,20 +269,20 @@ public:
 		https://github.com/google/mathfu
 			File include/mathfu/matrix.h
 			Function PerspectiveHelper
-			Uses another matrix, but we can use as reference.
 		
 		https://github.com/g-truc/glm
 			File glm/ext/matrix_clip_space.inl
 			Function perspectiveRH_NO
-			We implemented this one.
+		
+		My function is working fine for Opengl.
+		Considers a right-handed world coordinate system.
 	*/
 
 	constexpr void set_perspective (const T fovy,
 	                                const T screen_width,
 									const T screen_height,
 									const T znear,
-									const T zfar,
-									const T handedness = 1
+									const T zfar
 									) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
@@ -303,13 +305,63 @@ public:
 
 		m[2, 0] = 0;
 		m[2, 1] = 0;
-		m[2, 2] = (zfar + znear) / zdist * handedness;
+		m[2, 2] = (zfar + znear) / zdist;
 		m[2, 3] = (fp(2) * znear * zfar) / zdist;
 		
 		m[3, 0] = 0;
 		m[3, 1] = 0;
-		m[3, 2] = fp(-1) * handedness;
+		m[3, 2] = fp(-1);
 		m[3, 3] = 0;
+	}
+
+	/*
+		Orthogonal projection matrix
+
+		https://github.com/google/mathfu
+			File include/mathfu/matrix.h
+			Function OrthoHelper
+		
+		This orthographic projection matrix is for a right-handed
+		world coordinate system and opengl.
+	*/
+
+	constexpr void set_orthogonal  (const T view_width, // height will be calculated using the aspect ratio
+	                                const T screen_width,
+									const T screen_height,
+									const T znear,
+									const T zfar
+									) noexcept
+	{
+		static_assert(nrows == ncols && nrows == 4);
+
+		const T aspect = screen_width / screen_height;
+		const T view_height = view_width / aspect;
+		const T left = view_width / fp(-2);
+		const T right = -left;
+		const T bottom = view_height / fp(-2);
+		const T top = -bottom;
+
+		auto& self = *this;
+
+		self[0, 0] = fp(2) / (right - left);
+		self[0, 1] = 0;
+		self[0, 2] = 0;
+		self[0, 3] = -(right + left) / (right - left);
+
+		self[1, 0] = 0;
+		self[1, 1] = fp(2) / (top - bottom);
+		self[1, 2] = 0;
+		self[1, 3] = -(top + bottom) / (top - bottom);
+
+		self[2, 0] = 0;
+		self[2, 1] = 0;
+		self[2, 2] = fp(-2) / (zfar - znear);
+		self[2, 3] = (znear + zfar) / (znear - zfar);
+
+		self[3, 0] = 0;
+		self[3, 1] = 0;
+		self[3, 2] = 0;
+		self[3, 3] = 1;
 	}
 
 	/*
@@ -323,10 +375,8 @@ public:
 			File glm/ext/matrix_transform.inl
 			Function lookAtRH
 
-			The above functions were generating either a black screen
-			or a mirrored image.
-			So I modified them a bit.
-			My code is working fine for Opengl.
+		My code is working fine for Opengl.
+		Considers a right-handed world coordinate system.
 	*/
 
 	constexpr void set_look_at (const Vector<T, 3>& eye,
@@ -423,13 +473,12 @@ public:
 								         const T screen_width,
 								         const T screen_height,
 								         const T znear,
-								         const T zfar,
-								         const T handedness = 1
+								         const T zfar
 								         ) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
 		Matrix m;
-		m.set_perspective(fovy, screen_width, screen_height, znear, zfar, handedness);
+		m.set_perspective(fovy, screen_width, screen_height, znear, zfar);
 		return m;
 	}
 
