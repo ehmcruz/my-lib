@@ -346,12 +346,12 @@ public:
 		self[0, 0] = fp(2) / (right - left);
 		self[0, 1] = 0;
 		self[0, 2] = 0;
-		self[0, 3] = -(right + left) / (right - left);
+		self[0, 3] = 0; // -(right + left) / (right - left);
 
 		self[1, 0] = 0;
 		self[1, 1] = fp(2) / (top - bottom);
 		self[1, 2] = 0;
-		self[1, 3] = -(top + bottom) / (top - bottom);
+		self[1, 3] = 0; // -(top + bottom) / (top - bottom);
 
 		self[2, 0] = 0;
 		self[2, 1] = 0;

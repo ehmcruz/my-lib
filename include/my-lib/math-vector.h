@@ -5,6 +5,7 @@
 #include <concepts>
 #include <type_traits>
 #include <ostream>
+#include <algorithm>
 
 #include <cmath>
 
@@ -345,6 +346,18 @@ constexpr Vector<T, dim> abs (const Vector<T, dim>& v) noexcept
 }
 
 // ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr Vector<T, dim> max (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+{
+	Vector<T, dim> r;
+	for (uint32_t i = 0; i < dim; i++)
+		r[i] = std::max(a[i], b[i]);
+	return r;
+}
+
+// ---------------------------------------------------
+
 template <typename T, uint32_t dim>
 constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
 {
