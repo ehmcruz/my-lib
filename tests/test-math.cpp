@@ -55,5 +55,13 @@ int main ()
 	Vector3f v2 = Vector3f(1.0f, 0.0f, 0.0f);
 	std::cout << "Vector rotated with matrix: " << (m3 * v2) << " Vector rotated with quaternion: " << rotate(q1, v2) << std::endl;
 
+	// test conversion
+
+	{
+		Quaternionf q2 = Quaternionf::rotation(Vector3f(1, 0, 0), Vector3f(0, 1, 0));
+		auto [axis, angle] = q2.to_axis_angle();
+		std::cout << "Quaternion to axis-angle: " << axis << " " << Mylib::Math::radians_to_degrees(angle) << std::endl;
+	}
+
 	return 0;
 }

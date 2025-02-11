@@ -22,6 +22,11 @@ namespace Math
 
 // ---------------------------------------------------
 
+template <typename T>
+class Quaternion;
+
+// ---------------------------------------------------
+
 template <typename T, uint32_t dim>
 class VectorStorage__;
 
@@ -258,6 +263,13 @@ public:
 		this->z = a.x * b.y - a.y * b.x;
 	}
 
+	constexpr void rotate (const Quaternion<T>& q) noexcept
+	{
+		const Quaternion<T> v_(*this); // create a pure quaternion from the vector
+		const Quaternion<T> r = (q * v_) * conjugate(q);
+		*this = r.v;
+	}
+
 	constexpr void set_zero () noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)
@@ -383,6 +395,72 @@ constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 
 // ---------------------------------------------------
 
+// Find an arbitrary vector that is orthogonal to the given vector.
+// Copied from the MathFu library.
+
+template <typename T>
+constexpr Vector<T, 3> orthogonal_vector (const Vector<T, 3>& v) noexcept
+{
+	// We start out by taking the cross product of the vector and the x-axis to
+	// find something parallel to the input vectors.  If that cross product
+	// turns out to be length 0 (i. e. the vectors already lie along the x axis)
+	// then we use the y-axis instead.
+	
+	Vector<T, 3> r = cross_product(Vector<T, 3>(1, 0, 0), v);
+	
+	// We use a fairly high epsilon here because we know that if this number
+	// is too small, the axis we'll get from a cross product with the y axis
+	// will be much better and more numerically stable.
+	
+	if (r.length_squared() < static_cast<T>(0.05))
+		r = cross_product(Vector<T, 3>(0, 1, 0), v);
+
+	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+struct VectorBasis3
+{
+	using VectorBasis = VectorBasis3;
+	using Vector = Mylib::Math::Vector<T, 3>;
+
+	Vector x;
+	Vector y;
+	Vector z;
+
+	constexpr static uint32_t get_dim () noexcept
+	{
+		return 3;
+	}
+
+	// rh is right-handed
+
+	constexpr void set_default_rh_orthonormal_basis () noexcept
+	{
+		this->x = Vector(1, 0, 0);
+		this->y = Vector(0, 1, 0);
+		this->z = Vector(0, 0, 1);
+	}
+
+	constexpr void rotate (const Quaternion<T>& q) noexcept
+	{
+		this->x.rotate(q);
+		this->y.rotate(q);
+		this->z.rotate(q);
+	}
+
+	static constexpr VectorBasis default_rh_orthonormal_basis () noexcept
+	{
+		VectorBasis basis;
+		basis.set_default_rh_orthonormal_basis();
+		return basis;
+	}
+};
+
+// ---------------------------------------------------
+
 using Vector2f = Vector<float, 2>;
 using Point2f = Vector2f;
 
@@ -441,6 +519,15 @@ std::ostream& operator << (std::ostream& out, const Vector<T, dim>& v)
 
 	out << "]";
 
+	return out;
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+std::ostream& operator << (std::ostream& out, const VectorBasis3<T>& b)
+{
+	out << "[" << b.x << ", " << b.y << ", " << b.z << "]";
 	return out;
 }
 

@@ -154,22 +154,27 @@ public:
 		It considers the quaternion as a rotation quaternion (unit quaternion length=1).
 	*/
 
-	std::pair<Vector, T> to_axis_angle () const noexcept
+	constexpr std::pair<Vector, T> to_axis_angle () const noexcept
 	{
-		std::pair<Vector, T> r;
-		Vector& axis = r.first;
-		T& angle = r.second;
+		Quaternion<T> q = (this->w > 0) ? *this : Quaternion<T>(-(*this));
+		Vector axis;
+		T angle;
+		
+		const T length = q.v.normalize();
 
-		const T length = this->v.length();
+		// In case length is zero, normalize leaves NaNs in axis.
+		// This happens at angle = 0 and 360.
+		// All axes are correct, so any will do.
 
-		if (length == fp(0)) [[unlikely]]
+		if (length == 0) [[unlikely]]
 			axis.set(1, 0, 0);
 		else
-			axis = this->v / length; // normalize
-		
-		angle = std::acos(this->w) * fp(2);
+			axis = q.v;
 
-		return r;
+		angle = 2 * std::atan2(length, this->w);
+		// angle = std::acos(this->w) * fp(2);
+
+		return std::make_pair(axis, angle);
 
 /*		const T angle = std::acos(this->w) * 2;
 		const T s = std::sqrt(1 - this->w * this->w);
@@ -182,11 +187,50 @@ public:
 
 	// ---------------------------------------------------
 
-	void set_rotation (const Vector& axis, const T angle) noexcept
+	constexpr void set_rotation (const Vector& axis, const T angle) noexcept
 	{
 		const T half_angle = angle / fp(2);
 		this->v = Mylib::Math::normalize(axis) * std::sin(half_angle);
 		this->w = std::cos(half_angle);
+	}
+
+	// ---------------------------------------------------
+
+	constexpr void set_rotation (Vector start, Vector end) noexcept
+	{
+		start.normalize();
+		end.normalize();
+
+		const T dot_product = Mylib::Math::dot_product(start, end);
+
+		// From MathFu library:
+		// Any rotation < 0.1 degrees is treated as no rotation
+		// in order to avoid division by zero errors.
+		// So we early-out in cases where it's less than 0.1 degrees.
+		// cos( 0.1 degrees) = 0.99999847691
+
+		if (dot_product >= fp(0.99999847691)) {
+			this->set_identity();
+			return;
+		}
+
+		// From MathFu library:
+		// If the vectors point in opposite directions, return a 180 degree
+		// rotation, on an arbitrary axis.
+
+		if (dot_product <= fp(-0.99999847691)) {
+			this->v = orthogonal_vector(start);
+			this->w = 0;
+			return;
+		}
+		
+		// Degenerate cases have been handled, so if we're here, we have to
+		// actually compute the angle we want.
+
+		this->v = cross_product(start, end);
+		this->w = fp(1.0) + dot_product;
+
+		this->normalize();
 	}
 
 	// ---------------------------------------------------
@@ -264,6 +308,13 @@ public:
 	{
 		Quaternion q;
 		q.set_rotation(axis, angle);
+		return q;
+	}
+
+	static constexpr Quaternion rotation (const Vector& start, const Vector& end) noexcept
+	{
+		Quaternion q;
+		q.set_rotation(start, end);
 		return q;
 	}
 };
@@ -373,11 +424,10 @@ constexpr Quaternion<T> operator* (const Quaternion<T>& q1, const Quaternion<T>&
 // ---------------------------------------------------
 
 template <typename T>
-constexpr Vector<T, 3> rotate (const Quaternion<T>& q, const Vector<T, 3>& v) noexcept
+constexpr Vector<T, 3> rotate (const Quaternion<T>& q, Vector<T, 3> v) noexcept
 {
-	const Quaternion<T> v_(v); // create a pure quaternion from the vector
-	const Quaternion<T> r = (q * v_) * conjugate(q);
-	return r.v;
+	v.rotate(q);
+	return v;
 }
 
 // ---------------------------------------------------
