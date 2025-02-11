@@ -316,6 +316,23 @@ MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
 
 
+#undef MYLIB_MATH_BUILD_OPERATION
+#define MYLIB_MATH_BUILD_OPERATION(OP) \
+	template <typename T, uint32_t dim> \
+	constexpr Vector<T, dim> operator OP (const T s, const Vector<T, dim>& a) noexcept \
+	{ \
+		Vector<T, dim> r; \
+		for (uint32_t i = 0; i < dim; i++) \
+			r[i] = s OP a[i]; \
+		return r; \
+	}
+
+MYLIB_MATH_BUILD_OPERATION( + )
+MYLIB_MATH_BUILD_OPERATION( - )
+MYLIB_MATH_BUILD_OPERATION( * )
+MYLIB_MATH_BUILD_OPERATION( / )
+
+
 template <typename T, uint32_t dim> \
 constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 {
