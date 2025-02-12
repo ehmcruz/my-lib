@@ -443,9 +443,9 @@ struct VectorBasis3
 	using VectorBasis = VectorBasis3;
 	using Vector = Mylib::Math::Vector<T, 3>;
 
-	Vector x;
-	Vector y;
-	Vector z;
+	Vector vx;
+	Vector vy;
+	Vector vz;
 
 	constexpr static uint32_t get_dim () noexcept
 	{
@@ -456,16 +456,16 @@ struct VectorBasis3
 
 	constexpr void set_default_rh_orthonormal_basis () noexcept
 	{
-		this->x = Vector(1, 0, 0);
-		this->y = Vector(0, 1, 0);
-		this->z = Vector(0, 0, 1);
+		this->vx = Vector(1, 0, 0);
+		this->vy = Vector(0, 1, 0);
+		this->vz = Vector(0, 0, 1);
 	}
 
 	constexpr void rotate (const Quaternion<T>& q) noexcept
 	{
-		this->x.rotate(q);
-		this->y.rotate(q);
-		this->z.rotate(q);
+		this->vx.rotate(q);
+		this->vy.rotate(q);
+		this->vz.rotate(q);
 	}
 
 	static constexpr VectorBasis default_rh_orthonormal_basis () noexcept
@@ -544,7 +544,7 @@ std::ostream& operator << (std::ostream& out, const Vector<T, dim>& v)
 template <typename T>
 std::ostream& operator << (std::ostream& out, const VectorBasis3<T>& b)
 {
-	out << "[" << b.x << ", " << b.y << ", " << b.z << "]";
+	out << "[" << b.vx << ", " << b.vy << ", " << b.vz << "]";
 	return out;
 }
 
