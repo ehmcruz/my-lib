@@ -22,9 +22,38 @@ template <typename T, uint32_t dim>
 class Line
 {
 public:
-	Point<T, dim> base_point;
-	Vector<T, dim> direction;
+	Point<T, dim> point;
+	Vector<T, dim> vector;
 };
+
+// ---------------------------------------------------
+
+template <typename T>
+class Plane
+{
+public:
+	Point<T, 3> point;
+	Vector<T, 3> normal;
+};
+
+// ---------------------------------------------------
+
+template <typename T>
+Point<T, 3> intersection (const Plane<T>& plane, const Line<T, 3>& line)
+{
+	const Vector<T, 3> v = plane.point - line.point;
+	const T t = dot_product(v, plane.normal) / dot_product(line.vector, plane.normal);
+	return line.point + (line.vector * t);
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+Point<T, 3> intersection (const Line<T, 3>& line, const Plane<T>& plane)
+{
+	return intersection(plane, line);
+}
+
 
 // ---------------------------------------------------
 
