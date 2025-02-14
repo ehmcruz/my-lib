@@ -54,14 +54,14 @@ public:
 
 	// ------------------------ Constructors
 
-	Quaternion () noexcept = default;
+	constexpr Quaternion () noexcept = default;
 
-	Quaternion (const Vector& v_, const T w_) noexcept
+	constexpr Quaternion (const Vector& v_, const T w_) noexcept
 		: v(v_), w__(w_)
 	{
 	}
 
-	Quaternion (const T x_, const T y_, const T z_, const T w_) noexcept
+	constexpr Quaternion (const T x_, const T y_, const T z_, const T w_) noexcept
 		: x(x_), y(y_), z(z_), w(w_)
 	{
 	}
@@ -69,7 +69,7 @@ public:
 	// Create a scalar (or real) quaternion.
 	// The vector part is set to zero.
 
-	Quaternion (const T w_) noexcept
+	constexpr Quaternion (const T w_) noexcept
 		: x(0), y(0), z(0), w(w_)
 	{
 	}
@@ -77,7 +77,7 @@ public:
 	// Create a vector (or imaginary, or pure) quaternion.
 	// The scalar part is set to zero.
 
-	Quaternion (const Vector& v_) noexcept
+	constexpr Quaternion (const Vector& v_) noexcept
 		: v(v_), w__(0)
 	{
 	}
