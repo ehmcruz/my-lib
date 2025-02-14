@@ -36,6 +36,11 @@ using size_t = std::size_t;
 
 // ---------------------------------------------------
 
+template <typename T>
+concept Enum = std::is_enum_v<T>;
+
+// ---------------------------------------------------
+
 constexpr void build_str_from_stream__ (std::ostringstream& str_stream) noexcept
 {
 }
