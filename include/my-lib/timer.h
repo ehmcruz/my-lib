@@ -29,7 +29,7 @@ class Timer
 public:
 	using Ttime = typename remove_type_qualifiers< decltype(std::declval<Tget_current_time>()()) >::type;
 
-	static consteval bool debug ()
+	static consteval bool debug () noexcept
 	{
 		return false;
 	}
@@ -39,12 +39,19 @@ public:
 		bool re_schedule;
 	};
 
+	struct EventFull;
+
 	struct Descriptor {
 		Event *ptr;
 	};
 
 	struct Coroutine {
 		struct promise_type {
+			// If the coroutine is not waiting for a timer event, this is nullptr.
+			// Otherwise, it points to the event.
+			// We need this to be able to destroy the event when the coroutine is unregistered.
+			EventFull *event;
+
 			Coroutine get_return_object ()
 			{
 				return Coroutine {
@@ -52,57 +59,85 @@ public:
 				};
 			}
 
+			// Suspend the coroutine immediately after creation.
 			std::suspend_always initial_suspend () const noexcept { return {}; }
+
+			// https://stackoverflow.com/questions/75778999/should-promises-final-suspend-always-return-stdsuspend-always
+			// Quoting:
+			// It would be better to say that final_suspend should "always suspend",
+			// rather than "always return std::suspend_always".
+			// A coroutine is considered to be done if it is suspended at its
+			// final-suspend point. So if a coroutine flows past this point without
+			// suspending, then the coroutine is over, but coroutine_handle::done() will not be true.
+			//
+			// In summary, in order to be able to check if a coroutine is done, using
+			// coroutine_handle::done(), the final_suspend should always suspend.
 			std::suspend_always final_suspend () const noexcept { return {}; }
-			void return_void() const noexcept {}
+
+			// co_return returns nothing.
+			void return_void () const noexcept {}
+
 			void unhandled_exception () { std::terminate(); }
-		};
-
-		struct Awaiter {
-			Timer& timer;
-			const Ttime time;
-
-			// await_ready is called before the coroutine is suspended.
-			// We return false to tell the caller to suspend.
-
-			constexpr bool await_ready () const noexcept
-			{
-				return false;
-			}
-
-			// await_suspend is called when the coroutine is suspended.
-			// Return void to tell the caller to suspend.
-			// Only at this point we have access to the coroutine handler so we can
-			// resume the coroutine later, when the timer expires.
-
-			void await_suspend (std::coroutine_handle<promise_type> handler)
-			{
-				auto& promise = handler.promise();
-				Coroutine coro = promise.get_return_object();
-
-				EventFull *event = new (this->timer.memory_manager.template allocate_type<EventFull>(1)) EventFull;
-				event->time = this->time;
-				event->var_callback = EventCoroutine {
-					.coro = coro,
-				},
-				event->enabled = true;
-
-				if constexpr (debug()) std::cout << "await_suspend current.time " << this->timer.get_current_time() << " event.time " << event->time << std::endl;
-
-				this->timer.push(event);
-			}
-
-			// await_resume is called when the coroutine is resumed.
-			// Return void since we don't have a value to return to the caller.
-
-			constexpr void await_resume () const noexcept { }
 		};
 
 		std::coroutine_handle<promise_type> handler;
 	};
 
-private:
-	friend class Coroutine::Awaiter;
+	using PromiseType = typename Coroutine::promise_type;
+	using CoroutineHandle = std::coroutine_handle<PromiseType>;
+
+	struct CoroutineAwaiter {
+		Timer& timer;
+		const Ttime time;
+		CoroutineHandle handler;
+
+		// await_ready is called before the coroutine is suspended.
+		// We return false to tell the caller to suspend.
+
+		constexpr bool await_ready () const noexcept
+		{
+			return false;
+		}
+
+		// await_suspend is called when the coroutine is suspended.
+		// Return void to tell the caller to suspend.
+		// Only at this point we have access to the coroutine handler so we can
+		// resume the coroutine later, when the timer expires.
+
+		void await_suspend (CoroutineHandle handler)
+		{
+			this->handler = handler;
+			PromiseType& promise = handler.promise();
+			//Coroutine coro = promise.get_return_object();
+
+			EventFull *event = new (this->timer.memory_manager.template allocate_type<EventFull>(1)) EventFull;
+			event->time = this->time;
+			event->var_callback = EventCoroutine {
+				.coroutine_handler = handler
+			},
+			event->enabled = true;
+
+			// Store the event in the coroutine promise.
+			// We do this to be able to destroy the event when the coroutine is unregistered.
+			promise.event = event;
+
+			if constexpr (debug()) std::cout << "await_suspend current.time " << this->timer.get_current_time() << " event.time " << event->time << std::endl;
+
+			this->timer.push(event);
+		}
+
+		// await_resume is called when the coroutine is resumed.
+		// Return void since we don't have a value to return to the caller.
+
+		constexpr void await_resume () const noexcept
+		{
+			PromiseType& promise = this->handler.promise();
+			promise.event = nullptr;
+			//std::cout << "\t\tawait_resume" << std::endl;
+		}
+	};
+
+	friend class CoroutineAwaiter;
 
 	using TimerCallback = Callback<Event>;
 
@@ -111,7 +146,7 @@ private:
 	};
 
 	struct EventCoroutine {
-		Coroutine coro;
+		CoroutineHandle coroutine_handler;
 	};
 
 	struct EventFull : public Event {
@@ -119,6 +154,7 @@ private:
 		bool enabled;
 	};
 
+private:
 	/*
 		Since we store pointers to the events, not the events themselves,
 		we need a way to compare the event.time values to keep the heap property.
@@ -201,9 +237,11 @@ public:
 				else if (std::holds_alternative<EventCoroutine>(event->var_callback)) {
 					EventCoroutine& event_coro = std::get<EventCoroutine>(event->var_callback);
 					
-					if constexpr (debug()) std::cout << "\tresume coroutine time=" << event->time << std::endl;
+					if (event->enabled) {
+						if constexpr (debug()) std::cout << "\tresume coroutine time=" << event->time << std::endl;
 					
-					event_coro.coro.handler.resume();
+						event_coro.coroutine_handler.resume(); // resume automatically sets promise.event to nullptr
+					}
 				}
 				else
 					mylib_throw_exception_msg("invalid event callback type");
@@ -211,7 +249,7 @@ public:
 				if (event->re_schedule)
 					this->push(event);
 				else
-					this->destroy_event(event);
+					this->destroy_event(event); // coroutine always fall here
 			}
 			else
 				break;
@@ -243,23 +281,46 @@ public:
 		event->enabled = false; // better than rebuild the heap
 	}
 
+	inline void force_resume_coroutine (Coroutine coro)
+	{
+		PromiseType& promise = coro.handler.promise();
+
+		if (promise.event) {
+			promise.event->enabled = false; // better than rebuild the heap
+			coro.handler.resume(); // resume automatically sets promise.event to nullptr
+		}
+	}
+
+	inline void unregister_coroutine (Coroutine coro)
+	{
+		PromiseType& promise = coro.handler.promise();
+
+		if (promise.event) {
+			promise.event->enabled = false; // better than rebuild the heap
+			promise.event = nullptr;
+		}
+	}
+
 	void register_coroutine (Coroutine coro)
 	{
+		PromiseType& promise = coro.handler.promise();
+		promise.event = nullptr;
+
 		// We created the coroutine in a suspended state.
 		// We need to resume it to start the execution.
 		coro.handler.resume();
 	}
 
-	Coroutine::Awaiter coroutine_wait_until (const Ttime& time)
+	CoroutineAwaiter coroutine_wait_until (const Ttime& time)
 	{
-		return typename Coroutine::Awaiter {
+		return CoroutineAwaiter {
 			.timer = *this,
 			.time = time
 		};
 	}
 
 	template <typename Tduration>
-	Coroutine::Awaiter coroutine_wait (const Tduration& time)
+	CoroutineAwaiter coroutine_wait (const Tduration& time)
 	{
 		return this->coroutine_wait_until(this->get_current_time() + time);
 	}

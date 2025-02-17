@@ -53,6 +53,12 @@ void test_coroutine ()
 			alive = false;
 	}
 
+	std::cout << "done = " << timer_coroutine.handler.done() << std::endl;
+
+	timer.force_resume_coroutine(timer_coroutine);
+
+	std::cout << "done = " << timer_coroutine.handler.done() << std::endl;
+
 //	test_timer.clear_events();
 }
 
