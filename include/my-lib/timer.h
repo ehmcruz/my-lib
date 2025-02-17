@@ -15,6 +15,8 @@
 #include <my-lib/std.h>
 #include <my-lib/trigger.h>
 #include <my-lib/memory.h>
+#include <my-lib/coroutine.h>
+
 
 namespace Mylib
 {
@@ -34,57 +36,14 @@ public:
 		return false;
 	}
 
-	struct Event {
+	struct Event : public Mylib::Coroutine::Event {
 		Ttime time;
 		bool re_schedule;
 	};
 
-	struct EventFull;
-
 	struct Descriptor {
 		Event *ptr;
 	};
-
-	struct Coroutine {
-		struct promise_type {
-			// If the coroutine is not waiting for a timer event, this is nullptr.
-			// Otherwise, it points to the event.
-			// We need this to be able to destroy the event when the coroutine is unregistered.
-			EventFull *event;
-
-			Coroutine get_return_object ()
-			{
-				return Coroutine {
-					.handler = std::coroutine_handle<promise_type>::from_promise(*this)
-				};
-			}
-
-			// Suspend the coroutine immediately after creation.
-			std::suspend_always initial_suspend () const noexcept { return {}; }
-
-			// https://stackoverflow.com/questions/75778999/should-promises-final-suspend-always-return-stdsuspend-always
-			// Quoting:
-			// It would be better to say that final_suspend should "always suspend",
-			// rather than "always return std::suspend_always".
-			// A coroutine is considered to be done if it is suspended at its
-			// final-suspend point. So if a coroutine flows past this point without
-			// suspending, then the coroutine is over, but coroutine_handle::done() will not be true.
-			//
-			// In summary, in order to be able to check if a coroutine is done, using
-			// coroutine_handle::done(), the final_suspend should always suspend.
-			std::suspend_always final_suspend () const noexcept { return {}; }
-
-			// co_return returns nothing.
-			void return_void () const noexcept {}
-
-			void unhandled_exception () { std::terminate(); }
-		};
-
-		std::coroutine_handle<promise_type> handler;
-	};
-
-	using PromiseType = typename Coroutine::promise_type;
-	using CoroutineHandle = std::coroutine_handle<PromiseType>;
 
 	struct CoroutineAwaiter {
 		Timer& timer;
@@ -139,6 +98,7 @@ public:
 
 	friend class CoroutineAwaiter;
 
+private:
 	using TimerCallback = Callback<Event>;
 
 	struct EventCallback {
@@ -154,7 +114,6 @@ public:
 		bool enabled;
 	};
 
-private:
 	/*
 		Since we store pointers to the events, not the events themselves,
 		we need a way to compare the event.time values to keep the heap property.
@@ -286,7 +245,8 @@ public:
 		PromiseType& promise = coro.handler.promise();
 
 		if (promise.event) {
-			promise.event->enabled = false; // better than rebuild the heap
+			EventFull *event = static_cast<EventFull*>(promise.event);
+			event->enabled = false; // better than rebuild the heap
 			coro.handler.resume(); // resume automatically sets promise.event to nullptr
 		}
 	}
@@ -296,7 +256,8 @@ public:
 		PromiseType& promise = coro.handler.promise();
 
 		if (promise.event) {
-			promise.event->enabled = false; // better than rebuild the heap
+			EventFull *event = static_cast<EventFull*>(promise.event);
+			event->enabled = false; // better than rebuild the heap
 			promise.event = nullptr;
 		}
 	}

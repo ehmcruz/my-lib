@@ -24,7 +24,7 @@ using Timer = decltype(timer);
 
 bool alive = true;
 
-Timer::Coroutine coro_print_values ()
+Mylib::Coroutine coro_print_values ()
 {
 	while (alive) {
 		std::cout << "\tcoro_print_values loop start time=" << global_time << std::endl;
@@ -39,9 +39,9 @@ void test_coroutine ()
 
 	global_time = 0;
 
-	Timer::Coroutine timer_coroutine = coro_print_values();
+	Mylib::Coroutine coroutine = coro_print_values();
 
-	timer.register_coroutine(timer_coroutine);
+	timer.register_coroutine(coroutine);
 
 	while (alive) {
 		std::cout << "process events time=" << global_time << std::endl;
@@ -53,11 +53,11 @@ void test_coroutine ()
 			alive = false;
 	}
 
-	std::cout << "done = " << timer_coroutine.handler.done() << std::endl;
+	std::cout << "done = " << coroutine.handler.done() << std::endl;
 
-	timer.force_resume_coroutine(timer_coroutine);
+	timer.force_resume_coroutine(coroutine);
 
-	std::cout << "done = " << timer_coroutine.handler.done() << std::endl;
+	std::cout << "done = " << coroutine.handler.done() << std::endl;
 
 //	test_timer.clear_events();
 }
