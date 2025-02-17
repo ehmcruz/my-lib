@@ -27,30 +27,25 @@ public:
 	{
 	}
 
-	Interpolator (const Tx max_x_)
-		: max_x(max_x_)
-	{
-	}
-
 	virtual ~Interpolator () = default;
 
 	// Returns true if the interpolation is not finished.
 	// Returns false otherwise.
 
-	bool interpolate (const Tx delta_x)
+	bool operator() (const Tx delta_x)
 	{
 		this->x += delta_x;
 
 		if (this->x > this->max_x) [[unlikely]]
 			this->x = this->max_x;
 		
-		this->update__(this->x);
+		this->interpolate(this->x);
 
 		return (this->x < this->max_x);
 	}
 
 protected:
-	virtual void interpolate__ (const Tx x) = 0;
+	virtual void interpolate (const Tx x) = 0;
 };
 
 // ---------------------------------------------------
@@ -62,7 +57,7 @@ protected:
 	Ty& target;
 
 public:
-	Interpolator__ (const Tx max_x_, Ty *target_)
+	Interpolator__ (const Tx max_x_, Ty *target_, Ty start_y_)
 		: Interpolator<Tx>(max_x_),
 		target(*target_)
 	{
@@ -81,14 +76,14 @@ protected:
 
 public:
 	LinearInterpolator (const Tx max_x_, Ty *target_, Ty start_y_, Ty end_y_)
-		: Interpolator__<Tx>(max_x_, target_),
+		: Interpolator__<Tx, Ty>(max_x_, target_, start_y_),
 		  start_y(start_y_),
 		  rate((end_y_ - start_y_) / max_x_)
 	{
 	}
 
 protected:
-	void interpolate__ (const Tx x) override final
+	void interpolate (const Tx x) override final
 	{
 		this->target = this->start_y + x * this->rate;
 	}
