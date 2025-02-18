@@ -36,7 +36,7 @@ public:
 		return false;
 	}
 
-	struct Event : public Mylib::Coroutine::Event {
+	struct Event {
 		Ttime time;
 		bool re_schedule;
 	};
@@ -78,7 +78,8 @@ public:
 
 			// Store the event in the coroutine promise.
 			// We do this to be able to destroy the event when the coroutine is unregistered.
-			promise.event = event;
+			promise.awaiter_owner = &this->timer;
+			promise.awaiter_data = event;
 
 			if constexpr (debug()) std::cout << "await_suspend current.time " << this->timer.get_current_time() << " event.time " << event->time << std::endl;
 
@@ -91,7 +92,8 @@ public:
 		constexpr void await_resume () const noexcept
 		{
 			PromiseType& promise = this->handler.promise();
-			promise.event = nullptr;
+			promise.awaiter_owner = nullptr;
+			promise.awaiter_data = nullptr;
 			//std::cout << "\t\tawait_resume" << std::endl;
 		}
 	};
@@ -199,7 +201,7 @@ public:
 					if (event->enabled) {
 						if constexpr (debug()) std::cout << "\tresume coroutine time=" << event->time << std::endl;
 					
-						event_coro.coroutine_handler.resume(); // resume automatically sets promise.event to nullptr
+						event_coro.coroutine_handler.resume(); // resume automatically sets promise owner to nullptr
 					}
 				}
 				else
@@ -244,10 +246,10 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.event) {
-			EventFull *event = static_cast<EventFull*>(promise.event);
+		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
+			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
 			event->enabled = false; // better than rebuild the heap
-			coro.handler.resume(); // resume automatically sets promise.event to nullptr
+			coro.handler.resume(); // resume automatically sets promise owner to nullptr
 		}
 	}
 
@@ -255,21 +257,12 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.event) {
-			EventFull *event = static_cast<EventFull*>(promise.event);
+		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
+			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
 			event->enabled = false; // better than rebuild the heap
-			promise.event = nullptr;
+			promise.awaiter_owner = nullptr;
+			promise.awaiter_data = nullptr;
 		}
-	}
-
-	void register_coroutine (Coroutine coro)
-	{
-		PromiseType& promise = coro.handler.promise();
-		promise.event = nullptr;
-
-		// We created the coroutine in a suspended state.
-		// We need to resume it to start the execution.
-		coro.handler.resume();
 	}
 
 	CoroutineAwaiter coroutine_wait_until (const Ttime& time)

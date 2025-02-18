@@ -4,6 +4,7 @@
 #include <coroutine>
 
 #include <my-lib/std.h>
+#include <my-lib/any.h>
 
 
 namespace Mylib
@@ -12,14 +13,12 @@ namespace Mylib
 // ---------------------------------------------------
 
 struct Coroutine {
-	// Used so that we can control the coroutine in timer and inperpolator.
-	struct Event { };
-
 	struct promise_type {
 		// If the coroutine is not waiting for a timer event, this is nullptr.
-		// Otherwise, it points to the event.
-		// We need this to be able to destroy the event when the coroutine is unregistered.
-		Event *event;
+		// Otherwise, it points to the object that owns of the awaiter.
+		// We need this to be able to destroy the event when the coroutine finishes.
+		Mylib::Any<sizeof(void*), sizeof(void*)> awaiter_owner;
+		Mylib::Any<sizeof(void*), sizeof(void*)> awaiter_data;
 
 		Coroutine get_return_object ()
 		{
@@ -54,6 +53,19 @@ struct Coroutine {
 
 using PromiseType = typename Coroutine::promise_type;
 using CoroutineHandle = std::coroutine_handle<PromiseType>;
+
+// ---------------------------------------------------
+
+inline void initialize_coroutine (Coroutine coro)
+{
+	PromiseType& promise = coro.handler.promise();
+	promise.awaiter_owner = nullptr;
+	promise.awaiter_data = nullptr;
+
+	// We created the coroutine in a suspended state.
+	// We need to resume it to start the execution.
+	coro.handler.resume();
+}
 
 // ---------------------------------------------------
 

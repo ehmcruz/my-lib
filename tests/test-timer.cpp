@@ -41,7 +41,7 @@ void test_coroutine ()
 
 	Mylib::Coroutine coroutine = coro_print_values();
 
-	timer.register_coroutine(coroutine);
+	Mylib::initialize_coroutine(coroutine);
 
 	while (alive) {
 		std::cout << "process events time=" << global_time << std::endl;
@@ -58,6 +58,7 @@ void test_coroutine ()
 	timer.force_resume_coroutine(coroutine);
 
 	std::cout << "done = " << coroutine.handler.done() << std::endl;
+	coroutine.handler.destroy();
 
 //	test_timer.clear_events();
 }
