@@ -90,7 +90,7 @@ protected:
 	Ty& target;
 
 public:
-	Interpolator__ (const Tx max_x_, Ty *target_, const Ty start_y_)
+	Interpolator__ (const Tx max_x_, Ty *target_, const Ty& start_y_)
 		: Interpolator<Tx>(max_x_),
 		target(*target_)
 	{
@@ -113,7 +113,7 @@ protected:
 	Ty rate;
 
 public:
-	LinearInterpolator (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_)
+	LinearInterpolator (const Tx max_x_, Ty *target_, const Ty& start_y_, const Ty& end_y_)
 		: Interpolator__<Tx, Ty>(max_x_, target_, start_y_),
 		  start_y(start_y_),
 		  rate((end_y_ - start_y_) / max_x_)
