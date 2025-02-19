@@ -134,6 +134,40 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 
 // ---------------------------------------------------
 
+template <typename Tevent, typename Tlambda_>
+auto make_callback_lambda (Tlambda_&& callback)
+{
+	using Tlambda = typename remove_type_qualifiers<Tlambda_>::type;
+
+	class DerivedCallback : public Callback<Tevent>
+	{
+	private:
+		Tlambda callback_lambda;
+
+	public:
+		DerivedCallback (Tlambda_ callback_lambda_)
+			: callback_lambda(callback_lambda_)
+		{
+		}
+
+		void operator() (Tevent& event) override
+		{
+			/*auto built_params = std::tuple_cat(
+				std::forward_as_tuple(this->obj),
+				std::forward_as_tuple(event)
+			);
+			std::apply(this->callback_function, built_params);*/
+			std::invoke(this->callback_lambda, event);
+		}
+
+		MYLIB_TRIGGER_BASE_OPERATIONS
+	};
+
+	return DerivedCallback(callback);
+}
+
+// ---------------------------------------------------
+
 /*
 	Template parameter Tevent must be explicitly set.
 	Object function should be:
@@ -297,7 +331,17 @@ public:
 	};
 
 	struct Descriptor {
-		Subscriber *subscriber;
+		Subscriber *subscriber = nullptr;
+
+		void invalidate () noexcept
+		{
+			this->subscriber = nullptr;
+		}
+
+		bool is_valid () const noexcept
+		{
+			return (this->subscriber != nullptr);
+		}
 	};
 
 private:
