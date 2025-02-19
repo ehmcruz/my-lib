@@ -11,8 +11,8 @@ pool: $(HEADERS) src/memory-pool.cpp tests/test-memory-pool.cpp
 timer: $(HEADERS) tests/test-timer.cpp
 	$(CPP) tests/test-timer.cpp -o test-timer $(CPPFLAGS)
 
-trigger: $(HEADERS) tests/test-trigger.cpp
-	$(CPP) tests/test-trigger.cpp -o test-trigger $(CPPFLAGS)
+event: $(HEADERS) tests/test-event.cpp
+	$(CPP) tests/test-event.cpp -o test-event $(CPPFLAGS)
 
 any: $(HEADERS) tests/test-any.cpp
 	$(CPP) tests/test-any.cpp -o test-any $(CPPFLAGS)

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <vector>
+#include <memory>
 
 #include <cstdint>
 #include <cstdlib>
@@ -21,19 +22,25 @@ namespace Memory
 
 [[nodiscard]] inline void* m_allocate (const size_t size, const uint32_t align)
 {
-//	std::cout << "m_allocate size " << size << " align " << align << std::endl;
-#if __cpp_aligned_new
+	void *p;
+#ifdef __cpp_aligned_new
 	if (align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
-		return ::operator new(size, std::align_val_t(align));
+		p = ::operator new(size, std::align_val_t(align));
+	else
+		p = ::operator new(size);
+#else
+	#error "aligned new not supported"
 #endif
 //	std::cout << "\tstd align " << __STDCPP_DEFAULT_NEW_ALIGNMENT__ << std::endl;
-	return ::operator new(size);
+//	std::cout << "m_allocate size " << size << " align " << align << " address " << p << std::endl;
+	return p;
 }
 
 // ---------------------------------------------------
 
 inline void m_deallocate (void *p, const size_t size, const uint32_t align)
 {
+//std::cout << "m_deallocate size " << size << " align " << align << " address " << p << std::endl;
 #if __cpp_aligned_new
 	if (align > __STDCPP_DEFAULT_NEW_ALIGNMENT__) {
 		::operator delete(p,
@@ -163,6 +170,58 @@ public:
 
 // ---------------------------------------------------
 
+// To be used with unique_ptr
+
+template <typename T>
+class DeAllocatorSTL
+{
+public:
+	Manager *manager;
+
+	DeAllocatorSTL () = delete;
+
+	DeAllocatorSTL (Manager& manager_)
+		: manager(&manager_)
+	{
+	}
+
+	template <typename Tother>
+	DeAllocatorSTL (const DeAllocatorSTL<Tother>& other)
+		: manager(other.manager)
+	{
+	}
+
+	DeAllocatorSTL (const AllocatorSTL<T>& allocator)
+		: manager(allocator.manager)
+	{
+	}
+
+	template <typename Tother>
+	DeAllocatorSTL (const AllocatorSTL<Tother>& other)
+		: manager(other.manager)
+	{
+	}
+
+	void operator() (T *p)
+	{
+		this->manager->template deallocate_type<T>(p, 1);
+	}
+};
+
+// ---------------------------------------------------
+
+template <typename T>
+using unique_ptr = std::unique_ptr<T, DeAllocatorSTL<T>>;
+
+template <typename T, typename... Types>
+[[nodiscard]] unique_ptr<T> make_unique (Manager& manager, Types&&... vars)
+{
+	T *ptr = new (manager.template allocate_type<T>(1)) T(std::forward<Types>(vars)...);
+	return unique_ptr<T>(ptr, DeAllocatorSTL<T>(manager));
+}
+
+// ---------------------------------------------------
+
 class DefaultManager : public Manager
 {
 public:
@@ -180,7 +239,7 @@ public:
 // ---------------------------------------------------
 
 inline DefaultManager default_manager;
-//inline AllocatorSTL<int> default_allocator_stl(default_manager);
+inline AllocatorSTL<int> default_allocator_stl(default_manager);
 
 // ---------------------------------------------------
 

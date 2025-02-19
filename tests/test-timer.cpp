@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <cassert>
 
-#include <my-lib/timer.h>
+#include <my-lib/event-timer.h>
 
 uint32_t global_time = 0;
 
@@ -18,7 +18,7 @@ uint32_t get_time ()
 //using Timer = Mylib::Trigger::Timer<uint32_t, decltype(get_time)>;
 //auto timer = Mylib::Trigger::Timer(get_time);
 
-Mylib::Trigger::Timer timer(get_time);
+Mylib::Event::Timer timer(get_time);
 
 using Timer = decltype(timer);
 
@@ -108,17 +108,17 @@ test_t test;
 int main ()
 {
 	std::cout << "scheduling object function without params" << std::endl;
-	timer.schedule_event(10, Mylib::Trigger::make_callback_object_with_params< Timer::Event >(test, &test_t::callback_1, 10));
+	timer.schedule_event(10, Mylib::Event::make_callback_object_with_params< Timer::Event >(test, &test_t::callback_1, 10));
 
-	timer.schedule_event(20, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+	timer.schedule_event(20, Mylib::Event::make_callback_object< Timer::Event >(test, &test_t::callback));
 
-	timer.schedule_event(5, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+	timer.schedule_event(5, Mylib::Event::make_callback_object< Timer::Event >(test, &test_t::callback));
 
-	timer.schedule_event(1, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+	timer.schedule_event(1, Mylib::Event::make_callback_object< Timer::Event >(test, &test_t::callback));
 
-	timer.schedule_event(3, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+	timer.schedule_event(3, Mylib::Event::make_callback_object< Timer::Event >(test, &test_t::callback));
 
-	auto d = timer.schedule_event(55, Mylib::Trigger::make_callback_object< Timer::Event >(test, &test_t::callback));
+	auto d = timer.schedule_event(55, Mylib::Event::make_callback_object< Timer::Event >(test, &test_t::callback));
 
 	std::cout << "created " << timer.get_n_scheduled_events() << " events" << std::endl;
 

@@ -13,14 +13,14 @@
 
 #include <my-lib/macros.h>
 #include <my-lib/std.h>
-#include <my-lib/trigger.h>
+#include <my-lib/event.h>
 #include <my-lib/memory.h>
 #include <my-lib/coroutine.h>
 
 
 namespace Mylib
 {
-namespace Trigger
+namespace Event
 {
 
 // ---------------------------------------------------
@@ -234,12 +234,19 @@ public:
 	Descriptor schedule_event (const Ttime& time, const TimerCallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
+		auto unique_ptr = callback.make_copy(this->memory_manager);
+
 		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
 		event->time = time;
 		event->var_callback = EventCallback {
-			.callback = callback.make_copy(this->memory_manager),
+			.callback = unique_ptr.release(),
 		},
 		event->enabled = true;
+
+		// We store a raw pointer and release the unique_ptr.
+		// We do this because the pool memory manager doesn't support
+		// polymorphic types.
+		// I intend to change this in the future.
 
 		this->push(event);
 		
@@ -316,7 +323,7 @@ private:
 
 // ---------------------------------------------------
 
-} // end namespace Trigger
+} // end namespace Event
 } // end namespace Mylib
 
 #endif

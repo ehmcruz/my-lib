@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <cassert>
 
-#include <my-lib/trigger.h>
+#include <my-lib/event.h>
 
 
-Mylib::Trigger::EventHandler<int> event_handler;
+Mylib::Event::Handler<int> event_handler;
 
 struct MyFilter {
 	inline bool operator() (const int& event)
@@ -77,23 +77,19 @@ void subscribe_lambda (int x)
 		std::cout << "lambda_" << x << " event_data " << event_data << std::endl;
 	};
 
-	auto d6 = event_handler.subscribe( Mylib::Trigger::make_callback_lambda<int>(lambda_1) );
+	auto d6 = event_handler.subscribe( Mylib::Event::make_callback_lambda<int>(lambda_1) );
 }
 
 test_t test;
 
 int main ()
 {
-	auto callback1 = Mylib::Trigger::make_callback_object_with_params<int>(test, &test_t::callback_1, 10);
+	auto callback1 = Mylib::Event::make_callback_object_with_params<int>(test, &test_t::callback_1, 10);
 
 	auto d1 = event_handler.subscribe(callback1);
-
-	auto d3 = event_handler.subscribe( Mylib::Trigger::make_callback_object<int>(test, &test_t::callback_3) );
-
-	MyFilter filter;
-	auto d4 = event_handler.subscribe( Mylib::Trigger::make_filter_callback_object<int>(filter, test, &test_t::callback_with_filter) );
-
-	auto d5 = event_handler.subscribe( Mylib::Trigger::make_filter_callback_object_with_params<int>(filter, test, &test_t::callback_with_filter_and_param, 8.7) );
+	event_handler.unsubscribe(d1);
+	
+	auto d3 = event_handler.subscribe( Mylib::Event::make_callback_object<int>(test, &test_t::callback_3) );
 
 	subscribe_lambda(2);
 
@@ -101,8 +97,6 @@ int main ()
 
 	std::cout << "----------------------" << std::endl;
 	event_handler.publish(50);
-
-	event_handler.unsubscribe(d1);
 
 	std::cout << "----------------------" << std::endl;
 	event_handler.publish(67);

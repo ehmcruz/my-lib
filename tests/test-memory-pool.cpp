@@ -2,6 +2,8 @@
 #include <list>
 #include <chrono>
 #include <mutex>
+#include <memory>
+#include <utility>
 
 #include <cassert>
 
@@ -195,8 +197,66 @@ void benchmark_base_stl ()
 	std::cout << correct << " elements are correct again" << std::endl;
 }
 
+struct xxx {
+	int a;
+	int b;
+};
+
+struct xxx_derived : public xxx {
+	int c;
+	int d;
+};
+
+void test_unique_ptr ()
+{
+	auto& default_manager = Mylib::Memory::default_manager;
+	auto& default_allocator_stl = Mylib::Memory::default_allocator_stl;
+
+	Mylib::Memory::DeAllocatorSTL<int> deallocator(default_manager);
+	Mylib::Memory::DeAllocatorSTL<int> deallocator2(default_allocator_stl);
+
+	Mylib::Memory::unique_ptr<int> ptr(default_manager.allocate_type<int>(1), deallocator);
+	std::cout << "ptr " << ptr.get() << std::endl;
+}
+
+void test_unique_ptr_derived ()
+{
+	auto& default_manager = Mylib::Memory::default_manager;
+	auto& default_allocator_stl = Mylib::Memory::default_allocator_stl;
+
+	Mylib::Memory::unique_ptr<xxx_derived> ptr = Mylib::Memory::make_unique<xxx_derived>(default_manager);
+	//std::unique_ptr<xxx_derived> ptr(new xxx_derived);
+
+	Mylib::Memory::unique_ptr<xxx> ptr2(std::move(ptr));
+
+	std::cout << "ptr2 " << ptr2.get() << std::endl;
+}
+
+void test_shared_ptr ()
+{
+	auto& default_manager = Mylib::Memory::default_manager;
+	Mylib::Memory::AllocatorSTL<int> allocator(default_manager);
+
+	std::shared_ptr<int> ptr;
+	ptr = std::allocate_shared<int>(allocator, 1);
+	std::cout << "ptr " << ptr.get() << std::endl;
+}
+
 int main ()
 {
+	std::cout << "---------------------------------- unique_ptr start" << std::endl;
+	test_unique_ptr();
+	std::cout << "---------------------------------- unique_ptr end" << std::endl;
+
+	std::cout << "---------------------------------- unique_ptr derived start" << std::endl;
+	test_unique_ptr_derived();
+	std::cout << "---------------------------------- unique_ptr derived end" << std::endl;
+
+	std::cout << "---------------------------------- shared_ptr start" << std::endl;
+	test_shared_ptr();
+	std::cout << "---------------------------------- shared_ptr end" << std::endl;
+	return 0;
+
 	std::cout << "----------------------------------" << std::endl;
 	test_core();
 
