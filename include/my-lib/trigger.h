@@ -345,7 +345,7 @@ public:
 	};
 
 private:
-	Memory::Manager& memory_manager;
+	Memory::Manager *memory_manager;
 	//using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
 	using TallocSubscriber = Memory::AllocatorSTL<Subscriber>;
 	TallocSubscriber subscriber_allocator;
@@ -353,15 +353,15 @@ private:
 
 public:
 	EventHandler ()
-		: memory_manager(Memory::default_manager),
-		  subscriber_allocator(memory_manager),
+		: memory_manager(&Memory::default_manager),
+		  subscriber_allocator(*memory_manager),
 		  subscribers(subscriber_allocator)
 	{
 	}
 
 	EventHandler (Memory::Manager& memory_manager_)
-		: memory_manager(memory_manager_),
-		  subscriber_allocator(memory_manager),
+		: memory_manager(&memory_manager_),
+		  subscriber_allocator(*memory_manager),
 		  subscribers(subscriber_allocator)
 	{
 	}
@@ -369,7 +369,7 @@ public:
 	~EventHandler ()
 	{
 		for (auto& subscriber : this->subscribers)
-			subscriber.callback->deconstruct_free_memory(this->memory_manager);
+			subscriber.callback->deconstruct_free_memory(*this->memory_manager);
 	}
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
@@ -396,7 +396,7 @@ public:
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		this->subscribers.push_back( Subscriber {
-			.callback = callback.make_copy(this->memory_manager),
+			.callback = callback.make_copy(*this->memory_manager),
 			.enabled = true
 			} );
 
@@ -410,7 +410,7 @@ public:
 				bool found = (descriptor.subscriber == &subscriber);
 
 				if (found)
-					subscriber.callback->deconstruct_free_memory(this->memory_manager);
+					subscriber.callback->deconstruct_free_memory(*this->memory_manager);
 				
 				return found;
 			}
