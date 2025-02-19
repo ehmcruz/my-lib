@@ -42,7 +42,17 @@ public:
 	};
 
 	struct Descriptor {
-		Event *ptr;
+		Event *ptr = nullptr;
+
+		void invalidate () noexcept
+		{
+			this->ptr = nullptr;
+		}
+
+		bool is_valid () const noexcept
+		{
+			return (this->ptr != nullptr);
+		}
 	};
 
 	struct CoroutineAwaiter {
@@ -135,7 +145,7 @@ private:
 
 	Tget_current_time get_current_time_;
 	Memory::Manager& memory_manager;
-	std::vector<Internal> events; // we let the vector use its standard allocator
+	std::vector<Internal> events; // we let the vector use its standard allocators
 
 public:
 	Timer (Tget_current_time get_current_time__)

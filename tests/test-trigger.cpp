@@ -6,6 +6,9 @@
 
 #include <my-lib/trigger.h>
 
+
+Mylib::Trigger::EventHandler<int> event_handler;
+
 struct MyFilter {
 	inline bool operator() (const int& event)
 	{
@@ -68,13 +71,20 @@ public:
 	}
 };
 
+void subscribe_lambda (int x)
+{
+	auto lambda_1 = [x] (const int& event_data) {
+		std::cout << "lambda_" << x << " event_data " << event_data << std::endl;
+	};
+
+	auto d6 = event_handler.subscribe( Mylib::Trigger::make_callback_lambda<int>(lambda_1) );
+}
+
 test_t test;
 
 int main ()
 {
 	auto callback1 = Mylib::Trigger::make_callback_object_with_params<int>(test, &test_t::callback_1, 10);
-
-	Mylib::Trigger::EventHandler<int> event_handler;
 
 	auto d1 = event_handler.subscribe(callback1);
 
@@ -84,6 +94,8 @@ int main ()
 	auto d4 = event_handler.subscribe( Mylib::Trigger::make_filter_callback_object<int>(filter, test, &test_t::callback_with_filter) );
 
 	auto d5 = event_handler.subscribe( Mylib::Trigger::make_filter_callback_object_with_params<int>(filter, test, &test_t::callback_with_filter_and_param, 8.7) );
+
+	subscribe_lambda(2);
 
 	test.b = 99;
 
