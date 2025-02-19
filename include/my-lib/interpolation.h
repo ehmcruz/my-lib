@@ -139,8 +139,17 @@ public:
 		Interpolator<Tx> *interpolator;
 	};
 
-	struct Descriptor {
+	struct Descriptor__ {
 		Event *ptr;
+	};
+
+	struct Descriptor {
+		std::shared_ptr<Descriptor__> shared_ptr;
+
+		bool is_valid () const noexcept
+		{
+			return (this->shared_ptr && this->shared_ptr->ptr != nullptr);
+		}
 	};
 
 	struct CoroutineAwaiter {
@@ -199,6 +208,7 @@ private:
 	using InterpolatorCallback = Mylib::Event::Callback<Event>;
 
 	struct EventCallback {
+		Descriptor descriptor;
 		InterpolatorCallback *callback;
 	};
 
@@ -259,31 +269,16 @@ public:
 	template <typename Ty>
 	Descriptor interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_)
 	{
-		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
-		event->interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
-		event->var_callback = EventCallback {
-			.callback = nullptr,
-		},
-
-		this->push(event);
-		
-		return Descriptor { .ptr = event };
+		auto *interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
+		return this->add_interpolator_callback(interpolator, nullptr);
 	}
 
 	template <typename Ty>
 	Descriptor interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_, const InterpolatorCallback& callback)
 	{
 		auto unique_ptr = callback.make_copy(this->memory_manager);
-
-		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
-		event->interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
-		event->var_callback = EventCallback {
-			.callback = unique_ptr.release(),
-		},
-
-		this->push(event);
-		
-		return Descriptor { .ptr = event };
+		auto *interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
+		return this->add_interpolator_callback(interpolator, unique_ptr.release());
 	}
 
 	template <typename Ty>
@@ -300,6 +295,7 @@ public:
 		EventFull *event = static_cast<EventFull*>(descriptor.ptr);
 		this->pop(event);
 		this->destroy_event(event);
+		descriptor.shared_ptr.reset();
 	}
 
 	inline void force_resume_coroutine (Coroutine coro)
@@ -335,8 +331,11 @@ private:
 
 			if (callback.callback)
 				callback.callback->deconstruct_free_memory(this->memory_manager);
+
+			callback.descriptor.shared_ptr->ptr = nullptr;
 		}
 		event->interpolator->deconstruct_free_memory(this->memory_manager);
+		event->~EventFull();
 		this->memory_manager.template deallocate_type<EventFull>(event, 1);
 	}
 
@@ -361,6 +360,28 @@ private:
 	inline void pop (EventFull *event)
 	{
 		this->pop(event->vector_pos);
+	}
+
+	Descriptor add_interpolator_callback (Interpolator<Tx> *interpolator, InterpolatorCallback *callback_copy)
+	{
+		using TallocatorDescriptor = Memory::AllocatorSTL<Descriptor__>;
+		TallocatorDescriptor descriptor_allocator(this->memory_manager);
+
+		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
+
+		std::shared_ptr<Descriptor__> shared_ptr_ = std::allocate_shared<Descriptor__>(descriptor_allocator, Descriptor__ {
+			.ptr = event
+		});
+
+		event->interpolator = interpolator;
+		event->var_callback = EventCallback {
+			.descriptor = Descriptor { .shared_ptr = shared_ptr_ },
+			.callback = callback_copy,
+		},
+
+		this->push(event);
+		
+		return Descriptor { .shared_ptr = std::move(shared_ptr_) };
 	}
 };
 

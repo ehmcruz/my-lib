@@ -247,9 +247,7 @@ public:
 		});
 
 		event->var_callback = EventCallback {
-			.descriptor = Descriptor {
-				.shared_ptr = shared_ptr_
-			},
+			.descriptor = Descriptor { .shared_ptr = shared_ptr_ },
 			.callback = unique_ptr.release(),
 		},
 		event->enabled = true;
