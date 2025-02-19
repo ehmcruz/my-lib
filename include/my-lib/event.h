@@ -338,6 +338,7 @@ public:
 		mylib_assert_exception_msg(found, "subscriber not found");
 
 		descriptor.shared_ptr->subscriber = nullptr;
+		descriptor.shared_ptr.reset();
 	}
 };
 

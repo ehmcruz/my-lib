@@ -41,17 +41,16 @@ public:
 		bool re_schedule;
 	};
 
-	struct Descriptor {
+	struct Descriptor__ {
 		Event *ptr = nullptr;
+	};
 
-		void invalidate () noexcept
-		{
-			this->ptr = nullptr;
-		}
+	struct Descriptor {
+		std::shared_ptr<Descriptor__> shared_ptr;
 
 		bool is_valid () const noexcept
 		{
-			return (this->ptr != nullptr);
+			return (this->shared_ptr && this->shared_ptr->ptr != nullptr);
 		}
 	};
 
@@ -114,6 +113,7 @@ private:
 	using TimerCallback = Callback<Event>;
 
 	struct EventCallback {
+		Descriptor descriptor;
 		TimerCallback *callback;
 	};
 
@@ -234,11 +234,22 @@ public:
 	Descriptor schedule_event (const Ttime& time, const TimerCallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
+		using TallocatorDescriptor = Memory::AllocatorSTL<Descriptor__>;
+		TallocatorDescriptor descriptor_allocator(this->memory_manager);
+
 		auto unique_ptr = callback.make_copy(this->memory_manager);
 
 		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
 		event->time = time;
+
+		std::shared_ptr<Descriptor__> shared_ptr_ = std::allocate_shared<Descriptor__>(descriptor_allocator, Descriptor__ {
+			.ptr = event
+		});
+
 		event->var_callback = EventCallback {
+			.descriptor = Descriptor {
+				.shared_ptr = shared_ptr_
+			},
 			.callback = unique_ptr.release(),
 		},
 		event->enabled = true;
@@ -250,13 +261,15 @@ public:
 
 		this->push(event);
 		
-		return Descriptor { .ptr = event };
+		return Descriptor { .shared_ptr = std::move(shared_ptr_) };
 	}
 
 	inline void unschedule_event (Descriptor& descriptor)
 	{
-		EventFull *event = static_cast<EventFull*>(descriptor.ptr);
+		EventFull *event = static_cast<EventFull*>(descriptor.shared_ptr->ptr);
 		event->enabled = false; // better than rebuild the heap
+		descriptor.shared_ptr->ptr = nullptr;
+		descriptor.shared_ptr.reset();
 	}
 
 	inline void force_resume_coroutine (Coroutine coro)
@@ -316,7 +329,9 @@ private:
 		if (std::holds_alternative<EventCallback>(event->var_callback)) {
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
 			callback.callback->deconstruct_free_memory(this->memory_manager);
+			callback.descriptor.shared_ptr->ptr = nullptr;
 		}
+		event->~EventFull();
 		this->memory_manager.template deallocate_type<EventFull>(event, 1);
 	}
 };
