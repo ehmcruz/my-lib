@@ -80,6 +80,12 @@ public:
 			Type z;
 		};
 
+		struct {
+			Type r;
+			Type g;
+			Type b;
+		};
+
 		//uint64_t ivalue;
 	};
 
@@ -114,6 +120,13 @@ public:
 			Type y;
 			Type z;
 			Type w;
+		};
+
+		struct {
+			Type r;
+			Type g;
+			Type b;
+			Type a;
 		};
 
 		//uint64_t ivalue;
