@@ -358,6 +358,25 @@ constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
+constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
+{
+	for (uint32_t i = 0; i < dim; i++)
+		if (lhs[i] != rhs[i])
+			return false;
+	return true;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr bool operator!= (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
+{
+	return !(lhs == rhs);
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
 constexpr T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
 {
 	T value = 0;
