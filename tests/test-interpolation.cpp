@@ -33,8 +33,8 @@ int main ()
 {
 	float x;
 
-	interpolation_manager.interpolate_linear(10.0f, &x, 2.0f, 10.0f, Mylib::Trigger::make_callback_function< InterpolationManager::Event >(&callback));
-	interpolation_manager.interpolate_linear(5.0f, &v, Vector(0.0, 0.0), Vector(-10.0, 10.0), Mylib::Trigger::make_callback_function< InterpolationManager::Event >(&callback));
+	interpolation_manager.interpolate_linear(10.0f, &x, 2.0f, 10.0f, Mylib::Event::make_callback_function< InterpolationManager::Event >(&callback));
+	interpolation_manager.interpolate_linear(5.0f, &v, Vector(0.0, 0.0), Vector(-10.0, 10.0), Mylib::Event::make_callback_function< InterpolationManager::Event >(&callback));
 	
 	Mylib::Coroutine coroutine = coro_print_values();
 	Mylib::initialize_coroutine(coroutine);

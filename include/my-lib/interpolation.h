@@ -4,7 +4,7 @@
 #include <variant>
 
 #include <my-lib/std.h>
-#include <my-lib/trigger.h>
+#include <my-lib/event.h>
 #include <my-lib/coroutine.h>
 #include <my-lib/memory.h>
 
@@ -196,7 +196,7 @@ public:
 	friend class CoroutineAwaiter;
 
 private:
-	using InterpolatorCallback = Mylib::Trigger::Callback<Event>;
+	using InterpolatorCallback = Mylib::Event::Callback<Event>;
 
 	struct EventCallback {
 		InterpolatorCallback *callback;
@@ -273,10 +273,12 @@ public:
 	template <typename Ty>
 	Descriptor interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_, const InterpolatorCallback& callback)
 	{
+		auto unique_ptr = callback.make_copy(this->memory_manager);
+
 		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
 		event->interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
 		event->var_callback = EventCallback {
-			.callback = callback.make_copy(this->memory_manager),
+			.callback = unique_ptr.release(),
 		},
 
 		this->push(event);
