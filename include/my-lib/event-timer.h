@@ -107,7 +107,7 @@ public:
 		}
 	};
 
-	friend class CoroutineAwaiter;
+	friend struct CoroutineAwaiter;
 
 private:
 	using TimerCallback = Callback<Event>;
@@ -326,11 +326,10 @@ private:
 	{
 		if (std::holds_alternative<EventCallback>(event->var_callback)) {
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
-			callback.callback->deconstruct_free_memory(this->memory_manager);
+			callback.callback->destruct_deallocate_memory(this->memory_manager);
 			callback.descriptor.shared_ptr->ptr = nullptr;
 		}
-		event->~EventFull();
-		this->memory_manager.template deallocate_type<EventFull>(event, 1);
+		this->memory_manager.template destruct_deallocate_type<EventFull>(event);
 	}
 };
 

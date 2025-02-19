@@ -98,6 +98,13 @@ public:
 	{
 		this->deallocate(p, sizeof(T), count, calculate_alignment<T>());
 	}
+
+	template <typename T>
+	void destruct_deallocate_type (T *p)
+	{
+		p->~T();
+		this->deallocate_type<T>(p, 1);
+	}
 };
 
 // ---------------------------------------------------

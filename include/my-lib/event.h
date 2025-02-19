@@ -33,7 +33,7 @@ public:
 	virtual std::size_t get_size () const noexcept = 0; // returns object size
 	virtual uint32_t get_alignment () const noexcept = 0; // returns object alignment
 	virtual Mylib::Memory::unique_ptr<Callback<Tevent>> make_copy (Memory::Manager& memory_manager) const = 0;
-	virtual void deconstruct_free_memory (Memory::Manager& memory_manager) = 0;
+	virtual void destruct_deallocate_memory (Memory::Manager& memory_manager) = 0;
 };
 
 #define MYLIB_EVENT_BASE_OPERATIONS \
@@ -50,10 +50,9 @@ public:
 		{ \
 			return Mylib::Memory::make_unique<DerivedCallback>(memory_manager, *this); \
 		} \
-		void deconstruct_free_memory (Memory::Manager& memory_manager) override final \
+		void destruct_deallocate_memory (Memory::Manager& memory_manager) override final \
 		{ \
-			this->~DerivedCallback(); \
-			memory_manager.deallocate(this, this->get_size(), 1, this->get_alignment()); \
+			memory_manager.template destruct_deallocate_type<DerivedCallback>(this); \
 		}
 
 // ---------------------------------------------------
@@ -271,7 +270,7 @@ public:
 	{
 		for (auto& subscriber : this->subscribers) {
 			subscriber.descriptor.shared_ptr->subscriber = nullptr;
-			subscriber.callback->deconstruct_free_memory(*this->memory_manager);
+			subscriber.callback->destruct_deallocate_memory(*this->memory_manager);
 		}
 	}
 
@@ -327,7 +326,7 @@ public:
 				const bool local_found = (descriptor.shared_ptr->subscriber == &subscriber);
 
 				if (local_found) {
-					subscriber.callback->deconstruct_free_memory(*this->memory_manager);
+					subscriber.callback->destruct_deallocate_memory(*this->memory_manager);
 					found = true;
 				}
 				

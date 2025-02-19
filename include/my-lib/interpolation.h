@@ -53,7 +53,7 @@ public:
 
 	virtual std::size_t get_size () const noexcept = 0; // returns object size
 	virtual uint32_t get_alignment () const noexcept = 0; // returns object alignment
-	virtual void deconstruct_free_memory (Memory::Manager& memory_manager) = 0;
+	virtual void destruct_deallocate_memory (Memory::Manager& memory_manager) = 0;
 
 protected:
 	virtual void interpolate (const Tx x) = 0;
@@ -71,14 +71,14 @@ protected:
 		{ \
 			return alignof(decltype(*this)); \
 		} \
-		void deconstruct_free_memory (Memory::Manager& memory_manager) override final \
+		void destruct_deallocate_memory (Memory::Manager& memory_manager) override final \
 		{ \
-			this->~CLASS(); \
-			memory_manager.deallocate(this, this->get_size(), 1, this->get_alignment()); \
+			memory_manager.template destruct_deallocate_type<CLASS>(this); \
 		} \
-		static void* allocate (Memory::Manager& memory_manager) \
+		template <typename... Types> \
+		static Mylib::Memory::unique_ptr<CLASS> allocate (Memory::Manager& memory_manager, Types&&... vars) \
 		{ \
-			return memory_manager.allocate(sizeof(CLASS), 1, alignof(CLASS)); \
+			return Mylib::Memory::make_unique<CLASS>(memory_manager, std::forward<Types>(vars)...); \
 		}
 
 // ---------------------------------------------------
@@ -202,7 +202,7 @@ public:
 		}
 	};
 
-	friend class CoroutineAwaiter;
+	friend struct CoroutineAwaiter;
 
 private:
 	using InterpolatorCallback = Mylib::Event::Callback<Event>;
@@ -269,24 +269,25 @@ public:
 	template <typename Ty>
 	Descriptor interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_)
 	{
-		auto *interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
-		return this->add_interpolator_callback(interpolator, nullptr);
+		auto unique_ptr_interpolator = LinearInterpolator<Tx, Ty>::allocate(this->memory_manager, max_x_, target_, start_y_, end_y_);
+		return this->add_interpolator_callback(unique_ptr_interpolator.release(), nullptr);
 	}
 
 	template <typename Ty>
 	Descriptor interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_, const InterpolatorCallback& callback)
 	{
-		auto unique_ptr = callback.make_copy(this->memory_manager);
-		auto *interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_);
-		return this->add_interpolator_callback(interpolator, unique_ptr.release());
+		auto unique_ptr_callback = callback.make_copy(this->memory_manager);
+		auto unique_ptr_interpolator = LinearInterpolator<Tx, Ty>::allocate(this->memory_manager, max_x_, target_, start_y_, end_y_);
+		return this->add_interpolator_callback(unique_ptr_interpolator.release(), unique_ptr_callback.release());
 	}
 
 	template <typename Ty>
 	CoroutineAwaiter coroutine_wait_interpolate_linear (const Tx max_x_, Ty *target_, const Ty start_y_, const Ty end_y_)
 	{
+		auto unique_ptr_interpolator = LinearInterpolator<Tx, Ty>::allocate(this->memory_manager, max_x_, target_, start_y_, end_y_);
 		return CoroutineAwaiter {
 			.interpolation_manager = *this,
-			.interpolator = new (LinearInterpolator<Tx, Ty>::allocate(this->memory_manager)) LinearInterpolator<Tx, Ty>(max_x_, target_, start_y_, end_y_)
+			.interpolator = unique_ptr_interpolator.release()
 		};
 	}
 
@@ -330,13 +331,12 @@ private:
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
 
 			if (callback.callback)
-				callback.callback->deconstruct_free_memory(this->memory_manager);
+				callback.callback->destruct_deallocate_memory(this->memory_manager);
 
 			callback.descriptor.shared_ptr->ptr = nullptr;
 		}
-		event->interpolator->deconstruct_free_memory(this->memory_manager);
-		event->~EventFull();
-		this->memory_manager.template deallocate_type<EventFull>(event, 1);
+		event->interpolator->destruct_deallocate_memory(this->memory_manager);
+		this->memory_manager.template destruct_deallocate_type<EventFull>(event);
 	}
 
 	inline void push (EventFull *event)
