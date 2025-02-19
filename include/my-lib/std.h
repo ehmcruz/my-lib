@@ -41,6 +41,15 @@ concept Enum = std::is_enum_v<T>;
 
 // ---------------------------------------------------
 
+template <typename T, typename... Types>
+void reconstruct (T& obj, Types&&... vars)
+{
+	obj.~T();
+	new (&obj) T(std::forward<Types>(vars)...);
+}
+
+// ---------------------------------------------------
+
 constexpr void build_str_from_stream__ (std::ostringstream& str_stream) noexcept
 {
 }
