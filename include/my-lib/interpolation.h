@@ -303,8 +303,8 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
-			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
+		if (promise.awaiter_owner == static_cast<void*>(this)) {
+			EventFull *event = static_cast<EventFull*>(promise.awaiter_data);
 			coro.handler.resume(); // resume automatically sets promise owner to nullptr
 			this->pop(event);
 			this->destroy_event(event);
@@ -315,8 +315,8 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
-			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
+		if (promise.awaiter_owner == static_cast<void*>(this)) {
+			EventFull *event = static_cast<EventFull*>(promise.awaiter_data);
 			this->pop(event);
 			this->destroy_event(event);
 			promise.awaiter_owner = nullptr;

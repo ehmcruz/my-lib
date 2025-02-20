@@ -274,8 +274,8 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
-			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
+		if (promise.awaiter_owner == static_cast<void*>(this)) {
+			EventFull *event = static_cast<EventFull*>(promise.awaiter_data);
 			event->enabled = false; // better than rebuild the heap
 			coro.handler.resume(); // resume automatically sets promise owner to nullptr
 		}
@@ -285,8 +285,8 @@ public:
 	{
 		PromiseType& promise = coro.handler.promise();
 
-		if (promise.awaiter_owner.get_value<void*>() == static_cast<void*>(this)) {
-			EventFull *event = promise.awaiter_data.get_value<EventFull*>();
+		if (promise.awaiter_owner == static_cast<void*>(this)) {
+			EventFull *event = static_cast<EventFull*>(promise.awaiter_data);
 			event->enabled = false; // better than rebuild the heap
 			promise.awaiter_owner = nullptr;
 			promise.awaiter_data = nullptr;

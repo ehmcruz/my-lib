@@ -17,8 +17,8 @@ struct Coroutine {
 		// If the coroutine is not waiting for a timer event, this is nullptr.
 		// Otherwise, it points to the object that owns of the awaiter.
 		// We need this to be able to destroy the event when the coroutine finishes.
-		Mylib::Any<sizeof(void*), sizeof(void*)> awaiter_owner;
-		Mylib::Any<sizeof(void*), sizeof(void*)> awaiter_data;
+		void *awaiter_owner;
+		void *awaiter_data;
 
 		Coroutine get_return_object ()
 		{
