@@ -98,7 +98,7 @@ public:
 	template <typename T>
 	[[nodiscard]] T* allocate_type (const size_t count)
 	{
-		return static_cast<T*>( this->allocate(sizeof(T), count, calculate_alignment<T>()) );
+		return static_cast<T*>( this->allocate(calculate_size<T>(), count, calculate_alignment<T>()) );
 	}
 
 	template <typename T>
