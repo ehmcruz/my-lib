@@ -34,7 +34,6 @@ struct Coroutine {
 		static void operator delete (void *ptr, const size_t size)
 		{
 			//std::cout << "promise_type::operator delete size " << size << " ptr " << ptr << std::endl;
-			//::operator delete(ptr);
 			pool.deallocate(ptr);
 		}
 
