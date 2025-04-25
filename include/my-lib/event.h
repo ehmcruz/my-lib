@@ -214,24 +214,22 @@ public:
 	};
 
 private:
-	Memory::Manager *memory_manager;
-	//using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
 	using TallocSubscriber = Memory::AllocatorSTL<Subscriber>;
-	TallocSubscriber subscriber_allocator;
+	//using TallocSubscriber = typename std::allocator_traits<Talloc>::template rebind_alloc<Subscriber>;
+
+	Memory::Manager *memory_manager;
 	std::list<Subscriber, TallocSubscriber> subscribers;
 
 public:
 	Handler ()
 		: memory_manager(&Memory::default_manager),
-		  subscriber_allocator(*memory_manager),
-		  subscribers(subscriber_allocator)
+		  subscribers(TallocSubscriber(*memory_manager))
 	{
 	}
 
 	Handler (Memory::Manager& memory_manager_)
 		: memory_manager(&memory_manager_),
-		  subscriber_allocator(*memory_manager),
-		  subscribers(subscriber_allocator)
+		  subscribers(TallocSubscriber(*memory_manager))
 	{
 	}
 
@@ -241,6 +239,14 @@ public:
 			subscriber.descriptor.shared_ptr->subscriber = nullptr;
 		}
 	}
+
+	// delete copy constructor and assignment operator
+	Handler (const Handler&) = delete;
+	Handler& operator= (const Handler&) = delete;
+
+	// provide default move constructor and assignment operator
+	Handler (Handler&&) = default;
+	Handler& operator= (Handler&&) = default;
 
 	// We don't use const Tevent& because we allow the user to manipulate event data.
 	// This is useful for the timer, allowing us to re-schedule events.
@@ -265,6 +271,9 @@ public:
 	Descriptor subscribe (const Tcallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
+		using TallocatorDescriptor = Memory::AllocatorSTL<Descriptor__>;
+		TallocatorDescriptor descriptor_allocator(*this->memory_manager);
+
 		auto unique_ptr = Memory::make_unique<Tcallback>(*this->memory_manager, callback);
 
 		this->subscribers.push_back( Subscriber {
@@ -274,7 +283,7 @@ public:
 		Subscriber& subscriber = this->subscribers.back();
 
 		subscriber.descriptor = Descriptor {
-			.shared_ptr = std::allocate_shared<Descriptor__>(this->subscriber_allocator, Descriptor__ {
+			.shared_ptr = std::allocate_shared<Descriptor__>(descriptor_allocator, Descriptor__ {
 				.subscriber = &subscriber
 			})
 		};
