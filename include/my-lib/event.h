@@ -287,7 +287,7 @@ public:
 		bool found = false;
 
 		this->subscribers.remove_if(
-			[&descriptor, &found, this] (Subscriber& subscriber) -> bool {
+			[&descriptor, &found] (Subscriber& subscriber) -> bool {
 				const bool local_found = (descriptor.shared_ptr->subscriber == &subscriber);
 
 				if (local_found)

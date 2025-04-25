@@ -82,7 +82,7 @@ public:
 			event->time = this->time;
 			event->var_callback = EventCoroutine {
 				.coroutine_handler = handler
-			},
+			};
 			event->enabled = true;
 
 			// Store the event in the coroutine promise.

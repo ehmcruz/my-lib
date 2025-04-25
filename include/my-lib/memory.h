@@ -198,11 +198,11 @@ template <typename T>
 class DeAllocatorSTL_unique_ptr
 {
 public:
-	Manager *manager;
+	Manager *manager = nullptr;
 	size_t type_size;
 	size_t type_align;
 
-	DeAllocatorSTL_unique_ptr () = delete;
+	DeAllocatorSTL_unique_ptr () = default;
 
 	DeAllocatorSTL_unique_ptr (Manager& manager_)
 		: manager(&manager_), type_size(calculate_size<T>()), type_align(calculate_alignment<T>())

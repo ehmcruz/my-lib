@@ -217,6 +217,10 @@ void test_unique_ptr ()
 
 	Mylib::Memory::unique_ptr<int> ptr = Mylib::Memory::make_unique<int>(default_manager, 1);
 	std::cout << "ptr " << ptr.get() << std::endl;
+
+	Mylib::Memory::unique_ptr<double> ptr2;
+	ptr2 = Mylib::Memory::make_unique<double>(default_manager, 1);
+	std::cout << "ptr2 " << ptr2.get() << std::endl;
 }
 
 void test_unique_ptr_derived ()
