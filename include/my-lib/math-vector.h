@@ -444,6 +444,15 @@ constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 
 // ---------------------------------------------------
 
+template <typename T, uint32_t dim>
+constexpr T distance_squared (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
+{
+	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
+	return (a - b).length_squared();
+}
+
+// ---------------------------------------------------
+
 // Find an arbitrary vector that is orthogonal to the given vector.
 // Copied from the MathFu library.
 
