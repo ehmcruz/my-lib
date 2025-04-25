@@ -113,6 +113,13 @@ public:
 		p->~T();
 		this->deallocate_type<T>(p, 1);
 	}
+
+	template <typename T, typename... Types>
+	[[nodiscard]] T* allocate_construct_type (Types&&... vars)
+	{
+		T *ptr = new (this->allocate_type<T>(1)) T(std::forward<Types>(vars)...);
+		return ptr;
+	}
 };
 
 // ---------------------------------------------------

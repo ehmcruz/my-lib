@@ -30,30 +30,7 @@ class Callback
 public:
 	virtual void operator() (Tevent& event) = 0;
 	virtual ~Callback () = default;
-	virtual std::size_t get_size () const noexcept = 0; // returns object size
-	virtual uint32_t get_alignment () const noexcept = 0; // returns object alignment
-	virtual Mylib::Memory::unique_ptr<Callback<Tevent>> make_copy (Memory::Manager& memory_manager) const = 0;
-	virtual void destruct_deallocate_memory (Memory::Manager& memory_manager) = 0;
 };
-
-#define MYLIB_EVENT_BASE_OPERATIONS \
-	public: \
-		constexpr std::size_t get_size () const noexcept override final \
-		{ \
-			return sizeof(*this); \
-		} \
-		constexpr uint32_t get_alignment () const noexcept override final \
-		{ \
-			return alignof(decltype(*this)); \
-		} \
-		Mylib::Memory::unique_ptr<Callback<Tevent>> make_copy (Memory::Manager& memory_manager) const override final \
-		{ \
-			return Mylib::Memory::make_unique<DerivedCallback>(memory_manager, *this); \
-		} \
-		void destruct_deallocate_memory (Memory::Manager& memory_manager) override final \
-		{ \
-			memory_manager.template destruct_deallocate_type<DerivedCallback>(this); \
-		}
 
 // ---------------------------------------------------
 
@@ -86,8 +63,6 @@ auto make_callback_function (Tfunc callback)
 			std::apply(this->callback_function, built_params);*/
 			std::invoke(this->callback_function, event);
 		}
-
-		MYLIB_EVENT_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(callback);
@@ -125,8 +100,6 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 			std::apply(this->callback_function, built_params);*/
 			std::invoke(this->callback_function, this->obj, event);
 		}
-
-		MYLIB_EVENT_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(obj, callback);
@@ -159,8 +132,6 @@ auto make_callback_lambda (Tlambda_&& callback)
 			std::apply(this->callback_function, built_params);*/
 			std::invoke(this->callback_lambda, event);
 		}
-
-		MYLIB_EVENT_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(callback);
@@ -208,8 +179,6 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 			std::apply(this->callback_function, built_params);
 			//std::invoke(this->callback_function, *(this->obj));
 		}
-
-		MYLIB_EVENT_BASE_OPERATIONS
 	};
 
 	return DerivedCallback(obj, callback, params);
@@ -241,7 +210,7 @@ public:
 
 	struct Subscriber {
 		Descriptor descriptor;
-		EventCallback *callback;
+		Memory::unique_ptr<EventCallback> callback; // used my unique_ptr to support polymorphic types
 	};
 
 private:
@@ -270,7 +239,6 @@ public:
 	{
 		for (auto& subscriber : this->subscribers) {
 			subscriber.descriptor.shared_ptr->subscriber = nullptr;
-			subscriber.callback->destruct_deallocate_memory(*this->memory_manager);
 		}
 	}
 
@@ -292,19 +260,16 @@ public:
 	/* When creating the event listener by r-value ref,
 	   we allocate internal storage and copy the value to it.
 	*/
-	Descriptor subscribe (const EventCallback& callback)
+
+	template <typename Tcallback>
+	Descriptor subscribe (const Tcallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
-		auto unique_ptr = callback.make_copy(*this->memory_manager);
+		auto unique_ptr = Memory::make_unique<Tcallback>(*this->memory_manager, callback);
 
 		this->subscribers.push_back( Subscriber {
-			.callback = unique_ptr.release(),
+			.callback = std::move(unique_ptr),
 			} );
-		
-		// We store a raw pointer and release the unique_ptr.
-		// We do this because the pool memory manager doesn't support
-		// polymorphic types.
-		// I intend to change this in the future.
 		
 		Subscriber& subscriber = this->subscribers.back();
 
@@ -325,10 +290,8 @@ public:
 			[&descriptor, &found, this] (Subscriber& subscriber) -> bool {
 				const bool local_found = (descriptor.shared_ptr->subscriber == &subscriber);
 
-				if (local_found) {
-					subscriber.callback->destruct_deallocate_memory(*this->memory_manager);
+				if (local_found)
 					found = true;
-				}
 				
 				return local_found;
 			}
@@ -342,8 +305,6 @@ public:
 };
 
 // ---------------------------------------------------
-
-#undef MYLIB_EVENT_BASE_OPERATIONS
 
 } // end namespace Event
 } // end namespace Mylib

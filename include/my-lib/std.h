@@ -36,6 +36,11 @@ using size_t = std::size_t;
 
 // ---------------------------------------------------
 
+struct EmptyStruct {
+};
+
+// ---------------------------------------------------
+
 template <typename T>
 concept Enum = std::is_enum_v<T>;
 

@@ -78,7 +78,7 @@ public:
 			PromiseType& promise = handler.promise();
 			//Coroutine coro = promise.get_return_object();
 
-			EventFull *event = new (this->timer.memory_manager.template allocate_type<EventFull>(1)) EventFull;
+			EventFull *event = this->timer.memory_manager.template allocate_construct_type<EventFull>();
 			event->time = this->time;
 			event->var_callback = EventCoroutine {
 				.coroutine_handler = handler
@@ -114,7 +114,7 @@ private:
 
 	struct EventCallback {
 		Descriptor descriptor;
-		TimerCallback *callback;
+		Memory::unique_ptr<TimerCallback> callback;
 	};
 
 	struct EventCoroutine {
@@ -122,7 +122,7 @@ private:
 	};
 
 	struct EventFull : public Event {
-		std::variant<EventCallback, EventCoroutine> var_callback;
+		std::variant<EmptyStruct, EventCallback, EventCoroutine> var_callback;
 		bool enabled;
 	};
 
@@ -231,15 +231,16 @@ public:
 		When creating the event listener by r-value ref,
 		we allocate internal storage and copy the value to it.
 	*/
-	Descriptor schedule_event (const Ttime& time, const TimerCallback& callback)
+	template <typename Tcallback>
+	Descriptor schedule_event (const Ttime& time, const Tcallback& callback)
 		//requires std::is_rvalue_reference<decltype(callback)>::value
 	{
 		using TallocatorDescriptor = Memory::AllocatorSTL<Descriptor__>;
 		TallocatorDescriptor descriptor_allocator(this->memory_manager);
 
-		auto unique_ptr = callback.make_copy(this->memory_manager);
+		auto unique_ptr = Memory::make_unique<Tcallback>(this->memory_manager, callback);
 
-		EventFull *event = new (this->memory_manager.template allocate_type<EventFull>(1)) EventFull;
+		EventFull *event = this->memory_manager.template allocate_construct_type<EventFull>();
 		event->time = time;
 
 		std::shared_ptr<Descriptor__> shared_ptr_ = std::allocate_shared<Descriptor__>(descriptor_allocator, Descriptor__ {
@@ -248,14 +249,9 @@ public:
 
 		event->var_callback = EventCallback {
 			.descriptor = Descriptor { .shared_ptr = shared_ptr_ },
-			.callback = unique_ptr.release(),
+			.callback = std::move(unique_ptr),
 		},
 		event->enabled = true;
-
-		// We store a raw pointer and release the unique_ptr.
-		// We do this because the pool memory manager doesn't support
-		// polymorphic types.
-		// I intend to change this in the future.
 
 		this->push(event);
 		
@@ -326,7 +322,6 @@ private:
 	{
 		if (std::holds_alternative<EventCallback>(event->var_callback)) {
 			EventCallback& callback = std::get<EventCallback>(event->var_callback);
-			callback.callback->destruct_deallocate_memory(this->memory_manager);
 			callback.descriptor.shared_ptr->ptr = nullptr;
 		}
 		this->memory_manager.template destruct_deallocate_type<EventFull>(event);
