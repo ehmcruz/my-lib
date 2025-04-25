@@ -4,7 +4,8 @@
 #include <coroutine>
 
 #include <my-lib/std.h>
-#include <my-lib/any.h>
+#include <my-lib/memory.h>
+#include <my-lib/memory-pool.h>
 
 
 namespace Mylib
@@ -12,13 +13,30 @@ namespace Mylib
 
 // ---------------------------------------------------
 
+template <size_t buffer_size = 1024>
 struct Coroutine {
+	inline static Memory::PoolCore pool = Memory::PoolCore(buffer_size, 16, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
+
 	struct promise_type {
 		// If the coroutine is not waiting for a timer event, this is nullptr.
 		// Otherwise, it points to the object that owns of the awaiter.
 		// We need this to be able to destroy the event when the coroutine finishes.
 		void *awaiter_owner;
 		void *awaiter_data;
+
+		static void* operator new (const size_t size)
+		{
+			mylib_assert_exception(size < buffer_size)
+			//std::cout << "promise_type::operator new size " << size << " ptr " << ptr << std::endl;
+			return pool.allocate();
+		}
+
+		static void operator delete (void *ptr, const size_t size)
+		{
+			//std::cout << "promise_type::operator delete size " << size << " ptr " << ptr << std::endl;
+			//::operator delete(ptr);
+			pool.deallocate(ptr);
+		}
 
 		Coroutine get_return_object ()
 		{
@@ -51,14 +69,18 @@ struct Coroutine {
 	std::coroutine_handle<promise_type> handler;
 };
 
-using PromiseType = typename Coroutine::promise_type;
-using CoroutineHandle = std::coroutine_handle<PromiseType>;
+template <typename Tcoroutine>
+using PromiseType = typename Tcoroutine::promise_type;
+
+template <typename Tcoroutine>
+using CoroutineHandle = std::coroutine_handle<PromiseType<Tcoroutine>>;
 
 // ---------------------------------------------------
 
-inline void initialize_coroutine (Coroutine coro)
+template <typename Tcoroutine>
+void initialize_coroutine (Tcoroutine coro)
 {
-	PromiseType& promise = coro.handler.promise();
+	PromiseType<Tcoroutine>& promise = coro.handler.promise();
 	promise.awaiter_owner = nullptr;
 	promise.awaiter_data = nullptr;
 

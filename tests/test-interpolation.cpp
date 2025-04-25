@@ -3,7 +3,8 @@
 #include <my-lib/math-vector.h>
 #include <my-lib/interpolation.h>
 
-using InterpolationManager = Mylib::InterpolationManager<float>;
+using Coroutine = Mylib::Coroutine<1024>;
+using InterpolationManager = Mylib::InterpolationManager<Coroutine, float>;
 using Vector = Mylib::Math::Vector<float, 2>;
 
 InterpolationManager interpolation_manager;
@@ -17,7 +18,7 @@ void callback (InterpolationManager::Event& event)
 	std::cout << "interpolation of " << event.interpolator->get_target()  << " finished" << std::endl;
 }
 
-Mylib::Coroutine coro_print_values ()
+Coroutine coro_print_values ()
 {
 	while (global_time < 10) {
 		std::cout << "\tcoro_print_values loop start time=" << global_time << std::endl;

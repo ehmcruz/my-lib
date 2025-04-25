@@ -25,11 +25,13 @@ namespace Event
 
 // ---------------------------------------------------
 
-template <typename Tget_current_time>
+template <typename Coroutine, typename Tget_current_time>
 class Timer
 {
 public:
 	using Ttime = typename remove_type_qualifiers< decltype(std::declval<Tget_current_time>()()) >::type;
+	using CoroutineHandle = Mylib::CoroutineHandle<Coroutine>;
+	using PromiseType = typename Coroutine::promise_type;
 
 	static consteval bool debug () noexcept
 	{
@@ -327,6 +329,14 @@ private:
 		this->memory_manager.template destruct_deallocate_type<EventFull>(event);
 	}
 };
+
+// ---------------------------------------------------
+
+template <typename Coroutine, typename Tget_current_time>
+auto make_timer (Tget_current_time get_current_time_)
+{
+	return Timer<Coroutine, Tget_current_time>(get_current_time_);
+}
 
 // ---------------------------------------------------
 

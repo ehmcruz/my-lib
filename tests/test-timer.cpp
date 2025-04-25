@@ -18,13 +18,15 @@ uint32_t get_time ()
 //using Timer = Mylib::Trigger::Timer<uint32_t, decltype(get_time)>;
 //auto timer = Mylib::Trigger::Timer(get_time);
 
-Mylib::Event::Timer timer(get_time);
+using Coroutine = Mylib::Coroutine<1024>;
+
+auto timer = Mylib::Event::make_timer<Coroutine>(get_time);
 
 using Timer = decltype(timer);
 
 bool alive = true;
 
-Mylib::Coroutine coro_print_values ()
+Coroutine coro_print_values ()
 {
 	while (alive) {
 		std::cout << "\tcoro_print_values loop start time=" << global_time << std::endl;

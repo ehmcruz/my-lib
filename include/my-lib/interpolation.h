@@ -103,10 +103,13 @@ protected:
 
 // ---------------------------------------------------
 
-template <typename Tx>
+template <typename Coroutine, typename Tx>
 class InterpolationManager
 {
 public:
+	using CoroutineHandle = Mylib::CoroutineHandle<Coroutine>;
+	using PromiseType = typename Coroutine::promise_type;
+
 	struct Event {
 		Memory::unique_ptr<Interpolator<Tx>> interpolator;
 	};

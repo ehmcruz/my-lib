@@ -4,6 +4,9 @@
 #include <unordered_map>
 #include <string>
 #include <string_view>
+#include <array>
+#include <initializer_list>
+#include <algorithm>
 
 #include <my-lib/std.h>
 
