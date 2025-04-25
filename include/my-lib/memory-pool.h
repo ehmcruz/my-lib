@@ -55,7 +55,7 @@ private:
 
 	const size_t type_size;
 	const uint32_t chunks_per_block;
-	const uint32_t align;
+	const size_t align;
 
 	MYLIB_OO_ENCAPSULATE_SCALAR_CONST_READONLY(size_t, chunk_size)
 
@@ -69,7 +69,7 @@ private:
 	//std::mutex mutex;
 
 public:
-	PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const uint32_t align_);
+	PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const size_t align_);
 	~PoolCore ();
 
 	// allocates one element of size chunk_size
@@ -160,7 +160,7 @@ public:
 
 	~PoolManager ();
 
-	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override final
+	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const size_t align) override final
 	{
 		mylib_assert_exception_msg(count == 1, "PoolManager only supports allocation of one element at a time. Given ", count);
 //std::cout << "allocating..." << std::endl;
@@ -177,7 +177,7 @@ public:
 		return p;
 	}
 
-	void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) override final
+	void deallocate (void *p, const size_t type_size, const size_t count, const size_t align) override final
 	{
 		mylib_assert_exception_msg(count == 1, "PoolManager only supports deallocation of one element at a time. Given ", count);
 //std::cout << "deallocating..." << std::endl;

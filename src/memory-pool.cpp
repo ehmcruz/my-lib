@@ -9,7 +9,7 @@ namespace Memory
 
 // ---------------------------------------------------
 
-PoolCore::PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const uint32_t align_)
+PoolCore::PoolCore (const size_t type_size_, const uint32_t chunks_per_block_, const size_t align_)
 	: type_size(type_size_), chunks_per_block(chunks_per_block_), align(align_),
 	  chunk_size((type_size_ < lowest_chunk_size()) ? lowest_chunk_size() : type_size_)
 {

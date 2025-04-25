@@ -20,7 +20,7 @@ namespace Memory
 
 // ---------------------------------------------------
 
-[[nodiscard]] inline void* m_allocate (const size_t size, const uint32_t align)
+[[nodiscard]] inline void* m_allocate (const size_t size, const size_t align)
 {
 	void *p;
 #ifdef __cpp_aligned_new
@@ -38,7 +38,7 @@ namespace Memory
 
 // ---------------------------------------------------
 
-inline void m_deallocate (void *p, const size_t size, const uint32_t align)
+inline void m_deallocate (void *p, const size_t size, const size_t align)
 {
 //std::cout << "m_deallocate size " << size << " align " << align << " address " << p << std::endl;
 #if __cpp_aligned_new
@@ -61,7 +61,15 @@ inline void m_deallocate (void *p, const size_t size, const uint32_t align)
 // ---------------------------------------------------
 
 template <typename T>
-constexpr uint32_t calculate_alignment () noexcept
+consteval size_t calculate_size () noexcept
+{
+	return sizeof(T);
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+consteval size_t calculate_alignment () noexcept
 {
 	if constexpr (alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__)
 		return __STDCPP_DEFAULT_NEW_ALIGNMENT__;
@@ -74,8 +82,8 @@ constexpr uint32_t calculate_alignment () noexcept
 class Manager
 {
 public:
-	[[nodiscard]] virtual void* allocate (const size_t type_size, const size_t count, const uint32_t align) = 0;
-	virtual void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) = 0;
+	[[nodiscard]] virtual void* allocate (const size_t type_size, const size_t count, const size_t align) = 0;
+	virtual void deallocate (void *p, const size_t type_size, const size_t count, const size_t align) = 0;
 
 	[[nodiscard]] inline void* allocate (const size_t type_size, const size_t count)
 	{
@@ -96,7 +104,7 @@ public:
 	template <typename T>
 	void deallocate_type (T *p, const size_t count)
 	{
-		this->deallocate(p, sizeof(T), count, calculate_alignment<T>());
+		this->deallocate(p, calculate_size<T>(), count, calculate_alignment<T>());
 	}
 
 	template <typename T>
@@ -180,51 +188,66 @@ public:
 // To be used with unique_ptr
 
 template <typename T>
-class DeAllocatorSTL
+class DeAllocatorSTL_unique_ptr
 {
 public:
 	Manager *manager;
+	size_t type_size;
+	size_t type_align;
 
-	DeAllocatorSTL () = delete;
+	DeAllocatorSTL_unique_ptr () = delete;
 
-	DeAllocatorSTL (Manager& manager_)
-		: manager(&manager_)
+	DeAllocatorSTL_unique_ptr (Manager& manager_)
+		: manager(&manager_), type_size(calculate_size<T>()), type_align(calculate_alignment<T>())
 	{
 	}
 
 	template <typename Tother>
-	DeAllocatorSTL (const DeAllocatorSTL<Tother>& other)
-		: manager(other.manager)
+	DeAllocatorSTL_unique_ptr (const DeAllocatorSTL_unique_ptr<Tother>& other)
+		: manager(other.manager), type_size(other.type_size), type_align(other.type_align)
 	{
+//		std::cout << "DeAllocatorSTL_unique_ptr copy constructor from anothe type" << std::endl;
 	}
 
-	DeAllocatorSTL (const AllocatorSTL<T>& allocator)
+	/*
+	// never enable the following for this deallocator
+
+	DeAllocatorSTL_unique_ptr (const AllocatorSTL<T>& allocator)
 		: manager(allocator.manager)
 	{
 	}
 
 	template <typename Tother>
-	DeAllocatorSTL (const AllocatorSTL<Tother>& other)
+	DeAllocatorSTL_unique_ptr (const AllocatorSTL<Tother>& other)
 		: manager(other.manager)
 	{
-	}
+	}*/
 
 	void operator() (T *p)
 	{
-		this->manager->template deallocate_type<T>(p, 1);
+		//this->manager->template deallocate_type<T>(p, 1);
+		this->manager->deallocate(p, this->type_size, 1, this->type_align);
 	}
 };
 
 // ---------------------------------------------------
 
+// C++ std::unique_ptr has a problem:
+// It doesn't work well with custom allocators when you use a polymorphic type.
+// The problem is that if have a unique_ptr<T> that is referencing an object
+// of type U, where U is derived from T, the type size and alignment of T
+// are used to deallocate the memory. This is a problem for custom allocators.
+// The solution is to use a custom deleter that stores the type size and
+// alignment of the object being pointed to when the unique_ptr was created.
+
 template <typename T>
-using unique_ptr = std::unique_ptr<T, DeAllocatorSTL<T>>;
+using unique_ptr = std::unique_ptr<T, DeAllocatorSTL_unique_ptr<T>>;
 
 template <typename T, typename... Types>
 [[nodiscard]] unique_ptr<T> make_unique (Manager& manager, Types&&... vars)
 {
 	T *ptr = new (manager.template allocate_type<T>(1)) T(std::forward<Types>(vars)...);
-	return unique_ptr<T>(ptr, DeAllocatorSTL<T>(manager));
+	return unique_ptr<T>(ptr, DeAllocatorSTL_unique_ptr<T>(manager));
 }
 
 // ---------------------------------------------------
@@ -232,12 +255,12 @@ template <typename T, typename... Types>
 class DefaultManager : public Manager
 {
 public:
-	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const uint32_t align) override final
+	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const size_t align) override final
 	{
 		return m_allocate(type_size * count, align);
 	}
 
-	void deallocate (void *p, const size_t type_size, const size_t count, const uint32_t align) override final
+	void deallocate (void *p, const size_t type_size, const size_t count, const size_t align) override final
 	{
 		m_deallocate(p, type_size * count, align);
 	}

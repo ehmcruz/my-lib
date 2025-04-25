@@ -212,10 +212,10 @@ void test_unique_ptr ()
 	auto& default_manager = Mylib::Memory::default_manager;
 	auto& default_allocator_stl = Mylib::Memory::default_allocator_stl;
 
-	Mylib::Memory::DeAllocatorSTL<int> deallocator(default_manager);
-	Mylib::Memory::DeAllocatorSTL<int> deallocator2(default_allocator_stl);
+	Mylib::Memory::DeAllocatorSTL_unique_ptr<int> deallocator(default_manager);
+	//Mylib::Memory::DeAllocatorSTL_unique_ptr<int> deallocator2(default_allocator_stl);
 
-	Mylib::Memory::unique_ptr<int> ptr(default_manager.allocate_type<int>(1), deallocator);
+	Mylib::Memory::unique_ptr<int> ptr = Mylib::Memory::make_unique<int>(default_manager, 1);
 	std::cout << "ptr " << ptr.get() << std::endl;
 }
 
