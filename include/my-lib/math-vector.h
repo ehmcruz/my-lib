@@ -169,7 +169,7 @@ public:
 		return this->data;
 	}
 
-	constexpr static uint32_t get_dim () noexcept
+	consteval static uint32_t get_dim () noexcept
 	{
 		return dim;
 	}
@@ -283,13 +283,18 @@ public:
 		*this = r.v;
 	}
 
+	constexpr void project (const Vector& target) noexcept
+	{
+		*this = target * (dot_product(*this, target) / target.length_squared());
+	}
+
 	constexpr void set_zero () noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)
 			this->data[i] = 0;
 	}
 
-	static constexpr Vector zero () noexcept
+	static consteval Vector zero () noexcept
 	{
 		Vector v;
 		v.set_zero();
@@ -428,6 +433,15 @@ constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
+constexpr Vector<T, dim> projection (Vector<T, dim> source, const Vector<T, dim>& target) noexcept
+{
+	source.project(target);
+	return source;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
 constexpr Vector<T, dim> with_length (const Vector<T, dim>& v, const T len) noexcept
 {
 	return v * (len / v.length());
@@ -447,8 +461,23 @@ constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 template <typename T, uint32_t dim>
 constexpr T distance_squared (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 {
-	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
 	return (a - b).length_squared();
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr T cos_angle_between (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+{
+	return dot_product(a, b) / (a.length() * b.length());
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr T angle_between (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+{
+	return std::acos(cos_angle_between(a, b));
 }
 
 // ---------------------------------------------------

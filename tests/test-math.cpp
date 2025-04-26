@@ -16,6 +16,43 @@ using Matrix2f = Matrix<float, 2, 2>;
 using Matrix3f = Matrix<float, 3, 3>;
 using Matrix4f = Matrix<float, 4, 4>;
 
+void test_vector_projection ()
+{
+	Vector2f source, target;
+
+	std::cout << "---------------------- vector projection test" << std::endl << std::endl;
+
+	source = Vector2f(4.0f, 2.0f);
+	target = Vector2f(1, 0);
+	std::cout << "source: " << source << " target: " << target << " projection: " << projection(source, target) << std::endl << std::endl;
+
+	source = Vector2f(4.0f, 2.0f);
+	target = Vector2f(-1, 0);
+	std::cout << "source: " << source << " target: " << target << " projection: " << projection(source, target) << std::endl << std::endl;
+
+	source = Vector2f(4.0f, 2.0f);
+	target = Vector2f(1, 0.5);
+	std::cout << "source: " << source << " target: " << target << " projection: " << projection(source, target) << std::endl << std::endl;
+
+	source = Vector2f(4.0f, 2.0f);
+	target = Vector2f(1, 1);
+	std::cout << "source: " << source << " target: " << target << " projection: " << projection(source, target) << std::endl << std::endl;
+}
+
+void test_vector_angle ()
+{
+	std::cout << "---------------------- vector projection test" << std::endl << std::endl;
+
+	constexpr auto a = Vector2f(1, 0);
+	constexpr float angle_step = 30.0f;
+
+	for (float angle = 0; angle < 720; angle += angle_step) {
+		const Matrix2f m = Matrix2f::rotation(degrees_to_radians(angle));
+		const Vector2f b = m * a;
+		std::cout << "angle: " << angle << " b: " << b << " angle_recalc " << radians_to_degrees(angle_between(a, b)) << std::endl;
+	}
+}
+
 int main ()
 {
 	std::cout << "----------------------" << std::endl;
@@ -62,6 +99,9 @@ int main ()
 		auto [axis, angle] = q2.to_axis_angle();
 		std::cout << "Quaternion to axis-angle: " << axis << " " << Mylib::Math::radians_to_degrees(angle) << std::endl;
 	}
+
+	test_vector_projection();
+	test_vector_angle();
 
 	return 0;
 }

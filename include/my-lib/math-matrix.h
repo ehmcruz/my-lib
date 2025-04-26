@@ -29,20 +29,21 @@ class Matrix
 {
 private:
 	T data[nrows*ncols];
+
 public:
 	using Type = T;
 
-	constexpr static uint32_t get_nrows () noexcept
+	consteval static uint32_t get_nrows () noexcept
 	{
 		return nrows;
 	}
 
-	constexpr static uint32_t get_ncols () noexcept
+	consteval static uint32_t get_ncols () noexcept
 	{
 		return ncols;
 	}
 
-	constexpr static uint32_t get_length () noexcept
+	consteval static uint32_t get_length () noexcept
 	{
 		return nrows * ncols;
 	}
@@ -52,12 +53,12 @@ public:
 		return static_cast<T>(v);
 	}
 
-	inline T* get_raw () noexcept
+	constexpr T* get_raw () noexcept
 	{
 		return this->data;
 	}
 
-	inline const T* get_raw () const noexcept
+	constexpr const T* get_raw () const noexcept
 	{
 		return this->data;
 	}
@@ -182,6 +183,24 @@ public:
 			m[i, last] = v[i];
 	}
 
+	// 2D rotation matrix
+
+	constexpr void set_rotation_matrix (const T angle) noexcept
+		requires (nrows == ncols && ncols == 2)
+	{
+		const T c = std::cos(angle);
+		const T s = std::sin(angle);
+
+		auto& self = *this;
+
+		self[0, 0] = c;
+		self[0, 1] = -s;
+		self[1, 0] = s;
+		self[1, 1] = c;
+	}
+
+	// 3D rotation matrix
+	
 	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
 		requires (nrows == ncols && ncols == 3)
 	{
@@ -235,6 +254,9 @@ public:
 		m(2, 2) = t*z*z + c;
 	#endif
 	}
+
+	// 3D rotation matrix
+	// But using a 4x4 matrix to allow translation.
 
 	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
 		requires (nrows == ncols && ncols == 4)
@@ -493,9 +515,22 @@ public:
 		return m;
 	}
 
-	static constexpr Matrix rotation (const Vector<T, nrows>& axis, const T angle) noexcept
+	// 2D rotation matrix
+
+	static constexpr Matrix rotation (const T angle) noexcept
+		requires (nrows == ncols && ncols == 2)
 	{
-		static_assert(nrows == ncols);
+		Matrix m;
+		m.set_rotation_matrix(angle);
+		return m;
+	}
+
+	// 3D rotation matrix
+	// The 4x4 matrix variant is used to allow translation.
+
+	static constexpr Matrix rotation (const Vector<T, nrows>& axis, const T angle) noexcept
+		requires (nrows == ncols && (ncols == 3 || ncols == 4))
+	{
 		Matrix m;
 		m.set_rotation_matrix(axis, angle);
 		return m;
