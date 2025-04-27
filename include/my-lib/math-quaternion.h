@@ -38,31 +38,24 @@ public:
 	// We store in this format (x, y, z, w), where x,y,z are the vector part,
 	// and w is the scalar part, so that we can use the same memory layout
 	// as in GLSL.
-	union {
-		struct {
-			Vector v;
-			T w__;
-		};
-		struct {
-			T x;
-			T y;
-			T z;
-			T w;
-		};
-		T data[4];
-	};
+
+	Vector v;
+	Type w;
 
 	// ------------------------ Constructors
 
-	constexpr Quaternion () noexcept = default;
+	constexpr Quaternion () noexcept
+		: v(Vector::zero()), w(0)
+	{
+	}
 
 	constexpr Quaternion (const Vector& v_, const T w_) noexcept
-		: v(v_), w__(w_)
+		: v(v_), w(w_)
 	{
 	}
 
 	constexpr Quaternion (const T x_, const T y_, const T z_, const T w_) noexcept
-		: x(x_), y(y_), z(z_), w(w_)
+		: v(x_, y_, z_), w(w_)
 	{
 	}
 
@@ -70,7 +63,7 @@ public:
 	// The vector part is set to zero.
 
 	constexpr Quaternion (const T w_) noexcept
-		: x(0), y(0), z(0), w(w_)
+		: v(Vector::zero()), w(w_)
 	{
 	}
 
@@ -78,7 +71,7 @@ public:
 	// The scalar part is set to zero.
 
 	constexpr Quaternion (const Vector& v_) noexcept
-		: v(v_), w__(0)
+		: v(v_), w(0)
 	{
 	}
 
@@ -88,25 +81,13 @@ public:
 
 	// ------------------------ Other stuff
 
-	constexpr Type& operator[] (const uint32_t i) noexcept
-	{
-		static_assert(sizeof(Quaternion) == (4 * sizeof(Type)));
-		return this->data[i];
-	}
-
-	constexpr Type operator[] (const uint32_t i) const noexcept
-	{
-		static_assert(sizeof(Quaternion) == (4 * sizeof(Type)));
-		return this->data[i];
-	}
-
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		constexpr Quaternion& operator OP (const Quaternion& other) noexcept \
+		constexpr Quaternion& operator OP (this Quaternion& self, const Quaternion& other) noexcept \
 		{ \
-			for (uint32_t i = 0; i < 4; i++) \
-				this->data[i] OP other[i]; \
-			return *this; \
+			self.v OP other.v; \
+			self.w OP other.w; \
+			return self; \
 		}
 	
 	MYLIB_MATH_BUILD_OPERATION( += )
@@ -114,11 +95,11 @@ public:
 
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		constexpr Quaternion& operator OP (const Type s) noexcept \
+		constexpr Quaternion& operator OP (this Quaternion& self, const Type s) noexcept \
 		{ \
-			for (uint32_t i = 0; i < 4; i++) \
-				this->data[i] OP s; \
-			return *this; \
+			self.v OP s; \
+			self.w OP s; \
+			return self; \
 		}
 	
 	MYLIB_MATH_BUILD_OPERATION( *= )
@@ -134,11 +115,10 @@ public:
 
 	// ---------------------------------------------------
 
-	constexpr T length_squared () const noexcept
+	constexpr T length_squared (this const Quaternion& self) noexcept
 	{
-		Type value = 0;
-		for (uint32_t i = 0; i < 4; i++)
-			value += this->data[i] * this->data[i];
+		Type value = dot_product(self.v, self.v);
+		value += self.w * self.w;
 		return value;
 	}
 
@@ -238,19 +218,17 @@ public:
 	// normalize returns the length before normalization.
 	// Got the idea from the MathFu library.
 
-	constexpr Type normalize () noexcept
+	constexpr Type normalize (this Quaternion& self) noexcept
 	{
-		const Type len = this->length();
-		for (uint32_t i = 0; i < 4; i++)
-			this->data[i] /= len;
+		const Type len = self.length();
+		self.v /= len;
+		self.w /= len;
 		return len;
 	}
 
 	constexpr void conjugate () noexcept
 	{
-		this->x = -this->x;
-		this->y = -this->y;
-		this->z = -this->z;
+		this->v.negate();
 	}
 
 	/*
@@ -262,42 +240,38 @@ public:
 		this->conjugate();
 	}
 
-	constexpr void invert () noexcept
+	constexpr void invert (this Quaternion& self) noexcept
 	{
-		const Type len = this->length_squared();
-		this->conjugate();
-		for (uint32_t i = 0; i < 4; i++)
-			this->data[i] /= len;
+		const Type len = self.length_squared();
+		self.conjugate();
+		self.v /= len;
+		self.w /= len;
 	}
 
 	// ---------------------------------------------------
 
 	constexpr void set_zero () noexcept
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
+		this->v.set_zero();
 		this->w = 0;
 	}
 
 	constexpr void set_identity () noexcept
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
+		this->v.set_zero();
 		this->w = 1;
 	}
 
 	// ---------------------------------------------------
 
-	static constexpr Quaternion zero () noexcept
+	static consteval Quaternion zero () noexcept
 	{
 		Quaternion q;
 		q.set_zero();
 		return q;
 	}
 
-	static constexpr Quaternion identity () noexcept
+	static consteval Quaternion identity () noexcept
 	{
 		Quaternion q;
 		q.set_identity();
@@ -335,8 +309,8 @@ static_assert(sizeof(Quaterniond) == (4 * sizeof(double)));
 	constexpr Quaternion<T> operator OP (const Quaternion<T>& a, const Quaternion<T>& b) noexcept \
 	{ \
 		Quaternion<T> r; \
-		for (uint32_t i = 0; i < 4; i++) \
-			r[i] = a[i] OP b[i]; \
+		r.v = a.v OP b.v; \
+		r.w = a.w OP b.w; \
 		return r; \
 	}
 
@@ -349,8 +323,8 @@ MYLIB_MATH_BUILD_OPERATION( - )
 	constexpr Quaternion<T> operator OP (const Quaternion<T>& a, const T s) noexcept \
 	{ \
 		Quaternion<T> r; \
-		for (uint32_t i = 0; i < 4; i++) \
-			r[i] = a[i] OP s; \
+		r.v = a.v OP s; \
+		r.w = a.w OP s; \
 		return r; \
 	}
 
@@ -363,8 +337,8 @@ template <typename T>
 constexpr Quaternion<T> operator- (const Quaternion<T>& q) noexcept
 {
 	Quaternion<T> r;
-	for (uint32_t i = 0; i < 4; i++)
-		r[i] = -q[i];
+	r.v = -q.v;
+	r.w = -q.w;
 	return r;
 }
 
@@ -381,7 +355,7 @@ constexpr Quaternion<T> normalize (const Quaternion<T>& q) noexcept
 template <typename T>
 constexpr Quaternion<T> conjugate (const Quaternion<T>& q) noexcept
 {
-	return Quaternion<T>(-q.x, -q.y, -q.z, q.w);
+	return Quaternion<T>(-q.v, q.w);
 }
 
 // ---------------------------------------------------
@@ -411,10 +385,12 @@ constexpr Quaternion<T> operator* (const Quaternion<T>& q1, const Quaternion<T>&
 
 	// Hamilton product
 
-	r.x = (q1.w * q2.x) + (q1.x * q2.w) + (q1.y * q2.z) - (q1.z * q2.y);
-	r.y = (q1.w * q2.y) - (q1.x * q2.z) + (q1.y * q2.w) + (q1.z * q2.x);
-	r.z = (q1.w * q2.z) + (q1.x * q2.y) - (q1.y * q2.x) + (q1.z * q2.w);
-	r.w = (q1.w * q2.w) - (q1.x * q2.x) - (q1.y * q2.y) - (q1.z * q2.z);
+	enum { x, y, z };
+
+	r.v[x] = (q1.w * q2.v[x]) + (q1.v[x] * q2.w) + (q1.v[y] * q2.v[z]) - (q1.v[z] * q2.v[y]);
+	r.v[y] = (q1.w * q2.v[y]) - (q1.v[x] * q2.v[z]) + (q1.v[y] * q2.w) + (q1.v[z] * q2.v[x]);
+	r.v[z] = (q1.w * q2.v[z]) + (q1.v[x] * q2.v[y]) - (q1.v[y] * q2.v[x]) + (q1.v[z] * q2.w);
+	r.w = (q1.w * q2.w) - (q1.v[x] * q2.v[x]) - (q1.v[y] * q2.v[y]) - (q1.v[z] * q2.v[z]);
 	//r.v = (b.v * a.w) + (a.v * b.w) + cross_product(a.v, b.v);
 	//r.w = a.w * b.w - dot_product(a.v, b.v);
 
@@ -435,7 +411,8 @@ constexpr Vector<T, 3> rotate (const Quaternion<T>& q, Vector<T, 3> v) noexcept
 template <typename T>
 std::ostream& operator << (std::ostream& out, const Quaternion<T>& q)
 {
-	out << "[" << q.x << ", " << q.y << ", " << q.z << ", " << q.w << "]";
+	enum { x, y, z };
+	out << "[" << q.v[x] << ", " << q.v[y] << ", " << q.v[z] << ", " << q.w << "]";
 	return out;
 }
 

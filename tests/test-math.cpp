@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <array>
 
 #include <cstdint>
 #include <cassert>
@@ -55,6 +56,23 @@ void test_vector_angle ()
 
 int main ()
 {
+	Vector2f vzero = Vector2f::zero();
+	Vector2f vv;
+	std::array<Vector2f, 3> varray;
+
+	union xx
+	{
+		Vector2f v1;
+		Vector2f v2;
+
+		xx () noexcept
+		{
+			v1.set(0, 0);
+		}
+	};
+
+	xx uu;
+
 	std::cout << "----------------------" << std::endl;
 	Vector2f v1(2.0f, 3.0f);
 	std::cout << v1 << std::endl;

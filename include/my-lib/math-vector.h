@@ -39,27 +39,28 @@ public:
 	using Type = T;
 
 	union {
-		Type data[2];
-
 		struct {
 			Type x;
 			Type y;
 		};
 
-		//uint64_t ivalue;
+		Type data[2];
 	};
 
-	constexpr VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept
+		: data{0, 0}
+	{
+	}
 
 	constexpr VectorStorage__ (const Type x_, const Type y_) noexcept
-		: x(x_), y(y_)
+		: data{x_, y_}
 	{
 	}
 
 	constexpr void set (const Type x, const Type y) noexcept
 	{
-		this->x = x;
-		this->y = y;
+		this->data[0] = x;
+		this->data[1] = y;
 	}
 };
 
@@ -72,8 +73,6 @@ public:
 	using Type = T;
 
 	union {
-		Type data[3];
-
 		struct {
 			Type x;
 			Type y;
@@ -86,21 +85,24 @@ public:
 			Type b;
 		};
 
-		//uint64_t ivalue;
+		Type data[3];
 	};
 
-	constexpr VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept
+		: data{0, 0, 0}
+	{
+	}
 
 	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_) noexcept
-		: x(x_), y(y_), z(z_)
+		: data{x_, y_, z_}
 	{
 	}
 
 	constexpr void set (const Type x, const Type y, const Type z) noexcept
 	{
-		this->x = x;
-		this->y = y;
-		this->z = z;
+		this->data[0] = x;
+		this->data[1] = y;
+		this->data[2] = z;
 	}
 };
 
@@ -113,8 +115,6 @@ public:
 	using Type = T;
 
 	union {
-		Type data[4];
-
 		struct {
 			Type x;
 			Type y;
@@ -129,22 +129,25 @@ public:
 			Type a;
 		};
 
-		//uint64_t ivalue;
+		Type data[4];
 	};
 
-	constexpr VectorStorage__ () noexcept = default;
+	constexpr VectorStorage__ () noexcept
+		: data{0, 0, 0, 0}
+	{
+	}
 
 	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
-		: x(x_), y(y_), z(z_), w(w_)
+		: data{x_, y_, z_, w_}
 	{
 	}
 
 	constexpr void set (const Type x, const Type y, const Type z, const Type w) noexcept
 	{
-		this->x = x;
-		this->y = y;
-		this->z = z;
-		this->w = w;
+		this->data[0] = x;
+		this->data[1] = y;
+		this->data[2] = z;
+		this->data[3] = w;
 	}
 };
 
@@ -159,12 +162,12 @@ public:
 
 	static_assert(sizeof(TParent) == (dim * sizeof(Type)));
 
-	inline Type* get_raw () noexcept
+	constexpr Type* get_raw () noexcept
 	{
 		return this->data;
 	}
 
-	inline const Type* get_raw () const noexcept
+	constexpr const Type* get_raw () const noexcept
 	{
 		return this->data;
 	}
@@ -179,9 +182,23 @@ public:
 		return static_cast<Type>(v);
 	}
 
-	// ------------------------ Constructors
+	// ------------------------ operator[]
 
-	constexpr Vector () noexcept = default;
+	constexpr Type& operator[] (const uint32_t i) noexcept
+	{
+		static_assert(sizeof(Vector) == (dim * sizeof(Type)));
+		//return static_cast<Type*>(this)[i];
+		return this->data[i];
+	}
+
+	constexpr Type operator[] (const uint32_t i) const noexcept
+	{
+		static_assert(sizeof(Vector) == (dim * sizeof(Type)));
+		//return static_cast<const Type*>(this)[i];
+		return this->data[i];
+	}
+
+	// ------------------------ Constructors
 
 	using TParent::TParent;
 
@@ -189,10 +206,11 @@ public:
 	constexpr Vector (const Vector<T, dim_other>& other) noexcept
 	{
 		static_assert(dim_other <= dim);
+		auto& self = *this;
 		for (uint32_t i = 0; i < dim_other; i++)
-			this->data[i] = other.data[i];
+			self[i] = other[i];
 		for (uint32_t i = dim_other; i < dim; i++)
-			this->data[i] = 0;
+			self[i] = 0;
 	}
 
 	// ------------------------ operator=
@@ -203,17 +221,17 @@ public:
 
 	#undef MYLIB_MATH_BUILD_OPERATION
 	#define MYLIB_MATH_BUILD_OPERATION(OP) \
-		constexpr Vector& operator OP (const Vector& other) noexcept \
+		constexpr Vector& operator OP (this Vector& self, const Vector& other) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
-				this->data[i] OP other.data[i]; \
-			return *this; \
+				self[i] OP other[i]; \
+			return self; \
 		} \
-		constexpr Vector& operator OP (const Type s) noexcept \
+		constexpr Vector& operator OP (this Vector& self, const Type s) noexcept \
 		{ \
 			for (uint32_t i = 0; i < dim; i++) \
-				this->data[i] OP s; \
-			return *this; \
+				self[i] OP s; \
+			return self; \
 		}
 	
 	MYLIB_MATH_BUILD_OPERATION( += )
@@ -221,21 +239,12 @@ public:
 	MYLIB_MATH_BUILD_OPERATION( *= )
 	MYLIB_MATH_BUILD_OPERATION( /= )
 
-	constexpr Type& operator[] (const uint32_t i) noexcept
-	{
-		return this->data[i];
-	}
 
-	constexpr Type operator[] (const uint32_t i) const noexcept
-	{
-		return this->data[i];
-	}
-
-	constexpr Type length_squared () const noexcept
+	constexpr Type length_squared (this const Vector& self) noexcept
 	{
 		Type value = 0;
 		for (uint32_t i = 0; i < dim; i++)
-			value += this->data[i] * this->data[i];
+			value += self[i] * self[i];
 		return value;
 	}
 
@@ -244,36 +253,48 @@ public:
 		return std::sqrt(this->length_squared());
 	}
 
-	constexpr void set_length (const Type len) noexcept
+	constexpr void set_length (this Vector& self, const Type len) noexcept
 	{
-		const Type ratio = len / this->length();
+		const Type ratio = len / self.length();
 		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] *= ratio;
+			self[i] *= ratio;
 	}
 
 	// normalize returns the length of the vector before normalization.
 	// Got the idea from the MathFu library.
 
-	constexpr Type normalize () noexcept
+	constexpr Type normalize (this Vector& self) noexcept
 	{
-		const Type len = this->length();
+		const Type len = self.length();
 		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] /= len;
+			self[i] /= len;
 		return len;
 	}
 
-	constexpr void abs () noexcept
+	constexpr void negate (this Vector& self) noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = std::abs(this->data[i]);
+			self[i] = -self[i];
 	}
 
-	constexpr void cross_product (const Vector& a, const Vector& b) noexcept
+	constexpr void invert () noexcept
+	{
+		this->negate();
+	}
+
+	constexpr void abs (this Vector& self) noexcept
+	{
+		for (uint32_t i = 0; i < dim; i++)
+			self[i] = std::abs(self[i]);
+	}
+
+	constexpr void cross_product (this Vector& self, const Vector& a, const Vector& b) noexcept
 	{
 		static_assert(dim == 3);
-		this->x = a.y * b.z - a.z * b.y;
-		this->y = a.z * b.x - a.x * b.z;
-		this->z = a.x * b.y - a.y * b.x;
+		enum { x, y, z };
+		self[x] = a[y] * b[z] - a[z] * b[y];
+		self[y] = a[z] * b[x] - a[x] * b[z];
+		self[z] = a[x] * b[y] - a[y] * b[x];
 	}
 
 	constexpr void rotate (const Quaternion<T>& q) noexcept
@@ -288,17 +309,15 @@ public:
 		*this = target * (dot_product(*this, target) / target.length_squared());
 	}
 
-	constexpr void set_zero () noexcept
+	constexpr void set_zero (this Vector& self) noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)
-			this->data[i] = 0;
+			self[i] = 0;
 	}
 
 	static consteval Vector zero () noexcept
 	{
-		Vector v;
-		v.set_zero();
-		return v;
+		return Vector();
 	}
 };
 
@@ -316,7 +335,7 @@ using Point = Vector<T, dim>;
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
-			r.data[i] = a.data[i] OP b.data[i]; \
+			r[i] = a[i] OP b[i]; \
 		return r; \
 	} \
 	template <typename T, uint32_t dim> \
@@ -324,7 +343,7 @@ using Point = Vector<T, dim>;
 	{ \
 		Vector<T, dim> r; \
 		for (uint32_t i = 0; i < dim; i++) \
-			r.data[i] = a.data[i] OP s; \
+			r[i] = a[i] OP s; \
 		return r; \
 	}
 
@@ -356,7 +375,7 @@ constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
 {
 	Vector<T, dim> r;
 	for (uint32_t i = 0; i < dim; i++) \
-		r.data[i] = -v.data[i];
+		r[i] = -v[i];
 	return r;
 }
 
