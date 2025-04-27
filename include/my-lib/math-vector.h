@@ -371,12 +371,11 @@ MYLIB_MATH_BUILD_OPERATION( / )
 
 
 template <typename T, uint32_t dim> \
-constexpr Vector<T, dim> operator- (const Vector<T, dim>& v) noexcept
+constexpr Vector<T, dim> operator- (Vector<T, dim> v) noexcept
 {
-	Vector<T, dim> r;
 	for (uint32_t i = 0; i < dim; i++) \
-		r[i] = -v[i];
-	return r;
+		v[i] = -v[i];
+	return v;
 }
 
 // ---------------------------------------------------
