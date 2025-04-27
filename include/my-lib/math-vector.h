@@ -381,7 +381,7 @@ constexpr Vector<T, dim> operator- (Vector<T, dim> v) noexcept
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
+constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs) noexcept
 {
 	for (uint32_t i = 0; i < dim; i++)
 		if (lhs[i] != rhs[i])
@@ -392,7 +392,7 @@ constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-constexpr bool operator!= (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
+constexpr bool operator!= (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs) noexcept
 {
 	return !(lhs == rhs);
 }
