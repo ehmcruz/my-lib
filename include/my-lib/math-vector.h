@@ -421,12 +421,11 @@ constexpr Vector<T, 3> cross_product (const Vector<T, 3>& a, const Vector<T, 3>&
 // ---------------------------------------------------
 
 template <typename T, uint32_t dim>
-constexpr Vector<T, dim> abs (const Vector<T, dim>& v) noexcept
+constexpr Vector<T, dim> abs (Vector<T, dim> v) noexcept
 {
-	Vector<T, dim> r;
 	for (uint32_t i = 0; i < dim; i++)
-		r[i] = std::abs(v[i]);
-	return r;
+		v[i] = std::abs(v[i]);
+	return v;
 }
 
 // ---------------------------------------------------
