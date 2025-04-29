@@ -121,5 +121,9 @@ int main ()
 	test_vector_projection();
 	test_vector_angle();
 
+	std:: cout << "----------------------" << std::endl;
+
+	std::cout << base2_log_of_integer(0) << std::endl;
+
 	return 0;
 }

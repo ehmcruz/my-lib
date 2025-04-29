@@ -97,48 +97,6 @@ void print_stream (std::ostream& out, Types&&... vars)
 
 // ---------------------------------------------------
 
-class Exception : public std::exception
-{
-private:
-	std::string msg;
-
-public:
-	Exception (std::string&& msg)
-	{
-		this->msg = std::move(msg);
-	}
-
-	Exception (const std::string& msg)
-	{
-		this->msg = msg;
-	}
-
-	Exception (const char *msg)
-	{
-		this->msg = msg;
-	}
-
-	const char* what() const noexcept override
-	{
-		return this->msg.data();
-	}
-};
-
-#define mylib_throw_exception_msg(...) \
-	throw Mylib::Exception( Mylib::build_str_from_stream("exception throw at file ", __FILE__, " line ", __LINE__, '\n', __VA_ARGS__, '\n') )
-
-#define mylib_assert_exception_diecode_msg(bool_expr, die_code, ...) \
-	if (!(bool_expr)) [[unlikely]] { \
-		die_code \
-		mylib_throw_exception_msg("assert failed", '\n', #bool_expr, '\n', __VA_ARGS__); \
-	}
-
-#define mylib_assert_exception_msg(bool_expr, ...) mylib_assert_exception_diecode_msg(bool_expr, , __VA_ARGS__)
-
-#define mylib_assert_exception(bool_expr) mylib_assert_exception_msg(bool_expr, "")
-
-// ---------------------------------------------------
-
 } // end namespace Mylib
 
 #endif

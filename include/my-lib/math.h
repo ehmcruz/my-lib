@@ -5,6 +5,7 @@
 #include <numbers>
 
 #include <my-lib/std.h>
+#include <my-lib/exception.h>
 
 namespace Mylib
 {
@@ -23,7 +24,7 @@ constexpr T base2_log_of_integer (const T value)
 			return pos;
 	}
 
-	mylib_throw_exception_msg("Mylib::base2_log_of_integer\nNumber ", value, " cant be zero");
+	throw_exception<ExceptionZeroNumber>();
 }
 
 constexpr auto radians_to_degrees (const auto radians) noexcept -> decltype(radians)
