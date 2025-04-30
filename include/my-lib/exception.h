@@ -337,7 +337,7 @@ void assert_exception (const bool bool_expr, const std::source_location& locatio
 			throw Mylib::make_assert_exception_msg__(std::source_location::current(), #bool_expr, __VA_ARGS__); \
 	}
 
-	// ---------------------------------------------------
+// ---------------------------------------------------
 
 } // end namespace Mylib
 
