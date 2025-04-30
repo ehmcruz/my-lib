@@ -8,6 +8,7 @@
 
 #include <my-lib/std.h>
 #include <my-lib/macros.h>
+#include <my-lib/exception.h>
 
 namespace Mylib
 {
@@ -44,8 +45,8 @@ public:
 	inline T& operator[] (const uint32_t row, const uint32_t col)
 	{
 		if constexpr (bound_check) {
-			mylib_assert_exception(row < nrows)
-			mylib_assert_exception(col < ncols)
+			mylib_assert_exception_args(row < nrows, InvalidRowException, row, nrows)
+			mylib_assert_exception_args(col < ncols, InvalidColumnException, col, ncols)
 		}
 		return this->storage[row*ncols + col];
 	}
@@ -53,8 +54,8 @@ public:
 	inline const T& operator[] (const uint32_t row, const uint32_t col) const
 	{
 		if constexpr (bound_check) {
-			mylib_assert_exception(row < nrows)
-			mylib_assert_exception(col < ncols)
+			mylib_assert_exception_args(row < nrows, InvalidRowException, row, nrows)
+			mylib_assert_exception_args(col < ncols, InvalidColumnException, col, ncols)
 		}
 		return this->storage[row*ncols + col];
 	}
@@ -175,8 +176,8 @@ public:
 	inline T& operator[] (const uint32_t row, const uint32_t col)
 	{
 		if constexpr (bound_check) {
-			mylib_assert_exception(row < this->nrows)
-			mylib_assert_exception(col < this->ncols)
+			mylib_assert_exception_args(row < this->nrows, InvalidRowException, row, this->nrows)
+			mylib_assert_exception_args(col < this->ncols, InvalidColumnException, col, this->ncols)
 		}
 		return this->storage[row*this->ncols + col];
 	}
@@ -184,8 +185,8 @@ public:
 	inline const T& operator[] (const uint32_t row, const uint32_t col) const
 	{
 		if constexpr (bound_check) {
-			mylib_assert_exception(row < this->nrows)
-			mylib_assert_exception(col < this->ncols)
+			mylib_assert_exception_args(row < this->nrows, InvalidRowException, row, this->nrows)
+			mylib_assert_exception_args(col < this->ncols, InvalidColumnException, col, this->ncols)
 		}
 		return this->storage[row*this->ncols + col];
 	}

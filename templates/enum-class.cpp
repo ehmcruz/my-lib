@@ -3,6 +3,8 @@
 #include <utility>
 
 #include <my-lib/std.h>
+#include <my-lib/exception.h>
+
 
 #define _MYLIB_ENUM_CLASS_TYPE_VALUES_ \
 	_MYLIB_ENUM_CLASS_TYPE_VALUE_(Value1) \
@@ -22,7 +24,10 @@ const char* enum_class_to_str (const Type value)
 		#undef _MYLIB_ENUM_CLASS_TYPE_VALUE_
 	});
 
-	mylib_assert_exception_msg(std::to_underlying(value) < strs.size(), "invalid enum class value ", std::to_underlying(value))
+	using EnumType = typename Mylib::remove_type_qualifiers<decltype(value)>::type;
+	using ExceptionType = typename Mylib::InvalidEnumClassValueException<EnumType>;
+
+	mylib_assert_exception_args(std::to_underlying(value) < strs.size(), ExceptionType, value)
 
 	return strs[ std::to_underlying(value) ];
 }

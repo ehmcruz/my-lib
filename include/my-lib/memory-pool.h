@@ -14,6 +14,7 @@
 #include <my-lib/macros.h>
 #include <my-lib/std.h>
 #include <my-lib/memory.h>
+#include <my-lib/exception.h>
 
 namespace Mylib
 {
@@ -162,24 +163,22 @@ public:
 
 	[[nodiscard]] void* allocate (const size_t type_size, const size_t count, const size_t align) override final
 	{
-		mylib_assert_exception_msg(count == 1, "PoolManager only supports allocation of one element at a time. Given ", count);
+		mylib_assert_exception_args(count == 1, PoolAllocatorMultiException, type_size, count, align);
 //std::cout << "allocating..." << std::endl;
 
 		void *p;
 
 		if (type_size <= this->max_type_size) [[likely]]
 			p = this->allocators_index[type_size]->allocate();
-		else {
+		else
 			p = m_allocate(type_size, align);
-			mylib_assert_exception(p != nullptr);
-		}
 
 		return p;
 	}
 
 	void deallocate (void *p, const size_t type_size, const size_t count, const size_t align) override final
 	{
-		mylib_assert_exception_msg(count == 1, "PoolManager only supports deallocation of one element at a time. Given ", count);
+		mylib_assert_exception_args(count == 1, PoolAllocatorMultiException, type_size, count, align);
 //std::cout << "deallocating..." << std::endl;
 
 		if (type_size <= this->max_type_size) [[likely]]

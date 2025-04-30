@@ -12,6 +12,7 @@
 #include <my-lib/macros.h>
 #include <my-lib/std.h>
 #include <my-lib/memory.h>
+#include <my-lib/exception.h>
 
 namespace Mylib
 {
@@ -163,7 +164,7 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 		Tparams callback_params;
 	
 	public:
-		DerivedCallback (Tobj& obj_, Tfunc callback_function_, Tparams callback_params_)
+		DerivedCallback (Tobj& obj_, Tfunc callback_function_, const Tparams& callback_params_)
 			: obj(obj_), callback_function(callback_function_), callback_params(callback_params_)
 		{
 		}
@@ -306,7 +307,7 @@ public:
 			}
 		);
 
-		mylib_assert_exception_msg(found, "subscriber not found");
+		mylib_assert_exception(found, EventSubscriberNotFoundException)
 
 		descriptor.shared_ptr->subscriber = nullptr;
 		descriptor.shared_ptr.reset();

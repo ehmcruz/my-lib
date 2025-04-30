@@ -6,6 +6,7 @@
 #include <my-lib/std.h>
 #include <my-lib/memory.h>
 #include <my-lib/memory-pool.h>
+#include <my-lib/exception.h>
 
 
 namespace Mylib
@@ -26,7 +27,7 @@ struct Coroutine {
 
 		static void* operator new (const size_t size)
 		{
-			mylib_assert_exception(size < buffer_size)
+			mylib_assert(size < buffer_size)
 			//std::cout << "promise_type::operator new size " << size << " ptr " << ptr << std::endl;
 			return pool.allocate();
 		}

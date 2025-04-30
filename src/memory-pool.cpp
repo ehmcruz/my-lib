@@ -48,7 +48,6 @@ void PoolCore::alloc_chunks_for_block (Block *block)
 	//   and use the memory to store user data instead.
 
 	block->chunks = static_cast<Chunk*>( m_allocate(this->chunk_size * this->chunks_per_block, this->align) );
-	mylib_assert_exception(block->chunks != nullptr);
 
 	chunk = block->chunks;
 
