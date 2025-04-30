@@ -24,7 +24,8 @@ constexpr T base2_log_of_integer (const T value)
 			return pos;
 	}
 
-	throw_exception<ExceptionZeroNumber>();
+	mylib_throw(ExceptionZeroNumber);
+	return 0; // unreachable, but disables compiler warning
 }
 
 constexpr auto radians_to_degrees (const auto radians) noexcept -> decltype(radians)
