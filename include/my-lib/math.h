@@ -24,7 +24,7 @@ constexpr T base2_log_of_integer (const T value)
 			return pos;
 	}
 
-	mylib_throw(ExceptionZeroNumber);
+	mylib_throw(ZeroNumberException);
 	return 0; // unreachable, but disables compiler warning
 }
 

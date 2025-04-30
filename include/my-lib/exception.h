@@ -57,10 +57,27 @@ protected:
 
 // ---------------------------------------------------
 
-class ExceptionZeroNumber : public Exception
+class AssertException : public Exception
 {
 public:
-	ExceptionZeroNumber (const std::source_location& location_, const char *assert_str_)
+	AssertException (const std::source_location& location_, const char *assert_str_)
+		: Exception(location_, assert_str_)
+	{
+	}
+
+protected:
+	void build_exception_msg (std::ostringstream& str_stream) const override
+	{
+		str_stream << "Assert exception.";
+	}
+};
+
+// ---------------------------------------------------
+
+class ZeroNumberException : public Exception
+{
+public:
+	ZeroNumberException (const std::source_location& location_, const char *assert_str_)
 		: Exception(location_, assert_str_)
 	{
 	}
@@ -73,6 +90,7 @@ protected:
 };
 
 // ---------------------------------------------------
+
 /*
 // This is a helper function to throw an exception with no arguments.
 
@@ -161,12 +179,14 @@ void assert_exception (const bool bool_expr, const std::source_location& locatio
 #define mylib_throw_args(TYPE, ...) \
 	Mylib::throw_exception__<TYPE>(std::source_location::current(), nullptr, __VA_ARGS__)
 
-#define mylib_assert(bool_expr, TYPE) { \
+#define mylib_assert_excetion(bool_expr, TYPE) { \
 	if (!(bool_expr)) [[unlikely]] \
 		Mylib::throw_exception__<TYPE>(std::source_location::current(), #bool_expr); \
 	}
 
-#define mylib_assert_args(bool_expr, TYPE, ...) { \
+#define mylib_assert(bool_expr) mylib_assert_excetion((bool_expr), Mylib::AssertException)
+
+#define mylib_assert_exception_args(bool_expr, TYPE, ...) { \
 	if (!(bool_expr)) [[unlikely]] \
 		Mylib::throw_exception__<TYPE>(std::source_location::current(), #bool_expr, __VA_ARGS__); \
 	}
