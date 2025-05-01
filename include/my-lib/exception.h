@@ -95,7 +95,10 @@ auto make_assert_exception_msg__ (const std::source_location& location, const ch
 	protected:
 		void build_exception_msg (std::ostringstream& str_stream) const override final
 		{
-			str_stream << "Assert exception with message.";
+			str_stream << "Assert exception with message:" << std::endl;
+			std::apply([&str_stream] (auto&&... args) -> void {
+				((str_stream << args), ...);
+			}, this->args);
 		}
 	};
 
