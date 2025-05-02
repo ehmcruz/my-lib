@@ -23,10 +23,11 @@ private:
 	mutable std::string msg;
 	std::source_location location;
 	const char *assert_str;
+	const char *extra_msg;
 
 public:
-	Exception (const std::source_location& location_, const char *assert_str_)
-		: location(location_), assert_str(assert_str_)
+	Exception (const std::source_location& location_, const char *assert_str_, const char *extra_msg_)
+		: location(location_), assert_str(assert_str_), extra_msg(extra_msg_)
 	{
 	}
 
@@ -44,6 +45,11 @@ public:
 				str_stream << "Assertion that failed: " << this->assert_str << std::endl;
 	
 			this->build_exception_msg(str_stream);
+			str_stream << std::endl;
+
+			if (this->extra_msg != nullptr)
+				str_stream << "Extra message: " << this->extra_msg << std::endl;
+
 			this->msg = str_stream.str();
 	
 			return this->msg.c_str();
@@ -61,8 +67,8 @@ protected:
 class AssertException : public Exception
 {
 public:
-	AssertException (const std::source_location& location_, const char *assert_str_)
-		: Exception(location_, assert_str_)
+	AssertException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_)
+		: Exception(location_, assert_str_, extra_msg_)
 	{
 	}
 
@@ -88,7 +94,7 @@ auto make_assert_exception_msg__ (const std::source_location& location, const ch
 
 	public:
 		AssertExceptionMsg (const std::source_location& location_, const char *assert_str_, const Tpacked_args& args_)
-			: Exception(location_, assert_str_), args(args_)
+			: Exception(location_, assert_str_, nullptr), args(args_)
 		{
 		}
 
@@ -110,8 +116,8 @@ auto make_assert_exception_msg__ (const std::source_location& location, const ch
 class ZeroNumberException : public Exception
 {
 public:
-	ZeroNumberException (const std::source_location& location_, const char *assert_str_)
-		: Exception(location_, assert_str_)
+	ZeroNumberException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_)
+		: Exception(location_, assert_str_, extra_msg_)
 	{
 	}
 
@@ -127,8 +133,8 @@ protected:
 class EventSubscriberNotFoundException : public Exception
 {
 public:
-	EventSubscriberNotFoundException (const std::source_location& location_, const char *assert_str_)
-		: Exception(location_, assert_str_)
+	EventSubscriberNotFoundException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_)
+		: Exception(location_, assert_str_, extra_msg_)
 	{
 	}
 
@@ -141,46 +147,23 @@ protected:
 
 // ---------------------------------------------------
 
-class InvalidRowException : public Exception
+class InvalidBoundaryException : public Exception
 {
 private:
-	size_t row;
+	size_t pos;
 	size_t max;
 
 	public:
-	InvalidRowException (const std::source_location& location_, const char *assert_str_, const size_t row_, const size_t max_)
-		: Exception(location_, assert_str_), row(row_), max(max_)
+	InvalidBoundaryException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_, const size_t pos_, const size_t max_)
+		: Exception(location_, assert_str_, extra_msg_), pos(pos_), max(max_)
 	{
 	}
 
 protected:
 	void build_exception_msg (std::ostringstream& str_stream) const override final
 	{
-		str_stream << "Invalid row exception: "
-			<< " Row: " << this->row
-			<< " Max: " << this->max;
-	}
-};
-
-// ---------------------------------------------------
-
-class InvalidColumnException : public Exception
-{
-private:
-	size_t col;
-	size_t max;
-
-	public:
-	InvalidColumnException (const std::source_location& location_, const char *assert_str_, const size_t col_, const size_t max_)
-		: Exception(location_, assert_str_), col(col_), max(max_)
-	{
-	}
-
-protected:
-	void build_exception_msg (std::ostringstream& str_stream) const override final
-	{
-		str_stream << "Invalid column exception: "
-			<< " Column: " << this->col
+		str_stream << "Invalid boundary exception: "
+			<< " Pos: " << this->pos
 			<< " Max: " << this->max;
 	}
 };
@@ -195,8 +178,8 @@ private:
 	size_t alignment;
 
 	public:
-	PoolAllocatorMultiException (const std::source_location& location_, const char *assert_str_, const size_t type_size_, const size_t count_, const size_t alignment_)
-		: Exception(location_, assert_str_), type_size(type_size_), count(count_), alignment(alignment_)
+	PoolAllocatorMultiException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_, const size_t type_size_, const size_t count_, const size_t alignment_)
+		: Exception(location_, assert_str_, extra_msg_), type_size(type_size_), count(count_), alignment(alignment_)
 	{
 	}
 
@@ -220,8 +203,8 @@ private:
 	T value;
 
 public:
-	InvalidEnumClassValueException (const std::source_location& location_, const char *assert_str_, const T value_)
-		: Exception(location_, assert_str_), value(value_)
+	InvalidEnumClassValueException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_, const T value_)
+		: Exception(location_, assert_str_, extra_msg_), value(value_)
 	{
 	}
 
@@ -318,22 +301,39 @@ void assert_exception (const bool bool_expr, const std::source_location& locatio
 // ---------------------------------------------------
 
 #define mylib_throw(EXCEPTION_TYPE) \
-	throw EXCEPTION_TYPE(std::source_location::current(), nullptr)
+	throw EXCEPTION_TYPE(std::source_location::current(), nullptr, nullptr)
+
+#define mylib_throw_msg(EXCEPTION_TYPE, msg) \
+	throw EXCEPTION_TYPE(std::source_location::current(), nullptr, msg)
 
 #define mylib_throw_args(EXCEPTION_TYPE, ...) \
-	throw EXCEPTION_TYPE(std::source_location::current(), nullptr, __VA_ARGS__)
+	throw EXCEPTION_TYPE(std::source_location::current(), nullptr, nullptr, __VA_ARGS__)
+
+#define mylib_throw_msg_args(EXCEPTION_TYPE, msg, ...) \
+	throw EXCEPTION_TYPE(std::source_location::current(), nullptr, msg, __VA_ARGS__)
 
 #define mylib_assert_exception(bool_expr, EXCEPTION_TYPE) { \
 		if (!(bool_expr)) [[unlikely]] \
-			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr); \
+			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr, nullptr); \
+	}
+
+#define mylib_assert_exception_msg(bool_expr, EXCEPTION_TYPE, msg) { \
+		if (!(bool_expr)) [[unlikely]] \
+			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr, msg); \
 	}
 
 #define mylib_assert_exception_args(bool_expr, EXCEPTION_TYPE, ...) { \
 		if (!(bool_expr)) [[unlikely]] \
-			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr, __VA_ARGS__); \
+			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr, nullptr, __VA_ARGS__); \
 	}
 	
-#define mylib_assert(bool_expr) mylib_assert_exception((bool_expr), Mylib::AssertException)
+#define mylib_assert_exception_msg_args(bool_expr, EXCEPTION_TYPE, msg, ...) { \
+		if (!(bool_expr)) [[unlikely]] \
+			throw EXCEPTION_TYPE(std::source_location::current(), #bool_expr, msg, __VA_ARGS__); \
+	}
+
+#define mylib_assert(bool_expr) \
+	mylib_assert_exception((bool_expr), Mylib::AssertException)
 
 #define mylib_assert_msg(bool_expr, ...) { \
 		if (!(bool_expr)) [[unlikely]]\
