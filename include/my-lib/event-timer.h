@@ -217,7 +217,7 @@ public:
 					}
 				}
 				else
-					mylib_throw_exception_msg("invalid event callback type");
+					mylib_throw_msg(AssertException, "invalid event callback type");
 
 				if (event->re_schedule)
 					this->push(event);
