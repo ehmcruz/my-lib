@@ -18,12 +18,15 @@ namespace Math
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
+template <typename T, uint32_t dim_>
 class Line
 {
 public:
-	Point<T, dim> point;
-	Vector<T, dim> vector;
+	using Type = T;
+	inline static constexpr uint32_t dim = dim_;
+
+	Point<VectorStorage__<Type, dim>> point;
+	Vector<VectorStorage__<Type, dim>> vector;
 };
 
 // ---------------------------------------------------
@@ -32,16 +35,18 @@ template <typename T>
 class Plane
 {
 public:
-	Point<T, 3> point;
-	Vector<T, 3> normal;
+	using Type = T;
+
+	Point<VectorStorage__<Type, 3>> point;
+	Vector<VectorStorage__<Type, 3>> normal;
 };
 
 // ---------------------------------------------------
 
 template <typename T>
-Point<T, 3> intersection (const Plane<T>& plane, const Line<T, 3>& line)
+Point<VectorStorage__<T, 3>> intersection (const Plane<T>& plane, const Line<T, 3>& line)
 {
-	const Vector<T, 3> v = plane.point - line.point;
+	const Vector<VectorStorage__<T, 3>> v = plane.point - line.point;
 	const T t = dot_product(v, plane.normal) / dot_product(line.vector, plane.normal);
 	return line.point + (line.vector * t);
 }
@@ -49,7 +54,7 @@ Point<T, 3> intersection (const Plane<T>& plane, const Line<T, 3>& line)
 // ---------------------------------------------------
 
 template <typename T>
-Point<T, 3> intersection (const Line<T, 3>& line, const Plane<T>& plane)
+Point<VectorStorage__<T, 3>> intersection (const Line<T, 3>& line, const Plane<T>& plane)
 {
 	return intersection(plane, line);
 }

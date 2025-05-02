@@ -27,7 +27,7 @@ class Quaternion;
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
+template <typename T, uint32_t dim_>
 class VectorStorage__;
 
 // ---------------------------------------------------
@@ -37,30 +37,51 @@ class VectorStorage__<T, 2>
 {
 public:
 	using Type = T;
+	inline static constexpr uint32_t dim = 2;
 
-	union {
-		struct {
-			Type x;
-			Type y;
-		};
+	Type x;
+	Type y;
 
-		Type data[2];
-	};
-
-	constexpr VectorStorage__ () noexcept
-		: data{0, 0}
-	{
-	}
+	constexpr VectorStorage__ () noexcept = default;
 
 	constexpr VectorStorage__ (const Type x_, const Type y_) noexcept
-		: data{x_, y_}
+		: x(x_), y(y_)
 	{
 	}
 
 	constexpr void set (const Type x, const Type y) noexcept
 	{
-		this->data[0] = x;
-		this->data[1] = y;
+		this->x = x;
+		this->y = y;
+	}
+
+	constexpr Type* get_raw () noexcept { return &this->x; }
+	constexpr const Type* get_raw () const noexcept { return &this->x; }
+
+	constexpr Type& get (const uint32_t i) noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
+	}
+
+	constexpr Type get (const uint32_t i) const noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
 	}
 };
 
@@ -71,38 +92,55 @@ class VectorStorage__<T, 3>
 {
 public:
 	using Type = T;
+	inline static constexpr uint32_t dim = 3;
 
-	union {
-		struct {
-			Type x;
-			Type y;
-			Type z;
-		};
+	Type x;
+	Type y;
+	Type z;
 
-		struct {
-			Type r;
-			Type g;
-			Type b;
-		};
-
-		Type data[3];
-	};
-
-	constexpr VectorStorage__ () noexcept
-		: data{0, 0, 0}
-	{
-	}
+	constexpr VectorStorage__ () noexcept = default;
 
 	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_) noexcept
-		: data{x_, y_, z_}
+		: x(x_), y(y_), z(z_)
 	{
 	}
 
 	constexpr void set (const Type x, const Type y, const Type z) noexcept
 	{
-		this->data[0] = x;
-		this->data[1] = y;
-		this->data[2] = z;
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
+
+	constexpr Type* get_raw () noexcept { return &this->x; }
+	constexpr const Type* get_raw () const noexcept { return &this->x; }
+
+	constexpr Type& get (const uint32_t i) noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+				case 2: return this->z;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
+	}
+
+	constexpr Type get (const uint32_t i) const noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+				case 2: return this->z;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
 	}
 };
 
@@ -113,64 +151,72 @@ class VectorStorage__<T, 4>
 {
 public:
 	using Type = T;
+	inline static constexpr uint32_t dim = 4;
 
-	union {
-		struct {
-			Type x;
-			Type y;
-			Type z;
-			Type w;
-		};
+	Type x;
+	Type y;
+	Type z;
+	Type w;
 
-		struct {
-			Type r;
-			Type g;
-			Type b;
-			Type a;
-		};
-
-		Type data[4];
-	};
-
-	constexpr VectorStorage__ () noexcept
-		: data{0, 0, 0, 0}
-	{
-	}
+	constexpr VectorStorage__ () noexcept = default;
 
 	constexpr VectorStorage__ (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
-		: data{x_, y_, z_, w_}
+		: x(x_), y(y_), z(z_), w(w_)
 	{
 	}
 
 	constexpr void set (const Type x, const Type y, const Type z, const Type w) noexcept
 	{
-		this->data[0] = x;
-		this->data[1] = y;
-		this->data[2] = z;
-		this->data[3] = w;
+		this->x = x;
+		this->y = y;
+		this->z = z;
+		this->w = w;
+	}
+
+	constexpr Type* get_raw () noexcept { return &this->x; }
+	constexpr const Type* get_raw () const noexcept { return &this->x; }
+
+	constexpr Type& get (const uint32_t i) noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+				case 2: return this->z;
+				case 3: return this->w;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
+	}
+
+	constexpr Type get (const uint32_t i) const noexcept
+	{
+		if consteval {
+			switch (i) {
+				case 0: return this->x;
+				case 1: return this->y;
+				case 2: return this->z;
+				case 3: return this->w;
+			}
+		}
+		else {
+			return this->get_raw()[i];
+		}
 	}
 };
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim,
-          typename TParent = VectorStorage__<T, dim>>
-class Vector : public TParent
+template <typename T>
+class Vector : public T
 {
 public:
-	using Type = T;
+	using Type = typename T::Type;
+	inline static constexpr uint32_t dim = T::dim;
 
-	static_assert(sizeof(TParent) == (dim * sizeof(Type)));
-
-	constexpr Type* get_raw () noexcept
-	{
-		return this->data;
-	}
-
-	constexpr const Type* get_raw () const noexcept
-	{
-		return this->data;
-	}
+	static_assert(sizeof(T) == (dim * sizeof(Type)));
 
 	consteval static uint32_t get_dim () noexcept
 	{
@@ -187,29 +233,28 @@ public:
 	constexpr Type& operator[] (const uint32_t i) noexcept
 	{
 		static_assert(sizeof(Vector) == (dim * sizeof(Type)));
-		//return static_cast<Type*>(this)[i];
-		return this->data[i];
+		return this->get(i);
 	}
 
 	constexpr Type operator[] (const uint32_t i) const noexcept
 	{
 		static_assert(sizeof(Vector) == (dim * sizeof(Type)));
 		//return static_cast<const Type*>(this)[i];
-		return this->data[i];
+		return this->get(i);
 	}
 
 	// ------------------------ Constructors
 
-	using TParent::TParent;
+	using T::T;
 
-	template <uint32_t dim_other>
-	constexpr Vector (const Vector<T, dim_other>& other) noexcept
+	template <typename Tother>
+	constexpr Vector (const Vector<Tother>& other) noexcept
 	{
-		static_assert(dim_other <= dim);
+		static_assert(Tother::dim <= dim);
 		auto& self = *this;
-		for (uint32_t i = 0; i < dim_other; i++)
+		for (uint32_t i = 0; i < Tother::dim; i++)
 			self[i] = other[i];
-		for (uint32_t i = dim_other; i < dim; i++)
+		for (uint32_t i = Tother::dim; i < dim; i++)
 			self[i] = 0;
 	}
 
@@ -289,18 +334,18 @@ public:
 	}
 
 	constexpr void cross_product (this Vector& self, const Vector& a, const Vector& b) noexcept
+		requires (dim == 3)
 	{
-		static_assert(dim == 3);
 		enum { x, y, z };
 		self[x] = a[y] * b[z] - a[z] * b[y];
 		self[y] = a[z] * b[x] - a[x] * b[z];
 		self[z] = a[x] * b[y] - a[y] * b[x];
 	}
 
-	constexpr void rotate (const Quaternion<T>& q) noexcept
+	constexpr void rotate (const Quaternion<Type>& q) noexcept
 	{
-		const Quaternion<T> v_(*this); // create a pure quaternion from the vector
-		const Quaternion<T> r = (q * v_) * conjugate(q);
+		const Quaternion<Type> v_(*this); // create a pure quaternion from the vector
+		const Quaternion<Type> r = (q * v_) * conjugate(q);
 		*this = r.v;
 	}
 
@@ -317,32 +362,34 @@ public:
 
 	static consteval Vector zero () noexcept
 	{
-		return Vector();
+		Vector v;
+		v.set_zero();
+		return v;
 	}
 };
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-using Point = Vector<T, dim>;
+template <typename T>
+using Point = Vector<T>;
 
 // ---------------------------------------------------
 
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
-	template <typename T, uint32_t dim> \
-	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept \
+	template <typename T> \
+	constexpr Vector<T> operator OP (const Vector<T>& a, const Vector<T>& b) noexcept \
 	{ \
-		Vector<T, dim> r; \
-		for (uint32_t i = 0; i < dim; i++) \
+		Vector<T> r; \
+		for (uint32_t i = 0; i < T::dim; i++) \
 			r[i] = a[i] OP b[i]; \
 		return r; \
 	} \
-	template <typename T, uint32_t dim> \
-	constexpr Vector<T, dim> operator OP (const Vector<T, dim>& a, const T s) noexcept \
+	template <typename T> \
+	constexpr Vector<T> operator OP (const Vector<T>& a, const typename T::Type s) noexcept \
 	{ \
-		Vector<T, dim> r; \
-		for (uint32_t i = 0; i < dim; i++) \
+		Vector<T> r; \
+		for (uint32_t i = 0; i < T::dim; i++) \
 			r[i] = a[i] OP s; \
 		return r; \
 	}
@@ -355,11 +402,11 @@ MYLIB_MATH_BUILD_OPERATION( / )
 
 #undef MYLIB_MATH_BUILD_OPERATION
 #define MYLIB_MATH_BUILD_OPERATION(OP) \
-	template <typename T, uint32_t dim> \
-	constexpr Vector<T, dim> operator OP (const T s, const Vector<T, dim>& a) noexcept \
+	template <typename T> \
+	constexpr Vector<T> operator OP (const typename T::Type s, const Vector<T>& a) noexcept \
 	{ \
-		Vector<T, dim> r; \
-		for (uint32_t i = 0; i < dim; i++) \
+		Vector<T> r; \
+		for (uint32_t i = 0; i < T::dim; i++) \
 			r[i] = s OP a[i]; \
 		return r; \
 	}
@@ -370,20 +417,20 @@ MYLIB_MATH_BUILD_OPERATION( * )
 MYLIB_MATH_BUILD_OPERATION( / )
 
 
-template <typename T, uint32_t dim> \
-constexpr Vector<T, dim> operator- (Vector<T, dim> v) noexcept
+template <typename T> \
+constexpr Vector<T> operator- (Vector<T> v) noexcept
 {
-	for (uint32_t i = 0; i < dim; i++) \
+	for (uint32_t i = 0; i < T::dim; i++) \
 		v[i] = -v[i];
 	return v;
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs) noexcept
+template <typename T>
+constexpr bool operator== (const Vector<T>& lhs, const Vector<T>& rhs) noexcept
 {
-	for (uint32_t i = 0; i < dim; i++)
+	for (uint32_t i = 0; i < T::dim; i++)
 		if (lhs[i] != rhs[i])
 			return false;
 	return true;
@@ -391,19 +438,19 @@ constexpr bool operator== (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs)
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr bool operator!= (const Vector<T, dim>& lhs, const Vector<T, dim>& rhs) noexcept
+template <typename T>
+constexpr bool operator!= (const Vector<T>& lhs, const Vector<T>& rhs) noexcept
 {
 	return !(lhs == rhs);
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+template <typename T>
+constexpr auto dot_product (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
 {
-	T value = 0;
-	for (uint32_t i = 0; i < dim; i++)
+	typename T::Type value = 0;
+	for (uint32_t i = 0; i < T::dim; i++)
 		value += a[i] * b[i];
 	return value;
 }
@@ -411,46 +458,46 @@ constexpr T dot_product (const Vector<T, dim>& a, const Vector<T, dim>& b) noexc
 // ---------------------------------------------------
 
 template <typename T>
-constexpr Vector<T, 3> cross_product (const Vector<T, 3>& a, const Vector<T, 3>& b) noexcept
+constexpr Vector<T> cross_product (const Vector<T>& a, const Vector<T>& b) noexcept
 {
-	Vector<T, 3> v;
+	Vector<T> v;
 	v.cross_product(a, b);
 	return v;
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr Vector<T, dim> abs (Vector<T, dim> v) noexcept
+template <typename T>
+constexpr Vector<T> abs (Vector<T> v) noexcept
 {
-	for (uint32_t i = 0; i < dim; i++)
+	for (uint32_t i = 0; i < T::dim; i++)
 		v[i] = std::abs(v[i]);
 	return v;
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr Vector<T, dim> max (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+template <typename T>
+constexpr Vector<T> max (const Vector<T>& a, const Vector<T>& b) noexcept
 {
-	Vector<T, dim> r;
-	for (uint32_t i = 0; i < dim; i++)
+	Vector<T> r;
+	for (uint32_t i = 0; i < T::dim; i++)
 		r[i] = std::max(a[i], b[i]);
 	return r;
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr Vector<T, dim> normalize (const Vector<T, dim>& v) noexcept
+template <typename T>
+constexpr Vector<T> normalize (const Vector<T>& v) noexcept
 {
 	return v / v.length();
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr Vector<T, dim> projection (Vector<T, dim> source, const Vector<T, dim>& target) noexcept
+template <typename T>
+constexpr Vector<T> projection (Vector<T> source, const Vector<T>& target) noexcept
 {
 	source.project(target);
 	return source;
@@ -458,16 +505,16 @@ constexpr Vector<T, dim> projection (Vector<T, dim> source, const Vector<T, dim>
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr Vector<T, dim> with_length (const Vector<T, dim>& v, const T len) noexcept
+template <typename T>
+constexpr Vector<T> with_length (const Vector<T>& v, const typename T::Type len) noexcept
 {
 	return v * (len / v.length());
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
+template <typename T>
+constexpr auto distance (const Point<T>& a, const Point<T>& b) noexcept -> typename T::Type
 {
 	//static_assert(remove_type_qualifiers<Ta>::type::get_dim() == remove_type_qualifiers<Tb>::type::get_dim());
 	return (a - b).length();
@@ -475,24 +522,24 @@ constexpr T distance (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr T distance_squared (const Point<T, dim>& a, const Point<T, dim>& b) noexcept
+template <typename T>
+constexpr auto distance_squared (const Point<T>& a, const Point<T>& b) noexcept -> typename T::Type
 {
 	return (a - b).length_squared();
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr T cos_angle_between (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+template <typename T>
+constexpr auto cos_angle_between (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
 {
 	return dot_product(a, b) / (a.length() * b.length());
 }
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-constexpr T angle_between (const Vector<T, dim>& a, const Vector<T, dim>& b) noexcept
+template <typename T>
+constexpr auto angle_between (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
 {
 	return std::acos(cos_angle_between(a, b));
 }
@@ -503,21 +550,22 @@ constexpr T angle_between (const Vector<T, dim>& a, const Vector<T, dim>& b) noe
 // Copied from the MathFu library.
 
 template <typename T>
-constexpr Vector<T, 3> orthogonal_vector (const Vector<T, 3>& v) noexcept
+constexpr Vector<T> orthogonal_vector (const Vector<T>& v) noexcept
+	requires (T::dim == 3)
 {
 	// We start out by taking the cross product of the vector and the x-axis to
 	// find something parallel to the input vectors.  If that cross product
 	// turns out to be length 0 (i. e. the vectors already lie along the x axis)
 	// then we use the y-axis instead.
 	
-	Vector<T, 3> r = cross_product(Vector<T, 3>(1, 0, 0), v);
+	Vector<T> r = cross_product(Vector<T>(1, 0, 0), v);
 	
 	// We use a fairly high epsilon here because we know that if this number
 	// is too small, the axis we'll get from a cross product with the y axis
 	// will be much better and more numerically stable.
 	
-	if (r.length_squared() < static_cast<T>(0.05))
-		r = cross_product(Vector<T, 3>(0, 1, 0), v);
+	if (r.length_squared() < static_cast<typename T::Type>(0.05))
+		r = cross_product(Vector<T>(0, 1, 0), v);
 
 	return r;
 }
@@ -528,7 +576,8 @@ template <typename T>
 struct VectorBasis3
 {
 	using VectorBasis = VectorBasis3;
-	using Vector = Mylib::Math::Vector<T, 3>;
+	using Vector = Mylib::Math::Vector<VectorStorage__<T, 3>>;
+	using Type = T;
 
 	Vector vx;
 	Vector vy;
@@ -548,7 +597,7 @@ struct VectorBasis3
 		this->vz = Vector(0, 0, 1);
 	}
 
-	constexpr void rotate (const Quaternion<T>& q) noexcept
+	constexpr void rotate (const Quaternion<Type>& q) noexcept
 	{
 		this->vx.rotate(q);
 		this->vy.rotate(q);
@@ -565,7 +614,7 @@ struct VectorBasis3
 
 // ---------------------------------------------------
 
-using Vector2f = Vector<float, 2>;
+using Vector2f = Vector<VectorStorage__<float, 2>>;
 using Point2f = Vector2f;
 
 static_assert(sizeof(Vector2f) == (2 * sizeof(float)));
@@ -578,7 +627,7 @@ concept is_Vector2f = std::same_as< typename remove_type_qualifiers<T>::type, Ve
 
 // ---------------------------------------------------
 
-using Vector3f = Vector<float, 3>;
+using Vector3f = Vector<VectorStorage__<float, 3>>;
 using Point3f = Vector3f;
 
 static_assert(sizeof(Vector3f) == (3 * sizeof(float)));
@@ -591,7 +640,7 @@ concept is_Vector3f = std::same_as< typename remove_type_qualifiers<T>::type, Ve
 
 // ---------------------------------------------------
 
-using Vector4f = Vector<float, 4>;
+using Vector4f = Vector<VectorStorage__<float, 4>>;
 using Point4f = Vector4f;
 
 static_assert(sizeof(Vector4f) == (4 * sizeof(float)));
@@ -609,15 +658,15 @@ concept is_Point = is_Vector<T>;
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-std::ostream& operator << (std::ostream& out, const Vector<T, dim>& v)
+template <typename T>
+std::ostream& operator << (std::ostream& out, const Vector<T>& v)
 {
 	out << "[";
 	
-	for (uint32_t i = 0; i < dim; i++) {
+	for (uint32_t i = 0; i < T::dim; i++) {
 		out << v[i];
 		
-		if (i < (dim-1))
+		if (i < (T::dim-1))
 			out << ", ";
 	}
 

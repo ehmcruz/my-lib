@@ -58,6 +58,10 @@ int main ()
 {
 	Vector2f vzero = Vector2f::zero();
 	Vector2f vv;
+
+	float xxx = dot_product(vzero, vzero);
+	std::cout << "xxx " << xxx << std::endl;
+
 	std::array<Vector2f, 3> varray;
 
 	union xx

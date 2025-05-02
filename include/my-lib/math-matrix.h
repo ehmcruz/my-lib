@@ -27,12 +27,13 @@ namespace Math
 template <typename T, uint32_t nrows, uint32_t ncols>
 class Matrix
 {
-private:
-	T data[nrows*ncols];
-
 public:
 	using Type = T;
 
+private:
+	Type data[nrows*ncols];
+
+public:
 	consteval static uint32_t get_nrows () noexcept
 	{
 		return nrows;
@@ -48,17 +49,17 @@ public:
 		return nrows * ncols;
 	}
 
-	constexpr static T fp (const auto v) noexcept
+	constexpr static Type fp (const auto v) noexcept
 	{
-		return static_cast<T>(v);
+		return static_cast<Type>(v);
 	}
 
-	constexpr T* get_raw () noexcept
+	constexpr Type* get_raw () noexcept
 	{
 		return this->data;
 	}
 
-	constexpr const T* get_raw () const noexcept
+	constexpr const Type* get_raw () const noexcept
 	{
 		return this->data;
 	}
@@ -67,7 +68,7 @@ public:
 
 	constexpr Matrix () noexcept = default;
 
-	constexpr Matrix (const std::initializer_list<T> values) noexcept
+	constexpr Matrix (const std::initializer_list<Type> values) noexcept
 	{
 		for (uint32_t i = 0; const auto v : values)
 			this->data[i++] = v;
@@ -75,22 +76,22 @@ public:
 
 	// -------------------------------------
 
-	constexpr T& operator[] (const uint32_t i) noexcept
+	constexpr Type& operator[] (const uint32_t i) noexcept
 	{
 		return this->data[i];
 	}
 
-	constexpr const T operator[] (const uint32_t i) const noexcept
+	constexpr const Type operator[] (const uint32_t i) const noexcept
 	{
 		return this->data[i];
 	}
 
-	constexpr T& operator[] (const uint32_t row, const uint32_t col) noexcept
+	constexpr Type& operator[] (const uint32_t row, const uint32_t col) noexcept
 	{
 		return this->data[row*ncols + col];
 	}
 
-	constexpr T operator[] (const uint32_t row, const uint32_t col) const noexcept
+	constexpr Type operator[] (const uint32_t row, const uint32_t col) const noexcept
 	{
 		return this->data[row*ncols + col];
 	}
@@ -150,9 +151,11 @@ public:
 			m[i, i] = 1;
 	}
 
-	template <uint32_t vector_dim>
-	constexpr void set_scale (const Vector<T, vector_dim>& v) noexcept
+	template <typename Tvector>
+	constexpr void set_scale (const Vector<Tvector>& v) noexcept
 	{
+		constexpr auto vector_dim = Tvector::dim;
+
 		static_assert(nrows == ncols);
 		static_assert(vector_dim <= nrows);
 
@@ -167,9 +170,11 @@ public:
 			m[i, i] = 1;
 	}
 
-	template <uint32_t vector_dim>
-	constexpr void set_translate (const Vector<T, vector_dim>& v) noexcept
+	template <typename Tvector>
+	constexpr void set_translate (const Vector<Tvector>& v) noexcept
 	{
+		constexpr auto vector_dim = Tvector::dim;
+
 		static_assert(nrows == ncols);
 		static_assert(vector_dim < nrows);
 
@@ -185,11 +190,11 @@ public:
 
 	// 2D rotation matrix
 
-	constexpr void set_rotation_matrix (const T angle) noexcept
+	constexpr void set_rotation_matrix (const Type angle) noexcept
 		requires (nrows == ncols && ncols == 2)
 	{
-		const T c = std::cos(angle);
-		const T s = std::sin(angle);
+		const Type c = std::cos(angle);
+		const Type s = std::sin(angle);
 
 		auto& self = *this;
 
@@ -200,18 +205,19 @@ public:
 	}
 
 	// 3D rotation matrix
-	
-	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
-		requires (nrows == ncols && ncols == 3)
+
+	template <typename Tvector>
+	constexpr void set_rotation_matrix (const Vector<Tvector>& axis_, const Type angle) noexcept
+		requires (Tvector::dim == 3 && nrows == ncols && ncols == 3)
 	{
-		const T c = std::cos(angle);
-		const T s = std::sin(angle);
+		const Type c = std::cos(angle);
+		const Type s = std::sin(angle);
 		
-		const T t = fp(1) - c;
+		const Type t = fp(1) - c;
 		//const T sh = std::sin(angle / fp(2));
 		//const T t = fp(2) * sh * sh;
 
-		const Vector<T, 3> axis = normalize(axis_);
+		const Vector<Tvector> axis = normalize(axis_);
 
 		// Rodrigues' rotation
 
@@ -235,9 +241,9 @@ public:
 		this->set_identity();
 		*this += w * s + w2 * t;
 	#else
-		const T x = axis.x;
-		const T y = axis.y;
-		const T z = axis.z;
+		const Type x = axis.x;
+		const Type y = axis.y;
+		const Type z = axis.z;
 
 		auto& m = *this;
 
@@ -258,8 +264,9 @@ public:
 	// 3D rotation matrix
 	// But using a 4x4 matrix to allow translation.
 
-	constexpr void set_rotation_matrix (const Vector<T, 3>& axis_, const T angle) noexcept
-		requires (nrows == ncols && ncols == 4)
+	template <typename Tvector>
+	constexpr void set_rotation_matrix (const Vector<Tvector>& axis_, const Type angle) noexcept
+		requires (Tvector::dim == 3 && nrows == ncols && ncols == 4)
 	{
 		const Matrix<T, 3, 3> m = Matrix<T, 3, 3>::rotation(axis_, angle);
 		auto& self = *this;
@@ -300,18 +307,18 @@ public:
 		Considers a right-handed world coordinate system.
 	*/
 
-	constexpr void set_perspective (const T fovy,
-	                                const T screen_width,
-									const T screen_height,
-									const T znear,
-									const T zfar
+	constexpr void set_perspective (const Type fovy,
+	                                const Type screen_width,
+									const Type screen_height,
+									const Type znear,
+									const Type zfar
 									) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
 
-		const T aspect = screen_width / screen_height;
-		const T zdist = znear - zfar;
-		const T y = fp(1) / std::tan(fovy * fp(0.5));
+		const Type aspect = screen_width / screen_height;
+		const Type zdist = znear - zfar;
+		const Type y = fp(1) / std::tan(fovy * fp(0.5));
 
 		auto& m = *this;
 
@@ -347,21 +354,21 @@ public:
 		world coordinate system and opengl.
 	*/
 
-	constexpr void set_orthogonal  (const T view_width, // height will be calculated using the aspect ratio
-	                                const T screen_width,
-									const T screen_height,
-									const T znear,
-									const T zfar
+	constexpr void set_orthogonal  (const Type view_width, // height will be calculated using the aspect ratio
+	                                const Type screen_width,
+									const Type screen_height,
+									const Type znear,
+									const Type zfar
 									) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
 
-		const T aspect = screen_width / screen_height;
-		const T view_height = view_width / aspect;
-		const T left = view_width / fp(-2);
-		const T right = -left;
-		const T bottom = view_height / fp(-2);
-		const T top = -bottom;
+		const Type aspect = screen_width / screen_height;
+		const Type view_height = view_width / aspect;
+		const Type left = view_width / fp(-2);
+		const Type right = -left;
+		const Type bottom = view_height / fp(-2);
+		const Type top = -bottom;
 
 		auto& self = *this;
 
@@ -401,16 +408,18 @@ public:
 		Considers a right-handed world coordinate system.
 	*/
 
-	constexpr void set_look_at (const Vector<T, 3>& eye,
-	                            const Vector<T, 3>& at,
-								const Vector<T, 3>& world_up
+	template <typename Tvector>
+	constexpr void set_look_at (const Vector<Tvector>& eye,
+	                            const Vector<Tvector>& at,
+								const Vector<Tvector>& world_up
 								) noexcept
+		requires (Tvector::dim == 3)
 	{
 		static_assert(nrows == ncols && nrows == 4);
 
-		const Vector<T, 3> direction = normalize(at - eye);
-		const Vector<T, 3> right = normalize(cross_product(world_up, direction));
-		const Vector<T, 3> up = cross_product(direction, right);
+		const Vector<Tvector> direction = normalize(at - eye);
+		const Vector<Tvector> right = normalize(cross_product(world_up, direction));
+		const Vector<Tvector> up = cross_product(direction, right);
 
 		auto& m = *this;
 
@@ -470,19 +479,24 @@ public:
 		return m;
 	}
 
-	template <uint32_t vector_dim>
-	static constexpr Matrix scale (const Vector<T, vector_dim>& v) noexcept
+	template <typename Tvector>
+	static constexpr Matrix scale (const Vector<Tvector>& v) noexcept
 	{
+		constexpr auto vector_dim = Tvector::dim;
+
 		static_assert(nrows == ncols);
 		static_assert(vector_dim <= nrows);
+		
 		Matrix m;
 		m.set_scale(v);
 		return m;
 	}
 
-	template <uint32_t vector_dim>
-	static constexpr Matrix translate (const Vector<T, vector_dim>& v) noexcept
+	template <typename Tvector>
+	static constexpr Matrix translate (const Vector<Tvector>& v) noexcept
 	{
+		constexpr auto vector_dim = Tvector::dim;
+
 		static_assert(nrows == ncols);
 		static_assert(vector_dim < nrows);
 
@@ -491,11 +505,11 @@ public:
 		return m;
 	}
 
-	static constexpr Matrix perspective (const T fovy,
-								         const T screen_width,
-								         const T screen_height,
-								         const T znear,
-								         const T zfar
+	static constexpr Matrix perspective (const Type fovy,
+								         const Type screen_width,
+								         const Type screen_height,
+								         const Type znear,
+								         const Type zfar
 								         ) noexcept
 	{
 		static_assert(nrows == ncols && nrows == 4);
@@ -504,10 +518,12 @@ public:
 		return m;
 	}
 
-	static constexpr Matrix look_at (const Vector<T, 3>& eye,
-							         const Vector<T, 3>& at,
-							         const Vector<T, 3>& world_up
+	template <typename Tvector>
+	static constexpr Matrix look_at (const Vector<Tvector>& eye,
+							         const Vector<Tvector>& at,
+							         const Vector<Tvector>& world_up
 							         ) noexcept
+		requires (Tvector::dim == 3)
 	{
 		static_assert(nrows == ncols && nrows == 4);
 		Matrix m;
@@ -517,7 +533,7 @@ public:
 
 	// 2D rotation matrix
 
-	static constexpr Matrix rotation (const T angle) noexcept
+	static constexpr Matrix rotation (const Type angle) noexcept
 		requires (nrows == ncols && ncols == 2)
 	{
 		Matrix m;
@@ -528,8 +544,9 @@ public:
 	// 3D rotation matrix
 	// The 4x4 matrix variant is used to allow translation.
 
-	static constexpr Matrix rotation (const Vector<T, nrows>& axis, const T angle) noexcept
-		requires (nrows == ncols && (ncols == 3 || ncols == 4))
+	template <typename Tvector>
+	static constexpr Matrix rotation (const Vector<Tvector>& axis, const Type angle) noexcept
+		requires (Tvector::dim == 3 && nrows == ncols && (ncols == 3 || ncols == 4))
 	{
 		Matrix m;
 		m.set_rotation_matrix(axis, angle);
@@ -545,12 +562,12 @@ public:
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-Vector<T, dim> rotate (const Vector<T, dim>& axis, const T angle, const Vector<T, dim>& v) noexcept
-	requires (dim >= 2 && dim <= 3)
+template <typename Tvector>
+Vector<Tvector> rotate (const Vector<Tvector>& axis, const typename Tvector::Type angle, const Vector<Tvector>& v) noexcept
+	requires (Tvector::dim >= 2 && Tvector::dim <= 3)
 {
-	Vector<T, dim> rotated;
-	rotated = Matrix<T, dim, dim>::rotation(axis, angle) * v;
+	Vector<Tvector> rotated;
+	rotated = Matrix<typename Tvector::Type, Tvector::dim, Tvector::dim>::rotation(axis, angle) * v;
 	return rotated;
 }
 
@@ -618,14 +635,14 @@ constexpr Matrix<T, nrows_a, ncols_b> operator* (const Matrix<T, nrows_a, ncols_
 
 // ---------------------------------------------------
 
-template <typename T, uint32_t dim>
-Vector<T, dim> operator* (const Matrix<T, dim, dim>& m, const Vector<T, dim>& v) noexcept
+template <typename Tvector>
+Vector<Tvector> operator* (const Matrix<typename Tvector::Type, Tvector::dim, Tvector::dim>& m, const Vector<Tvector>& v) noexcept
 {
-	Vector<T, dim> r;
+	Vector<Tvector> r;
 
-	for (uint32_t i = 0; i < dim; i++) {
+	for (uint32_t i = 0; i < Tvector::dim; i++) {
 		r[i] = 0;
-		for (uint32_t j = 0; j < dim; j++)
+		for (uint32_t j = 0; j < Tvector::dim; j++)
 			r[i] += m[i, j] * v[j];
 	}
 	

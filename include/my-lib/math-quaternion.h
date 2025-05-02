@@ -28,7 +28,7 @@ class Quaternion
 {
 public:
 	using Type = T;
-	using Vector = Mylib::Math::Vector<T, 3>;
+	using Vector = Mylib::Math::Vector<VectorStorage__<Type, 3>>;
 
 	constexpr static Type fp (const auto v) noexcept
 	{
@@ -399,8 +399,9 @@ constexpr Quaternion<T> operator* (const Quaternion<T>& q1, const Quaternion<T>&
 
 // ---------------------------------------------------
 
-template <typename T>
-constexpr Vector<T, 3> rotate (const Quaternion<T>& q, Vector<T, 3> v) noexcept
+template <typename Tvector>
+constexpr Vector<Tvector> rotate (const Quaternion<typename Tvector::Type>& q, Vector<Tvector> v) noexcept
+	requires (Tvector::dim == 3)
 {
 	v.rotate(q);
 	return v;
