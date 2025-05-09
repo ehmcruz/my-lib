@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <ostream>
 #include <algorithm>
+#include <numeric>
+#include <numbers>
 
 #include <cmath>
 
@@ -458,7 +460,18 @@ constexpr auto dot_product (const Vector<T>& a, const Vector<T>& b) noexcept -> 
 // ---------------------------------------------------
 
 template <typename T>
+constexpr auto cross_product (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
+	requires (T::dim == 2)
+{
+	enum { x, y };
+	return a[x] * b[y] - a[y] * b[x];
+}
+
+// ---------------------------------------------------
+
+template <typename T>
 constexpr Vector<T> cross_product (const Vector<T>& a, const Vector<T>& b) noexcept
+	requires (T::dim == 3)
 {
 	Vector<T> v;
 	v.cross_product(a, b);
@@ -542,6 +555,32 @@ template <typename T>
 constexpr auto angle_between (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
 {
 	return std::acos(cos_angle_between(a, b));
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr auto oriented_signed_angle_between (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
+	requires (T::dim == 2)
+{
+	return std::atan2(cross_product(a, b), dot_product(a, b));
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr auto oriented_unsigned_angle_between (const Vector<T>& a, const Vector<T>& b) noexcept -> typename T::Type
+	requires (T::dim == 2)
+{
+	using Type = typename T::Type;
+	using Vector = Vector<T>;
+
+	static constexpr Type value_to_add[2] = { Vector::fp(0), Vector::fp(2) * std::numbers::pi_v<Type> };
+
+	const Type angle = oriented_signed_angle_between(a, b);
+	const bool is_negative = (angle < Vector::fp(0));
+
+	return angle + value_to_add[is_negative];
 }
 
 // ---------------------------------------------------

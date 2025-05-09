@@ -47,10 +47,10 @@ void test_vector_angle ()
 	constexpr auto a = Vector2f(1, 0);
 	constexpr float angle_step = 30.0f;
 
-	for (float angle = 0; angle < 720; angle += angle_step) {
+	for (float angle = 0; angle <= 720; angle += angle_step) {
 		const Matrix2f m = Matrix2f::rotation(degrees_to_radians(angle));
 		const Vector2f b = m * a;
-		std::cout << "angle: " << angle << " b: " << b << " angle_recalc " << radians_to_degrees(angle_between(a, b)) << std::endl;
+		std::cout << "angle: " << angle << " b: " << b << " angle_recalc " << radians_to_degrees(angle_between(a, b)) << " oriented_signed_angle " << radians_to_degrees(oriented_signed_angle_between(a, b)) << " oriented_unsigned_angle " << radians_to_degrees(oriented_unsigned_angle_between(a, b)) << std::endl;
 	}
 }
 
