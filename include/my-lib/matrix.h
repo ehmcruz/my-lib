@@ -119,6 +119,13 @@ public:
 		this->alloc(nrows_, ncols_);
 	}
 
+	Matrix (const uint32_t nrows_, const uint32_t ncols_, const T& v)
+		: Matrix(nrows_, ncols_)
+	{
+		for (uint32_t i = 0; i < nrows_ * ncols_; i++)
+			this->storage[i] = v;
+	}
+
 	~Matrix ()
 	{
 		if (this->storage != nullptr) {
