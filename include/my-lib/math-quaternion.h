@@ -134,19 +134,19 @@ public:
 		It considers the quaternion as a rotation quaternion (unit quaternion length=1).
 	*/
 
-	constexpr std::pair<Vector, T> to_axis_angle () const noexcept
+	constexpr std::pair<Vector, Type> to_axis_angle () const noexcept
 	{
-		Quaternion<T> q = (this->w > 0) ? *this : Quaternion<T>(-(*this));
+		Quaternion<Type> q = (this->w > 0) ? *this : Quaternion<T>(-(*this));
 		Vector axis;
-		T angle;
+		Type angle;
 		
-		const T length = q.v.normalize();
+		const Type length = q.v.normalize();
 
 		// In case length is zero, normalize leaves NaNs in axis.
 		// This happens at angle = 0 and 360.
 		// All axes are correct, so any will do.
 
-		if (length == 0) [[unlikely]]
+		if (length == fp(0)) [[unlikely]]
 			axis.set(1, 0, 0);
 		else
 			axis = q.v;
@@ -163,6 +163,52 @@ public:
 			return std::make_pair(Vector(1, 0, 0), 0);
 
 		return std::make_pair(this->v / s, angle);*/
+	}
+
+	// ---------------------------------------------------
+
+	// Returns the rotation matrix corresponding to this quaternion.
+
+	template <uint32_t dim>
+	constexpr Matrix<Type, dim, dim> to_rotation_matrix () const noexcept
+		requires (dim == 3 || dim == 4)
+	{
+		Matrix<Type, dim, dim> m;
+
+		const Type x2 = this->v.x * this->v.x;
+		const Type y2 = this->v.y * this->v.y;
+		const Type z2 = this->v.z * this->v.z;
+		const Type xy = this->v.x * this->v.y;
+		const Type xz = this->v.x * this->v.z;
+		const Type yz = this->v.y * this->v.z;
+		const Type wx = this->w * this->v.x;
+		const Type wy = this->w * this->v.y;
+		const Type wz = this->w * this->v.z;
+		
+		m[0, 0] = fp(1) - fp(2) * (y2 + z2);
+		m[0, 1] = fp(2) * (xy - wz);
+		m[0, 2] = fp(2) * (xz + wy);
+
+		m[1, 0] = fp(2) * (xy + wz);
+		m[1, 1] = fp(1) - fp(2) * (x2 + z2);
+		m[1, 2] = fp(2) * (yz - wx);
+
+		m[2, 0] = fp(2) * (xz - wy);
+		m[2, 1] = fp(2) * (yz + wx);
+		m[2, 2] = fp(1) - fp(2) * (x2 + y2);
+
+		if constexpr (dim == 4) {
+			m[0, 3] = 0;
+			m[1, 3] = 0;
+			m[2, 3] = 0;
+
+			m[3, 0] = 0;
+			m[3, 1] = 0;
+			m[3, 2] = 0;
+			m[3, 3] = 1;
+		}
+
+		return m;
 	}
 
 	// ---------------------------------------------------
