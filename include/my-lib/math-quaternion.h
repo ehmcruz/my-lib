@@ -44,17 +44,14 @@ public:
 
 	// ------------------------ Constructors
 
-	constexpr Quaternion () noexcept
-		: v(Vector::zero()), w(0)
-	{
-	}
+	constexpr Quaternion () noexcept = default;
 
 	constexpr Quaternion (const Vector& v_, const T w_) noexcept
 		: v(v_), w(w_)
 	{
 	}
 
-	constexpr Quaternion (const T x_, const T y_, const T z_, const T w_) noexcept
+	constexpr Quaternion (const Type x_, const Type y_, const Type z_, const Type w_) noexcept
 		: v(x_, y_, z_), w(w_)
 	{
 	}
@@ -62,7 +59,7 @@ public:
 	// Create a scalar (or real) quaternion.
 	// The vector part is set to zero.
 
-	constexpr Quaternion (const T w_) noexcept
+	constexpr Quaternion (const Type w_) noexcept
 		: v(Vector::zero()), w(w_)
 	{
 	}
@@ -115,14 +112,14 @@ public:
 
 	// ---------------------------------------------------
 
-	constexpr T length_squared (this const Quaternion& self) noexcept
+	constexpr Type length_squared (this const Quaternion& self) noexcept
 	{
 		Type value = dot_product(self.v, self.v);
 		value += self.w * self.w;
 		return value;
 	}
 
-	constexpr T length () const noexcept
+	constexpr Type length () const noexcept
 	{
 		return std::sqrt(this->length_squared());
 	}
@@ -136,7 +133,7 @@ public:
 
 	constexpr std::pair<Vector, Type> to_axis_angle () const noexcept
 	{
-		Quaternion<Type> q = (this->w > 0) ? *this : Quaternion<T>(-(*this));
+		Quaternion<Type> q = (this->w > 0) ? *this : Quaternion<Type>(-(*this));
 		Vector axis;
 		Type angle;
 		
@@ -151,7 +148,7 @@ public:
 		else
 			axis = q.v;
 
-		angle = 2 * std::atan2(length, this->w);
+		angle = fp(2) * std::atan2(length, this->w);
 		// angle = std::acos(this->w) * fp(2);
 
 		return std::make_pair(axis, angle);
@@ -213,9 +210,9 @@ public:
 
 	// ---------------------------------------------------
 
-	constexpr void set_rotation (const Vector& axis, const T angle) noexcept
+	constexpr void set_rotation (const Vector& axis, const Type angle) noexcept
 	{
-		const T half_angle = angle / fp(2);
+		const Type half_angle = angle / fp(2);
 		this->v = Mylib::Math::normalize(axis) * std::sin(half_angle);
 		this->w = std::cos(half_angle);
 	}
@@ -227,7 +224,7 @@ public:
 		start.normalize();
 		end.normalize();
 
-		const T dot_product = Mylib::Math::dot_product(start, end);
+		const Type dot_product = Mylib::Math::dot_product(start, end);
 
 		// From MathFu library:
 		// Any rotation < 0.1 degrees is treated as no rotation
@@ -324,7 +321,7 @@ public:
 		return q;
 	}
 
-	static constexpr Quaternion rotation (const Vector& axis, const T angle) noexcept
+	static constexpr Quaternion rotation (const Vector& axis, const Type angle) noexcept
 	{
 		Quaternion q;
 		q.set_rotation(axis, angle);

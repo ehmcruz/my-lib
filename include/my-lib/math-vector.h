@@ -368,6 +368,16 @@ public:
 		v.set_zero();
 		return v;
 	}
+
+	static consteval Vector uniform (const Type value) noexcept
+	{
+		Vector v;
+		
+		for (uint32_t i = 0; i < dim; i++)
+			v[i] = value;
+
+		return v;
+	}
 };
 
 // ---------------------------------------------------

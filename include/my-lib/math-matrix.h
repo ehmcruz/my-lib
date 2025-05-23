@@ -190,25 +190,32 @@ public:
 
 	// 2D rotation matrix
 
-	constexpr void set_rotation_matrix (const Type angle) noexcept
-		requires (nrows == ncols && ncols == 2)
+	constexpr void set_rotation_matrix (this Matrix& self, const Type angle) noexcept
+		requires (nrows == ncols && (ncols == 2 || ncols == 3))
 	{
 		const Type c = std::cos(angle);
 		const Type s = std::sin(angle);
-
-		auto& self = *this;
 
 		self[0, 0] = c;
 		self[0, 1] = -s;
 		self[1, 0] = s;
 		self[1, 1] = c;
+
+		if constexpr (ncols == 3) {
+			self[0, 2] = 0;
+			self[1, 2] = 0;
+
+			self[2, 0] = 0;
+			self[2, 1] = 0;
+			self[2, 2] = 1;
+		}
 	}
 
 	// 3D rotation matrix
 
 	template <typename Tvector>
-	constexpr void set_rotation_matrix (const Vector<Tvector>& axis_, const Type angle) noexcept
-		requires (Tvector::dim == 3 && nrows == ncols && ncols == 3)
+	constexpr void set_rotation_matrix (this Matrix& self, const Vector<Tvector>& axis_, const Type angle) noexcept
+		requires (Tvector::dim == 3 && nrows == ncols && (ncols == 3 || ncols == 4))
 	{
 		const Type c = std::cos(angle);
 		const Type s = std::sin(angle);
@@ -238,8 +245,8 @@ public:
 
 		const Matrix w2 = w * w;
 
-		this->set_identity();
-		*this += w * s + w2 * t;
+		self.set_identity();
+		self += w * s + w2 * t;
 	#else
 		const Type x = axis.x;
 		const Type y = axis.y;
@@ -259,32 +266,19 @@ public:
 		m(2, 1) = t*y*z + s*x;
 		m(2, 2) = t*z*z + c;
 	#endif
-	}
 
-	// 3D rotation matrix
-	// But using a 4x4 matrix to allow translation.
-
-	template <typename Tvector>
-	constexpr void set_rotation_matrix (const Vector<Tvector>& axis_, const Type angle) noexcept
-		requires (Tvector::dim == 3 && nrows == ncols && ncols == 4)
-	{
-		const Matrix<T, 3, 3> m = Matrix<T, 3, 3>::rotation(axis_, angle);
-		auto& self = *this;
-
-		for (uint32_t i = 0; i < 3; i++) {
-			for (uint32_t j = 0; j < 3; j++)
-				self[i, j] = m[i, j];
+		if constexpr (ncols == 4) {
+			self[0, 3] = 0;
+			self[1, 3] = 0;
+			self[2, 3] = 0;
+	
+			self[3, 0] = 0;
+			self[3, 1] = 0;
+			self[3, 2] = 0;
+	
+			self[3, 3] = 1;
 		}
 
-		self[0, 3] = 0;
-		self[1, 3] = 0;
-		self[2, 3] = 0;
-
-		self[3, 0] = 0;
-		self[3, 1] = 0;
-		self[3, 2] = 0;
-
-		self[3, 3] = 1;
 	}
 
 	/*
@@ -534,7 +528,7 @@ public:
 	// 2D rotation matrix
 
 	static constexpr Matrix rotation (const Type angle) noexcept
-		requires (nrows == ncols && ncols == 2)
+		requires (nrows == ncols && (ncols == 2 || ncols == 3))
 	{
 		Matrix m;
 		m.set_rotation_matrix(angle);
