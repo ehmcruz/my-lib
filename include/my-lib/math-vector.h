@@ -250,14 +250,14 @@ public:
 	using T::T;
 
 	template <typename Tother>
-	constexpr Vector (const Vector<Tother>& other) noexcept
+	constexpr Vector (const Vector<Tother>& other, const Type other_values = 0) noexcept
 	{
 		static_assert(Tother::dim <= dim);
 		auto& self = *this;
 		for (uint32_t i = 0; i < Tother::dim; i++)
 			self[i] = other[i];
 		for (uint32_t i = Tother::dim; i < dim; i++)
-			self[i] = 0;
+			self[i] = other_values;
 	}
 
 	// ------------------------ operator=
@@ -369,7 +369,7 @@ public:
 		return v;
 	}
 
-	static consteval Vector uniform (const Type value) noexcept
+	static constexpr Vector uniform (const Type value) noexcept
 	{
 		Vector v;
 		
