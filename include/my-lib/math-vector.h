@@ -356,6 +356,28 @@ public:
 		*this = target * (dot_product(*this, target) / target.length_squared());
 	}
 
+	// Convertion functions that do not change the vector itself.
+
+	constexpr Vector to_abs (this const Vector& self) noexcept
+	{
+		Vector v;
+		for (uint32_t i = 0; i < dim; i++)
+			v[i] = std::abs(self[i]);
+		return v;
+	}
+
+	constexpr Vector to_normalized () const noexcept
+	{
+		return *this / this->length();
+	}
+
+	constexpr Vector to_length (const Type len) const noexcept
+	{
+		return *this * (len / this->length());
+	}
+
+	// Functions to set the vector to pre-defined values.
+
 	constexpr void set_zero (this Vector& self) noexcept
 	{
 		for (uint32_t i = 0; i < dim; i++)
@@ -493,9 +515,7 @@ constexpr Vector<T> cross_product (const Vector<T>& a, const Vector<T>& b) noexc
 template <typename T>
 constexpr Vector<T> abs (Vector<T> v) noexcept
 {
-	for (uint32_t i = 0; i < T::dim; i++)
-		v[i] = std::abs(v[i]);
-	return v;
+	return v.to_abs();
 }
 
 // ---------------------------------------------------
@@ -514,7 +534,15 @@ constexpr Vector<T> max (const Vector<T>& a, const Vector<T>& b) noexcept
 template <typename T>
 constexpr Vector<T> normalize (const Vector<T>& v) noexcept
 {
-	return v / v.length();
+	return v.to_normalized();
+}
+
+// ---------------------------------------------------
+
+template <typename T>
+constexpr Vector<T> with_length (const Vector<T>& v, const typename T::Type len) noexcept
+{
+	return v.to_length(len);
 }
 
 // ---------------------------------------------------
@@ -524,14 +552,6 @@ constexpr Vector<T> projection (Vector<T> source, const Vector<T>& target) noexc
 {
 	source.project(target);
 	return source;
-}
-
-// ---------------------------------------------------
-
-template <typename T>
-constexpr Vector<T> with_length (const Vector<T>& v, const typename T::Type len) noexcept
-{
-	return v * (len / v.length());
 }
 
 // ---------------------------------------------------
