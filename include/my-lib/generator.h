@@ -17,84 +17,61 @@ namespace Mylib
 template <typename T, typename NextFn>
 class StackGenerator
 {
+public:
+	using Type = T;
+
 private:
-	T current_;
-	NextFn next_fn_;  // State transition logic (stored by value)
+	const Type init_value; // initial value of the generator
+	const Type end_value;  // end value of the generator
+	const NextFn next_fn;  // State transition logic
 
 public:
-	StackGenerator (T init, NextFn next_fn) 
-		: current_(init), next_fn_(next_fn)
+	StackGenerator (const Type& init_value_, const Type& end_value_, const NextFn& next_fn_)
+		: init_value(init_value_), end_value(end_value_), next_fn(next_fn_)
 	{
 	}
 
-	// Iterator interface
 	class Iterator
 	{
 	private:
-		StackGenerator* parent_;
+		const StackGenerator *parent;
+		Type current;
+		NextFn next_fn;  // State transition logic
 	
 	public:
-		Iterator (StackGenerator* parent)
-			: parent_(parent)
+		Iterator (const StackGenerator *parent_, const Type& value_, const NextFn& next_fn_)
+			: parent(parent_), current(value_), next_fn(next_fn_)
 		{
-		}
-
-		T operator* () const
-		{
-			return parent_->current_;
 		}
 
 		Iterator& operator++ ()
 		{
-			parent_->current_ = parent_->next_fn_(parent_->current_);
+			this->current = this->next_fn(this->current);
 			return *this;
 		}
 
-		bool operator!= (const Iterator&) const
+		const Type& operator* () const { return this->current; }
+		
+		bool operator!= (const Iterator& other) const
 		{
-			return true;
+			return (this->current != other.current);
 		}
 	};
 
-	Iterator begin () { return Iterator(this); }
-	Iterator end () { return Iterator(nullptr); }  // Dummy sentinel
+	Iterator begin () const { return Iterator(this, this->init_value, this->next_fn); }
+	Iterator end () const { return Iterator(this, this->end_value, this->next_fn); }
 };
 
-// Example: Fibonacci sequence
-int next_fib (int prev)
+// ---------------------------------------------------
+
+template <typename T, typename NextFn__>
+auto make_stack_generator (const T& init_value, const T& end_value, const NextFn__& next_fn)
 {
-	static int a = 0, b = 1;
-	int next = a + b;
-	a = b;
-	b = next;
-	return next;
-}
+	using NextFn = std::conditional_t<std::is_function_v<NextFn__>,
+	                                  NextFn__&,
+	                                  NextFn__>;
 
-int main() {
-// No heap allocations! All state is on the stack.
-StackGenerator<int, decltype(&next_fib)> fib(1, next_fib);
-
-int count = 0;
-for (int val : fib) {
-std::cout << val << " ";
-if (++count >= 10) break;  // Stop after 10 elements
-}
-// Output: 1 1 2 3 5 8 13 21 34 55
-}
-
-// statefull generator
-
-struct Counter {
-	int step_;
-	int operator()(int x) { return x + step_; }
-};
-
-Counter counter{2};  // Increment by 2 each time
-StackGenerator<int, Counter> gen(0, counter);
-
-for (int val : gen) {
-	if (val >= 10) break;
-	std::cout << val << " ";  // 0 2 4 6 8
+	return StackGenerator<T, NextFn>(init_value, end_value, next_fn);
 }
 
 // ---------------------------------------------------

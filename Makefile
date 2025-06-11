@@ -29,5 +29,8 @@ matrix: $(HEADERS) tests/test-matrix.cpp
 interpolation: $(HEADERS) tests/test-interpolation.cpp
 	$(CPP) tests/test-interpolation.cpp src/memory-pool.cpp -o test-interpolation $(CPPFLAGS)
 
+generator: $(HEADERS) tests/test-generator.cpp
+	$(CPP) tests/test-generator.cpp -o test-generator $(CPPFLAGS)
+
 clean:
 	- rm -rf test-pool-alloc test-stl-alloc test-timer
