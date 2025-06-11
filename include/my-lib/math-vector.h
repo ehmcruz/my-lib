@@ -376,6 +376,16 @@ public:
 		return *this * (len / this->length());
 	}
 
+	template <typename Tother>
+	constexpr Tother to_reduced (this const Vector& self) noexcept
+	{
+		static_assert(Tother::dim < dim);
+		Tother v;
+		for (uint32_t i = 0; i < Tother::dim; i++)
+			v[i] = self[i];
+		return v;
+	}
+
 	// Functions to set the vector to pre-defined values.
 
 	constexpr void set_zero (this Vector& self) noexcept
