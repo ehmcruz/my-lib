@@ -54,6 +54,19 @@ void test_vector_angle ()
 	}
 }
 
+void test_matrix_determinant ()
+{
+	auto m2 = Matrix2f({1.0f, 2.0f, 3.0f, 4.0f});
+	std::cout << "Matrix2f:" << std::endl << m2 << std::endl;
+	std::cout << "Determinant: " << m2.determinant() << std::endl;
+
+	std::cout << std::endl;
+
+	auto m3 = Matrix3f({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f});
+	std::cout << "Matrix3f:" << std::endl << m3 << std::endl;
+	std::cout << "Determinant: " << m3.determinant() << std::endl;
+}
+
 int main ()
 {
 	Vector2f vzero = Vector2f::zero();
@@ -124,6 +137,10 @@ int main ()
 
 	test_vector_projection();
 	test_vector_angle();
+
+	std:: cout << "----------------------" << std::endl;
+
+	test_matrix_determinant();
 
 	std:: cout << "----------------------" << std::endl;
 

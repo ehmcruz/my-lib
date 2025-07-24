@@ -458,7 +458,61 @@ public:
 
 	// ---------------------------------------------------
 
-	static constexpr Matrix zero () noexcept
+	// Returns a submatrix of the given matrix, removing the specified row and column.
+
+	constexpr Matrix<Type, nrows-1, ncols-1> to_submatrix (this const Matrix& self, const uint32_t row, const uint32_t col) noexcept
+	{
+		static_assert(nrows > 1);
+		static_assert(ncols > 1);
+
+		Matrix<Type, nrows-1, ncols-1> r;
+
+		for (uint32_t i = 0; i < nrows - 1; i++) {
+			const auto i_ = i + (i >= row);
+			
+			for (uint32_t j = 0; j < ncols - 1; j++)
+				r[i, j] = self[i_, j + (j >= col)];
+		}
+
+		return r;
+	}
+
+	// ---------------------------------------------------
+
+	Type determinant (this const Matrix& self) noexcept
+	{
+		static_assert(nrows == ncols);
+
+		if constexpr (nrows == 1)
+			return self[0, 0];
+		else if constexpr (nrows == 2)
+			return self[0, 0] * self[1, 1] - self[0, 1] * self[1, 0];
+		else
+			return self.determinant_laplace();
+	}
+
+	Type determinant_laplace (this const Matrix& self) noexcept
+	{
+		static_assert(nrows == ncols);
+
+		if constexpr (nrows == 1 || nrows == 2)
+			return self.determinant();
+		else {
+			static constexpr Type sign[2] = { 1, -1 };
+			Type det = 0;
+
+			for (uint32_t j = 0; j < ncols; j++) {
+				const bool sign_index = j & 0x01;
+				det += sign[sign_index] * self[0, j] * self.to_submatrix(0, j).determinant_laplace();
+			}
+
+			return det;
+		}
+	}
+
+	// ---------------------------------------------------
+
+	static consteval Matrix zero () noexcept
 	{
 		Matrix m;
 		m.set_zero();
