@@ -56,15 +56,30 @@ void test_vector_angle ()
 
 void test_matrix_determinant ()
 {
-	auto m2 = Matrix2f({1.0f, 2.0f, 3.0f, 4.0f});
-	std::cout << "Matrix2f:" << std::endl << m2 << std::endl;
-	std::cout << "Determinant: " << m2.determinant() << std::endl;
-
-	std::cout << std::endl;
-
-	auto m3 = Matrix3f({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f});
-	std::cout << "Matrix3f:" << std::endl << m3 << std::endl;
-	std::cout << "Determinant: " << m3.determinant() << std::endl;
+	{
+		auto m = Matrix2f(1.0f, 2.0f, 3.0f, 4.0f);
+		std::cout << "Matrix2f:" << std::endl << m << std::endl;
+		std::cout << "Determinant: " << m.determinant() << std::endl;
+		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
+		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		std::cout << std::endl;
+	}
+	{
+		auto m = Matrix3f(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
+		std::cout << "Matrix3f:" << std::endl << m << std::endl;
+		std::cout << "Determinant: " << m.determinant() << std::endl;
+		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
+		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		std::cout << std::endl;
+	}
+	{
+		auto m = Matrix3f(11.0f, 21.0f, 61.0f, 41.0f, 51.0f, 91.0f, 71.0f, 81.0f, 91.0f);
+		std::cout << "Matrix3f:" << std::endl << m << std::endl;
+		std::cout << "Determinant: " << m.determinant() << std::endl;
+		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
+		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		std::cout << std::endl;
+	}
 }
 
 int main ()

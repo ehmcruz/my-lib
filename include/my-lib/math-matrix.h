@@ -7,6 +7,8 @@
 #include <ostream>
 #include <utility>
 #include <initializer_list>
+#include <limits>
+#include <algorithm>
 
 #include <cmath>
 
@@ -34,35 +36,13 @@ private:
 	Type data[nrows*ncols];
 
 public:
-	consteval static uint32_t get_nrows () noexcept
-	{
-		return nrows;
-	}
-
-	consteval static uint32_t get_ncols () noexcept
-	{
-		return ncols;
-	}
-
-	consteval static uint32_t get_length () noexcept
-	{
-		return nrows * ncols;
-	}
-
-	constexpr static Type fp (const auto v) noexcept
-	{
-		return static_cast<Type>(v);
-	}
-
-	constexpr Type* get_raw () noexcept
-	{
-		return this->data;
-	}
-
-	constexpr const Type* get_raw () const noexcept
-	{
-		return this->data;
-	}
+	consteval static uint32_t get_nrows () noexcept { return nrows; }
+	consteval static uint32_t get_ncols () noexcept { return ncols; }
+	consteval static uint32_t get_length () noexcept { return nrows * ncols; }
+	
+	constexpr static Type fp (const auto v) noexcept { return static_cast<Type>(v); }
+	constexpr Type* get_raw () noexcept { return this->data; }
+	constexpr const Type* get_raw () const noexcept { return this->data; }
 
 	// ------------------------ Constructors
 
@@ -72,6 +52,16 @@ public:
 	{
 		for (uint32_t i = 0; const auto v : values)
 			this->data[i++] = v;
+	}
+
+	template <typename... Types>
+	constexpr Matrix (const Types... values) noexcept
+	{
+		static_assert(sizeof...(values) == get_length());
+		static_assert((std::convertible_to<Types, Type> && ...));
+
+		uint32_t i = 0;
+		((this->data[i++] = values), ...);
 	}
 
 	// -------------------------------------
@@ -479,7 +469,21 @@ public:
 
 	// ---------------------------------------------------
 
-	Type determinant (this const Matrix& self) noexcept
+	void swap_rows (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
+	{
+		for (uint32_t j = 0; j < ncols; j++)
+			std::swap(self[a, j], self[b, j]);
+	}
+
+	void swap_cols (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
+	{
+		for (uint32_t i = 0; i < nrows; i++)
+			std::swap(self[i, a], self[i, b]);
+	}
+
+	// ---------------------------------------------------
+
+	constexpr Type determinant (this const Matrix& self) noexcept
 	{
 		static_assert(nrows == ncols);
 
@@ -487,16 +491,20 @@ public:
 			return self[0, 0];
 		else if constexpr (nrows == 2)
 			return self[0, 0] * self[1, 1] - self[0, 1] * self[1, 0];
+		else if constexpr (nrows == 3)
+			return self[0, 0] * (self[1, 1] * self[2, 2] - self[1, 2] * self[2, 1]) -
+			       self[0, 1] * (self[1, 0] * self[2, 2] - self[1, 2] * self[2, 0]) +
+			       self[0, 2] * (self[1, 0] * self[2, 1] - self[1, 1] * self[2, 0]);
 		else
-			return self.determinant_laplace();
+			return self.determinant_gauss();
 	}
 
-	Type determinant_laplace (this const Matrix& self) noexcept
+	constexpr Type determinant_laplace (this const Matrix& self) noexcept
 	{
 		static_assert(nrows == ncols);
 
-		if constexpr (nrows == 1 || nrows == 2)
-			return self.determinant();
+		if constexpr (nrows == 1)
+			return self[0, 0];
 		else {
 			static constexpr Type sign[2] = { 1, -1 };
 			Type det = 0;
@@ -506,6 +514,89 @@ public:
 				det += sign[sign_index] * self[0, j] * self.to_submatrix(0, j).determinant_laplace();
 			}
 
+			return det;
+		}
+	}
+
+	// Performs Gaussian elimination with partial pivoting
+	// Returns the number of row swaps performed (for determinant sign calculation)
+
+	constexpr uint32_t gauss_elimination (this Matrix& self) noexcept
+	{
+		uint32_t row_swaps = 0;
+		const uint32_t min_dim = std::min(nrows, ncols);
+		
+		// Forward elimination with partial pivoting
+		for (uint32_t k = 0; k < min_dim - 1; k++) {
+			// Find pivot (largest element in column k from row k onwards)
+			uint32_t pivot_row = k;
+			Type max_val = std::abs(self[k, k]);
+			
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				const Type abs_val = std::abs(self[i, k]);
+
+				if (abs_val > max_val) {
+					max_val = abs_val;
+					pivot_row = i;
+				}
+			}
+			
+			// If pivot is zero, matrix is singular - return early
+			if (max_val == fp(0))
+				return std::numeric_limits<uint32_t>::max(); // Special value to indicate singular matrix
+			
+			// Swap rows if needed
+			if (pivot_row != k) {
+				self.swap_rows(k, pivot_row);
+				row_swaps++;
+			}
+			
+			// Eliminate column k
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				if (self[i, k] != fp(0)) {
+					const Type factor = self[i, k] / self[k, k];
+
+					for (uint32_t j = k; j < ncols; j++)
+						self[i, j] -= factor * self[k, j];
+				}
+			}
+		}
+		
+		return row_swaps;
+	}
+
+	// Returns a pair containing the matrix in row echelon form and the number of row swaps performed.
+
+	constexpr std::pair<Matrix, uint32_t> to_gauss_elimination (this const Matrix& self) noexcept
+	{
+		std::pair<Matrix, uint32_t> r = { self, 0 };
+		r.second = r.first.gauss_elimination();
+		return r;
+	}
+
+	constexpr Type determinant_gauss (this const Matrix& self) noexcept
+	{
+		static_assert(nrows == ncols);
+
+		if constexpr (nrows == 1)
+			return self[0, 0];
+		else {
+			// Create a copy for Gaussian elimination
+			const auto [temp, row_swaps] = self.to_gauss_elimination();
+			
+			// If matrix is singular
+			if (row_swaps == std::numeric_limits<uint32_t>::max())
+				return fp(0);
+			
+			static constexpr Type det_init[2] = { 1, -1 };
+			
+			// Calculate determinant as product of diagonal elements
+			Type det = det_init[row_swaps & 0x01];
+
+			// Multiply diagonal elements
+			for (uint32_t i = 0; i < nrows; i++)
+				det *= temp[i, i];
+			
 			return det;
 		}
 	}
