@@ -469,13 +469,13 @@ public:
 
 	// ---------------------------------------------------
 
-	void swap_rows (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
+	constexpr void swap_rows (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
 	{
 		for (uint32_t j = 0; j < ncols; j++)
 			std::swap(self[a, j], self[b, j]);
 	}
 
-	void swap_cols (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
+	constexpr void swap_cols (this Matrix& self, const uint32_t a, const uint32_t b) noexcept
 	{
 		for (uint32_t i = 0; i < nrows; i++)
 			std::swap(self[i, a], self[i, b]);
