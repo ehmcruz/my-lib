@@ -9,11 +9,14 @@
 #include <initializer_list>
 #include <limits>
 #include <algorithm>
+#include <tuple>
+#include <array>
 
 #include <cmath>
 
 #include <my-lib/std.h>
 #include <my-lib/math-vector.h>
+#include <my-lib/exception.h>
 
 namespace Mylib
 {
@@ -31,6 +34,7 @@ class Matrix
 {
 public:
 	using Type = T;
+	using PivotIndices = std::array<uint32_t, nrows>;
 
 private:
 	Type data[nrows*ncols];
@@ -574,6 +578,88 @@ public:
 		}
 
 		return row_swaps;
+	}
+
+	// ---------------------------------------------------
+
+	// Set the pivot matrix based on the given pivot indices.
+
+	constexpr void set_pivot_matrix (this Matrix& self, const PivotIndices& pivot_indices) noexcept
+	{
+		static_assert(nrows == ncols);
+				
+		self.set_zero();
+
+		for (uint32_t i = 0; i < nrows; i++)
+			self[i, pivot_indices[i]] = 1; // P[i, pivot_indices[i]] = 1 means row i gets element from original row pivot_indices[i]
+	}
+
+	// ---------------------------------------------------
+
+	// Perform LU decomposition with partial pivoting.
+	// Returns a tuple containing the pivot indices, L matrix, and U matrix.
+	// The decomposition satisfies: P*A = L*U where P is the permutation matrix represented by pivot indices.
+	// Throws SingularMatrixException if the matrix is singular.
+
+	constexpr std::tuple<PivotIndices, Matrix, Matrix> to_LU_decomposition_pivoting () const noexcept
+	{
+		static_assert(nrows == ncols);
+
+		std::tuple<PivotIndices, Matrix, Matrix> result;
+		auto& pivot_indices = std::get<0>(result);
+		auto& L = std::get<1>(result);  // Copy for L matrix
+		L.set_identity();  // Initialize L as identity
+		auto& U = std::get<2>(result);  // Copy for U matrix
+		U = *this;
+		
+		// Initialize pivot indices to identity permutation
+		for (uint32_t i = 0; i < nrows; i++)
+			pivot_indices[i] = i;
+		
+		constexpr Type tolerance = fp(1e-10);
+		
+		// Perform LU decomposition with partial pivoting
+		for (uint32_t k = 0; k < nrows - 1; k++) {
+			// Find pivot (largest element in column k from row k onwards)
+			uint32_t pivot_row = k;
+			Type max_val = std::abs(U[k, k]);
+			
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				const Type abs_val = std::abs(U[i, k]);
+				if (abs_val > max_val) {
+					max_val = abs_val;
+					pivot_row = i;
+				}
+			}
+			
+			// If pivot is too small, matrix is singular
+			if (max_val <= tolerance)
+				mylib_throw(SingularMatrixException);
+			
+			// Swap rows if needed
+			if (pivot_row != k) {
+				U.swap_rows(k, pivot_row);
+				
+				// Swap corresponding rows in L (only the lower part computed so far)
+				for (uint32_t j = 0; j < k; j++)
+					std::swap(L[k, j], L[pivot_row, j]);
+				
+				// Update pivot indices
+				std::swap(pivot_indices[k], pivot_indices[pivot_row]);
+			}
+			
+			// Eliminate column k and store multipliers in L
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				const Type factor = U[i, k] / U[k, k];
+				L[i, k] = factor;  // Store multiplier in L
+				
+				// Apply elimination to U
+				for (uint32_t j = k; j < ncols; j++)
+					U[i, j] -= factor * U[k, j];
+			}
+		}
+		
+		return result;
 	}
 
 	// ---------------------------------------------------

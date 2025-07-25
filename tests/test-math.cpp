@@ -54,11 +54,28 @@ void test_vector_angle ()
 	}
 }
 
+void test_matrix_lu_decomposition ()
+{
+	{
+		auto m = Matrix2f(1.0f, 2.0f, 3.0f, 4.0f);
+		std::cout << "Matrix:" << std::endl << m << std::endl;
+		auto [pivot_indices, L, U] = m.to_LU_decomposition_pivoting();
+		std::cout << "Pivot indices: ";
+		for (const auto& index : pivot_indices)
+			std::cout << index << ", ";
+		std::cout << std::endl;
+		std::cout << "L matrix:" << std::endl << L << std::endl;
+		std::cout << "U matrix:" << std::endl << U << std::endl;
+		std::cout << "P.A matrix:" << std::endl << () << std::endl;
+		std::cout << std::endl;
+	}
+}
+
 void test_matrix_determinant ()
 {
 	{
 		auto m = Matrix2f(1.0f, 2.0f, 3.0f, 4.0f);
-		std::cout << "Matrix2f:" << std::endl << m << std::endl;
+		std::cout << "Matrix:" << std::endl << m << std::endl;
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
@@ -66,7 +83,7 @@ void test_matrix_determinant ()
 	}
 	{
 		auto m = Matrix3f(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
-		std::cout << "Matrix3f:" << std::endl << m << std::endl;
+		std::cout << "Matrix:" << std::endl << m << std::endl;
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
@@ -74,7 +91,7 @@ void test_matrix_determinant ()
 	}
 	{
 		auto m = Matrix3f(11.0f, 21.0f, 61.0f, 41.0f, 51.0f, 91.0f, 71.0f, 81.0f, 91.0f);
-		std::cout << "Matrix3f:" << std::endl << m << std::endl;
+		std::cout << "Matrix:" << std::endl << m << std::endl;
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
@@ -183,6 +200,10 @@ int main ()
 
 	test_vector_projection();
 	test_vector_angle();
+
+	std:: cout << "----------------------" << std::endl;
+	std::cout << "Matrix LU decomposition:" << std::endl;
+	test_matrix_lu_decomposition();
 
 	std:: cout << "----------------------" << std::endl;
 	std::cout << "Matrix determinent:" << std::endl;
