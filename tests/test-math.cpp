@@ -82,6 +82,37 @@ void test_matrix_determinant ()
 	}
 }
 
+void test_matrix_inverse ()
+{
+	{
+		auto m = Matrix2f(1.0f, 2.0f, 3.0f, 4.0f);
+		auto [inverse, success] = m.to_inverse();
+		std::cout << "Matrix:" << std::endl << m << std::endl;
+		std::cout << "Determinant: " << m.determinant() << std::endl;
+		std::cout << "Inverse success: " << success << std::endl;
+		if (success) {
+			std::cout << "Inverse:" << std::endl << inverse << std::endl;
+			std::cout << "Inverse * Matrix = Identity:" << std::endl;
+			std::cout << (inverse * m) << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	{
+		auto m = Matrix3f(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
+		auto [inverse, success] = m.to_inverse();
+		std::cout << "Matrix:" << std::endl << m << std::endl;
+		std::cout << "Determinant: " << m.determinant() << std::endl;
+		std::cout << "Inverse success: " << success << std::endl;
+		if (success) {
+			std::cout << "Inverse:" << std::endl << inverse << std::endl;
+			std::cout << "Inverse * Matrix = Identity:" << std::endl;
+			std::cout << (inverse * m) << std::endl;
+		}
+		std::cout << std::endl;
+	}
+}
+
 int main ()
 {
 	Vector2f vzero = Vector2f::zero();
@@ -154,12 +185,16 @@ int main ()
 	test_vector_angle();
 
 	std:: cout << "----------------------" << std::endl;
-
+	std::cout << "Matrix determinent:" << std::endl;
 	test_matrix_determinant();
 
 	std:: cout << "----------------------" << std::endl;
+	std::cout << "Matrix inverse:" << std::endl;
+	test_matrix_inverse();
 
-	std::cout << base2_log_of_integer(0) << std::endl;
+	std:: cout << "----------------------" << std::endl;
+
+	//std::cout << base2_log_of_integer(0) << std::endl;
 
 	return 0;
 }

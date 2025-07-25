@@ -483,6 +483,149 @@ public:
 
 	// ---------------------------------------------------
 
+	// Performs Gaussian elimination with partial pivoting.
+	// Returns the number of row swaps performed (for determinant sign calculation).
+	// If the matrix is singular, returns a special value (max uint32_t) to indicate that.
+
+	constexpr uint32_t gauss_elimination (this Matrix& self) noexcept
+	{
+		uint32_t row_swaps = 0;
+		constexpr uint32_t min_dim = std::min(nrows, ncols);
+		constexpr Type tolerance = fp(1e-10);
+		
+		// Forward elimination with partial pivoting
+		for (uint32_t k = 0; k < min_dim; k++) {
+			// Find pivot (largest element in column k from row k onwards)
+			uint32_t pivot_row = k;
+			Type max_val = std::abs(self[k, k]);
+			
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				const Type abs_val = std::abs(self[i, k]);
+				if (abs_val > max_val) {
+					max_val = abs_val;
+					pivot_row = i;
+				}
+			}
+			
+			// If no acceptable pivot found, matrix is singular
+			if (max_val <= tolerance)
+				return std::numeric_limits<uint32_t>::max();
+			
+			// Swap rows if needed
+			if (pivot_row != k) {
+				self.swap_rows(k, pivot_row);
+				row_swaps++;
+			}
+			
+			// Eliminate column k
+			for (uint32_t i = k + 1; i < nrows; i++) {
+				const Type factor = self[i, k] / self[k, k];
+
+				for (uint32_t j = k; j < ncols; j++)
+					self[i, j] -= factor * self[k, j];
+			}
+		}
+		
+		return row_swaps;
+	}
+
+	// Returns a pair containing the matrix in row echelon form and the number of row swaps performed.
+
+	constexpr std::pair<Matrix, uint32_t> to_gauss_elimination (this const Matrix& self) noexcept
+	{
+		std::pair<Matrix, uint32_t> r = { self, 0 };
+		r.second = r.first.gauss_elimination();
+		return r;
+	}
+
+	// ---------------------------------------------------
+
+	// Perform Gauss-Jordan elimination.
+	// Returns the number of row swaps performed.
+	// If the matrix is singular, returns a special value (max uint32_t) to indicate that.
+
+	constexpr uint32_t gauss_jordan_elimination (this Matrix& self) noexcept
+	{
+		const uint32_t row_swaps = self.gauss_elimination();
+		
+		if (row_swaps == std::numeric_limits<uint32_t>::max())
+			return std::numeric_limits<uint32_t>::max(); // Singular matrix, cannot proceed
+
+		constexpr uint32_t min_dim = std::min(nrows, ncols);
+
+		// Back substitution to get reduced row echelon form
+		for (int32_t k = static_cast<int32_t>(min_dim) - 1; k >= 0; k--) {
+			const Type pivot = self[k, k];
+			if (pivot == fp(0))
+				continue; // Skip if pivot is zero
+			
+			// Normalize the pivot row
+			for (uint32_t j = 0; j < ncols; j++)
+				self[k, j] /= pivot;
+
+			// Eliminate all other entries in column k
+			for (uint32_t i = 0; i < nrows; i++) {
+				if (i != static_cast<uint32_t>(k)) {
+					const Type factor = self[i, k];
+					for (uint32_t j = 0; j < ncols; j++)
+						self[i, j] -= factor * self[k, j];
+				}
+			}
+		}
+
+		return row_swaps;
+	}
+
+	// ---------------------------------------------------
+
+	// Invert the matrix using Gauss-Jordan elimination.
+	// Returns true if the matrix is invertible, false otherwise.
+
+	constexpr bool invert (this Matrix& self) noexcept
+	{
+		static_assert(nrows == ncols);
+
+		// Create augmented matrix [A | I] where A is the original matrix and I is identity
+		Matrix<Type, nrows, ncols * 2> augmented;
+		
+		// Copy original matrix to left half
+		for (uint32_t i = 0; i < nrows; i++) {
+			for (uint32_t j = 0; j < ncols; j++)
+				augmented[i, j] = self[i, j];
+		}
+		
+		// Set right half to identity matrix
+		for (uint32_t i = 0; i < nrows; i++) {
+			for (uint32_t j = 0; j < ncols; j++)
+				augmented[i, j + ncols] = fp(0);
+			augmented[i, i + ncols] = fp(1);
+		}
+		
+		// Apply Gauss-Jordan elimination to the augmented matrix
+		const uint32_t row_swaps = augmented.gauss_jordan_elimination();
+		
+		// Check if matrix is invertible by looking at the return value
+		if (row_swaps == std::numeric_limits<uint32_t>::max())
+			return false; // Matrix is singular (not invertible)
+		
+		// Copy the right half (inverse) back to self
+		for (uint32_t i = 0; i < nrows; i++) {
+			for (uint32_t j = 0; j < ncols; j++)
+				self[i, j] = augmented[i, j + ncols];
+		}
+
+		return true;
+	}
+
+	std::pair<Matrix, bool> to_inverse (this const Matrix& self) noexcept
+	{
+		std::pair<Matrix, bool> r = { self, true };
+		r.second = r.first.invert();
+		return r;
+	}
+
+	// ---------------------------------------------------
+
 	constexpr Type determinant (this const Matrix& self) noexcept
 	{
 		static_assert(nrows == ncols);
@@ -498,6 +641,8 @@ public:
 		else
 			return self.determinant_gauss();
 	}
+
+	// ---------------------------------------------------
 
 	constexpr Type determinant_laplace (this const Matrix& self) noexcept
 	{
@@ -518,62 +663,7 @@ public:
 		}
 	}
 
-	// Performs Gaussian elimination with partial pivoting.
-	// Returns the number of row swaps performed (for determinant sign calculation).
-	// If the matrix is singular, returns a special value (max uint32_t) to indicate that.
-
-	constexpr uint32_t gauss_elimination (this Matrix& self) noexcept
-	{
-		uint32_t row_swaps = 0;
-		const uint32_t min_dim = std::min(nrows, ncols);
-		
-		// Forward elimination with partial pivoting
-		for (uint32_t k = 0; k < min_dim - 1; k++) {
-			// Find pivot (largest element in column k from row k onwards)
-			uint32_t pivot_row = k;
-			Type max_val = std::abs(self[k, k]);
-			
-			for (uint32_t i = k + 1; i < nrows; i++) {
-				const Type abs_val = std::abs(self[i, k]);
-
-				if (abs_val > max_val) {
-					max_val = abs_val;
-					pivot_row = i;
-				}
-			}
-			
-			// If pivot is zero, matrix is singular - return early
-			if (max_val == fp(0))
-				return std::numeric_limits<uint32_t>::max(); // Special value to indicate singular matrix
-			
-			// Swap rows if needed
-			if (pivot_row != k) {
-				self.swap_rows(k, pivot_row);
-				row_swaps++;
-			}
-			
-			// Eliminate column k
-			for (uint32_t i = k + 1; i < nrows; i++) {
-				if (self[i, k] != fp(0)) {
-					const Type factor = self[i, k] / self[k, k];
-
-					for (uint32_t j = k; j < ncols; j++)
-						self[i, j] -= factor * self[k, j];
-				}
-			}
-		}
-		
-		return row_swaps;
-	}
-
-	// Returns a pair containing the matrix in row echelon form and the number of row swaps performed.
-
-	constexpr std::pair<Matrix, uint32_t> to_gauss_elimination (this const Matrix& self) noexcept
-	{
-		std::pair<Matrix, uint32_t> r = { self, 0 };
-		r.second = r.first.gauss_elimination();
-		return r;
-	}
+	// ---------------------------------------------------
 
 	constexpr Type determinant_gauss (this const Matrix& self) noexcept
 	{
