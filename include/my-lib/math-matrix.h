@@ -518,8 +518,9 @@ public:
 		}
 	}
 
-	// Performs Gaussian elimination with partial pivoting
-	// Returns the number of row swaps performed (for determinant sign calculation)
+	// Performs Gaussian elimination with partial pivoting.
+	// Returns the number of row swaps performed (for determinant sign calculation).
+	// If the matrix is singular, returns a special value (max uint32_t) to indicate that.
 
 	constexpr uint32_t gauss_elimination (this Matrix& self) noexcept
 	{
