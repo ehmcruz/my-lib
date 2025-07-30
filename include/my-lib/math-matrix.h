@@ -594,6 +594,14 @@ public:
 			self[i, pivot_indices[i]] = 1; // P[i, pivot_indices[i]] = 1 means row i gets element from original row pivot_indices[i]
 	}
 
+	static constexpr Matrix pivot_matrix (const PivotIndices& pivot_indices) noexcept
+	{
+		Matrix m;
+		m.set_pivot_matrix(pivot_indices);
+
+		return m;
+	}
+
 	// ---------------------------------------------------
 
 	// Perform LU decomposition with partial pivoting.
@@ -601,7 +609,7 @@ public:
 	// The decomposition satisfies: P*A = L*U where P is the permutation matrix represented by pivot indices.
 	// Throws SingularMatrixException if the matrix is singular.
 
-	constexpr std::tuple<PivotIndices, Matrix, Matrix> to_LU_decomposition_pivoting () const noexcept
+	constexpr std::tuple<PivotIndices, Matrix, Matrix> to_LU_decomposition_pivoting () const
 	{
 		static_assert(nrows == ncols);
 
