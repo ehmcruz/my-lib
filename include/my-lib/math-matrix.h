@@ -605,20 +605,22 @@ public:
 	// ---------------------------------------------------
 
 	// Perform LU decomposition with partial pivoting.
-	// Returns a tuple containing the pivot indices, L matrix, and U matrix.
+	// Returns a tuple containing the pivot indices, L matrix, U matrix, and the number of row swaps.
 	// The decomposition satisfies: P*A = L*U where P is the permutation matrix represented by pivot indices.
 	// Throws SingularMatrixException if the matrix is singular.
 
-	constexpr std::tuple<PivotIndices, Matrix, Matrix> to_LU_decomposition_pivoting () const
+	constexpr std::tuple<PivotIndices, Matrix, Matrix, uint32_t> to_LU_decomposition_pivoting () const
 	{
 		static_assert(nrows == ncols);
 
-		std::tuple<PivotIndices, Matrix, Matrix> result;
+		std::tuple<PivotIndices, Matrix, Matrix, uint32_t> result;
 		auto& pivot_indices = std::get<0>(result);
 		auto& L = std::get<1>(result);  // Copy for L matrix
 		L.set_identity();  // Initialize L as identity
 		auto& U = std::get<2>(result);  // Copy for U matrix
 		U = *this;
+		auto& row_swaps = std::get<3>(result);  // Number of row swaps
+		row_swaps = 0;  // Initialize row swaps count
 		
 		// Initialize pivot indices to identity permutation
 		for (uint32_t i = 0; i < nrows; i++)
@@ -646,6 +648,7 @@ public:
 			
 			// Swap rows if needed
 			if (pivot_row != k) {
+				row_swaps++; // Increment row swaps count
 				U.swap_rows(k, pivot_row);
 				
 				// Swap corresponding rows in L (only the lower part computed so far)
@@ -986,6 +989,20 @@ constexpr Matrix<T, ncols, nrows> transpose (const Matrix<T, nrows, ncols>& m) n
 	}
 	
 	return r;
+}
+
+// ---------------------------------------------------
+
+template <typename T, uint32_t dim>
+constexpr T determinent_LU_pivoting (const Matrix<T, dim, dim>& U, const uint32_t row_swaps) noexcept
+{
+	static constexpr T sign[2] = { 1, -1 };
+	T det = sign[row_swaps & 0x01]; // Adjust sign based on row swaps
+
+	for (uint32_t i = 0; i < dim; i++)
+		det *= U[i, i];
+
+	return det;
 }
 
 // ---------------------------------------------------

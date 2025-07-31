@@ -63,7 +63,7 @@ void test_matrix_lu_decomposition ()
 	{
 		auto m = Matrix2f(1.0f, 2.0f, 3.0f, 4.0f);
 		std::cout << "Matrix:" << std::endl << m << std::endl;
-		auto [pivot_indices, L, U] = m.to_LU_decomposition_pivoting();
+		auto [pivot_indices, L, U, row_swaps] = m.to_LU_decomposition_pivoting();
 		std::cout << "Pivot indices: ";
 		for (const auto& index : pivot_indices)
 			std::cout << index << ", ";
@@ -78,7 +78,7 @@ void test_matrix_lu_decomposition ()
 	{
 		auto m = Matrix3f(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f);
 		std::cout << "Matrix:" << std::endl << m << std::endl;
-		auto [pivot_indices, L, U] = m.to_LU_decomposition_pivoting();
+		auto [pivot_indices, L, U, row_swaps] = m.to_LU_decomposition_pivoting();
 		std::cout << "Pivot indices: ";
 		for (const auto& index : pivot_indices)
 			std::cout << index << ", ";
@@ -90,7 +90,7 @@ void test_matrix_lu_decomposition ()
 		std::cout << std::endl;
 	}
 
-	std::exit(0);
+//	std::exit(0);
 }
 
 void test_matrix_determinant ()
@@ -101,6 +101,8 @@ void test_matrix_determinant ()
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		auto [pivot_indices, L, U, row_swaps] = m.to_LU_decomposition_pivoting();
+		std::cout << "Determinant LU: " << determinent_LU_pivoting(U, row_swaps) << std::endl;
 		std::cout << std::endl;
 	}
 	{
@@ -109,6 +111,8 @@ void test_matrix_determinant ()
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		auto [pivot_indices, L, U, row_swaps] = m.to_LU_decomposition_pivoting();
+		std::cout << "Determinant LU: " << determinent_LU_pivoting(U, row_swaps) << std::endl;
 		std::cout << std::endl;
 	}
 	{
@@ -117,8 +121,12 @@ void test_matrix_determinant ()
 		std::cout << "Determinant: " << m.determinant() << std::endl;
 		std::cout << "Determinant laplace: " << m.determinant_laplace() << std::endl;
 		std::cout << "Determinant gauss: " << m.determinant_gauss() << std::endl;
+		auto [pivot_indices, L, U, row_swaps] = m.to_LU_decomposition_pivoting();
+		std::cout << "Determinant LU: " << determinent_LU_pivoting(U, row_swaps) << std::endl;
 		std::cout << std::endl;
 	}
+
+//	std::exit(0);
 }
 
 void test_matrix_inverse ()
