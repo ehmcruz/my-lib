@@ -436,16 +436,7 @@ using Point = Vector<T>;
 		for (uint32_t i = 0; i < T::dim; i++) \
 			r[i] = a[i] OP s; \
 		return r; \
-	}
-
-MYLIB_MATH_BUILD_OPERATION( + )
-MYLIB_MATH_BUILD_OPERATION( - )
-MYLIB_MATH_BUILD_OPERATION( * )
-MYLIB_MATH_BUILD_OPERATION( / )
-
-
-#undef MYLIB_MATH_BUILD_OPERATION
-#define MYLIB_MATH_BUILD_OPERATION(OP) \
+	} \
 	template <typename T> \
 	constexpr Vector<T> operator OP (const typename T::Type s, const Vector<T>& a) noexcept \
 	{ \

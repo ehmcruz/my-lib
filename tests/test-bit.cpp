@@ -135,12 +135,22 @@ int main ()
 
 	std::stringstream ss;
 	std::cout << "---------------------- j" << std::endl;
-	ss << bitset;
-	std::cout << ss.str() << std::endl;
+	ss << bitset << std::endl;
+	ss << ~bitset << std::endl;
+	bitset = bitset[0];
+	ss << bitset << std::endl;
+	bitset[1] = 1;
+	bitset = bitset[1];
+	ss << bitset << std::endl;
+	std::cout << ss.str();
 
 	std::cout << "---------------------- k" << std::endl;
 	uint32_t v = 0xFFFFFFFF;
 	std::cout << Mylib::BitSet<32>(Mylib::extract_bits(v, 0, 31)) << std::endl;
+
+	std::cout << "---------------------- l" << std::endl;
+	bitset = MyBitSet(1) | MyBitSet(2);
+	std::cout << bitset << std::endl;
 
 	test_bit_field();
 	test_enum();
