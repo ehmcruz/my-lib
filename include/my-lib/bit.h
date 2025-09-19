@@ -352,36 +352,41 @@ public:
 
 	// --------------------------
 
-	constexpr void set (const std::size_t pos, const std::size_t length, const std::integral auto v) noexcept
+	constexpr BitSet__& set (const std::size_t pos, const std::size_t length, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), pos, length, v);
 		this->ensure_safety_mask();
+		return *this;
 	}
 
-	constexpr void set (const BitField field, const std::integral auto v) noexcept
+	constexpr BitSet__& set (const BitField field, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), field.bpos, field.blength, v);
 		this->ensure_safety_mask();
+		return *this;
 	}
 
-	constexpr void set (const Enum auto pos, const Enum auto length, const std::integral auto v) noexcept
+	constexpr BitSet__& set (const Enum auto pos, const Enum auto length, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), std::to_underlying(pos), std::to_underlying(length), v);
 		this->ensure_safety_mask();
+		return *this;
 	}
 
 	// --------------------------
 
-	constexpr void set (const std::size_t pos, const std::integral auto v) noexcept
+	constexpr BitSet__& set (const std::size_t pos, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), pos, 1, v);
 		this->ensure_safety_mask();
+		return *this;
 	}
 
-	constexpr void set (const Enum auto pos, const std::integral auto v) noexcept
+	constexpr BitSet__& set (const Enum auto pos, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), std::to_underlying(pos), 1, v);
 		this->ensure_safety_mask();
+		return *this;
 	}
 
 	// --------------------------
@@ -412,6 +417,21 @@ public:
 
 	// --------------------------
 
+	#define MYLIB_BUILD_OPERATION(OP) \
+		constexpr BitSet__& operator OP (const std::integral auto v) noexcept \
+		{ \
+			this->storage() OP v; \
+			this->ensure_safety_mask(); \
+			return *this; \
+		}
+	
+	MYLIB_BUILD_OPERATION( <<= )
+	MYLIB_BUILD_OPERATION( >>= )
+
+	#undef MYLIB_BUILD_OPERATION
+
+	// --------------------------
+
 	constexpr BitSet__ operator~ () const noexcept
 	{
 		return BitSet__(~this->storage());
@@ -432,6 +452,88 @@ public:
 	constexpr bool none () const noexcept
 	{
 		return (this->storage() == 0);
+	}
+
+	constexpr std::size_t count () const noexcept
+	{
+		std::size_t c = 0;
+		Type v = this->storage();
+		while (v) {
+			c += (v & 0x01);
+			v >>= 1;
+		}
+		return c;
+	}
+
+	// --------------------------
+
+	constexpr BitSet__& reset () noexcept
+	{
+		this->storage() = 0;
+		return *this;
+	}
+
+	constexpr BitSet__& reset (const std::size_t pos, const std::size_t length) noexcept
+	{
+		this->storage() = set_bits(this->storage(), pos, length, 0);
+		return *this;
+	}
+
+	constexpr BitSet__& reset (const std::size_t pos) noexcept
+	{
+		return this->reset(pos, 1);
+	}
+
+	constexpr BitSet__& reset (const BitField field) noexcept
+	{
+		return this->reset(field.bpos, field.blength);
+	}
+
+	constexpr BitSet__& reset (const Enum auto pos, const Enum auto length) noexcept
+	{
+		return this->reset(std::to_underlying(pos), std::to_underlying(length));
+	}
+
+	constexpr BitSet__& reset (const Enum auto pos) noexcept
+	{
+		return this->reset(std::to_underlying(pos));
+	}
+
+	// --------------------------
+
+	constexpr BitSet__& flip () noexcept
+	{
+		this->storage() = ~this->storage();
+		this->ensure_safety_mask();
+		return *this;
+	}
+
+	constexpr BitSet__& flip (const std::size_t pos, const std::size_t length) noexcept
+	{
+		const Type mask = ((static_cast<Type>(1) << length) - 1) << pos;
+		this->storage() ^= mask;
+		this->ensure_safety_mask();
+		return *this;
+	}
+
+	constexpr BitSet__& flip (const std::size_t pos) noexcept
+	{
+		return this->flip(pos, 1);
+	}
+
+	constexpr BitSet__& flip (const BitField field) noexcept
+	{
+		return this->flip(field.bpos, field.blength);
+	}
+
+	constexpr BitSet__& flip (const Enum auto pos, const Enum auto length) noexcept
+	{
+		return this->flip(std::to_underlying(pos), std::to_underlying(length));
+	}
+
+	constexpr BitSet__& flip (const Enum auto pos) noexcept
+	{
+		return this->flip(std::to_underlying(pos));
 	}
 };
 
@@ -457,6 +559,20 @@ public:
 MYLIB_BUILD_OPERATION( & )
 MYLIB_BUILD_OPERATION( | )
 MYLIB_BUILD_OPERATION( ^ )
+
+#undef MYLIB_BUILD_OPERATION
+
+// ---------------------------------------------------
+
+#define MYLIB_BUILD_OPERATION(OP) \
+	template <typename ParentType, std::size_t nbits> \
+	constexpr BitSet__<ParentType, nbits> operator OP (const BitSet__<ParentType, nbits> a, const std::integral auto v) noexcept \
+	{ \
+		return BitSet__<ParentType, nbits>(a.to_underlying() OP v); \
+	}
+
+MYLIB_BUILD_OPERATION( << )
+MYLIB_BUILD_OPERATION( >> )
 
 #undef MYLIB_BUILD_OPERATION
 

@@ -154,6 +154,8 @@ int main ()
 	std::cout << bitset << std::endl;
 	bitset = MyBitSet(0x00FF) & MyBitSet(0b00001100);
 	std::cout << bitset << std::endl;
+	bitset = MyBitSet(bitset) << 2;
+	std::cout << bitset << std::endl;
 
 	std::cout << "---------------------- m" << std::endl;
 	bitset = 1;
@@ -161,6 +163,8 @@ int main ()
 	std::cout << bitset << std::endl;
 	bitset = 0x00FF;
 	bitset &= 0b00001100;
+	std::cout << bitset << std::endl;
+	bitset <<= 2;
 	std::cout << bitset << std::endl;
 
 	test_bit_field();
