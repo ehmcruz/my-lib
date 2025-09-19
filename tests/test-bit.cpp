@@ -63,13 +63,13 @@ void test_enum ()
 
 	std::cout << bitset << std::endl;
 
-	bitset[xa] = 1;
+	bitset.set(xa, 1);
 	std::cout << bitset << std::endl;
 
-	bitset[menumc::b] = 1;
+	bitset.set(menumc::b, 1);
 	std::cout << bitset << std::endl;
 
-	bitset[{std::to_underlying(menumc::d), std::to_underlying(menumc::c)}] = 3;
+	bitset.set({std::to_underlying(menumc::d), std::to_underlying(menumc::c)}, 3);
 	std::cout << bitset << std::endl;
 
 	const MyBitSet cset(bitset);
@@ -84,14 +84,13 @@ int main ()
 
 	MyBitSet bitset;
 	bool bit;
-	MyBitSet::Type bits;
 
 	std::cout << "---------------------- a" << std::endl;
 	bitset = 0x04;
 	std::cout << bitset << std::endl;
 
 	std::cout << "---------------------- b" << std::endl;
-	bitset[0] = 1;
+	bitset.set(0, 1);
 	std::cout << bitset << std::endl;
 
 	std::cout << "---------------------- c" << std::endl;
@@ -104,22 +103,24 @@ int main ()
 	std::cout << bit << std::endl;
 
 	std::cout << "---------------------- e" << std::endl;
-	bits = (~bitset(0, 2)).to_underlying();
-	std::cout << static_cast<uint64_t>(bits) << std::endl;
+	auto bbb = ~bitset(0, 2);
+	std::cout << bbb << std::endl;
 
 	std::cout << "---------------------- f" << std::endl;
-	bitset[{0, 2}] = 0b0011;
-	bitset[2] = 0;
+	std::cout << bitset << std::endl;
+	bitset.set({0, 2}, 0b0011);
+	std::cout << bitset << std::endl;
+	bitset.set(2, 0);
 	std::cout << bitset << std::endl;
 
 	std::cout << "---------------------- g" << std::endl;
-	bitset[{0, 2}] = bitset(2, 2);
+	bitset.set({0, 2}, *bitset(2, 2));
 	std::cout << bitset << std::endl;
 
 	bitset = 0;
 
 	std::cout << "---------------------- h" << std::endl;
-	bitset[{1, 3}] = 0b101;
+	bitset.set({1, 4}, 0b1101);
 	std::cout << bitset << std::endl;
 
 #ifdef __cpp_multidimensional_subscript
@@ -127,7 +128,7 @@ int main ()
 
 	std::cout << "---------------------- i" << std::endl;
 	const Mylib::BitSet<3> bs (0b111);
-	bitset[2, 3] = bs;
+	bitset.set({2, 3}, *bs);
 	std::cout << bitset << std::endl;
 #else
 	#warning "Multidimensional subscripts are not supported"
@@ -139,7 +140,7 @@ int main ()
 	ss << ~bitset << std::endl;
 	bitset = bitset[0];
 	ss << bitset << std::endl;
-	bitset[1] = 1;
+	bitset.set(1, 1);
 	bitset = bitset[1];
 	ss << bitset << std::endl;
 	std::cout << ss.str();
@@ -150,6 +151,16 @@ int main ()
 
 	std::cout << "---------------------- l" << std::endl;
 	bitset = MyBitSet(1) | MyBitSet(2);
+	std::cout << bitset << std::endl;
+	bitset = MyBitSet(0x00FF) & MyBitSet(0b00001100);
+	std::cout << bitset << std::endl;
+
+	std::cout << "---------------------- m" << std::endl;
+	bitset = 1;
+	bitset |= 2;
+	std::cout << bitset << std::endl;
+	bitset = 0x00FF;
+	bitset &= 0b00001100;
 	std::cout << bitset << std::endl;
 
 	test_bit_field();

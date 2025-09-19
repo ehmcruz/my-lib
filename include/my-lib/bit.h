@@ -60,21 +60,13 @@ constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t ble
 }
 
 template <typename T>
-constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t blength, const auto value) noexcept
-	requires (std::is_integral_v<decltype(value)> == false)
-{
-	const T value_ = value; // call conversion operator
-	return set_bits(src, bpos, blength, value_);
-}
-
-template <typename T>
-constexpr T set_bits (const T src, const BitField field, const auto value) noexcept
+constexpr T set_bits (const T src, const BitField field, const std::integral auto value) noexcept
 {
 	return set_bits(src, field.bpos, field.blength, value);
 }
 
 template <typename T>
-constexpr T set_bits (const T src, const auto bpos, const auto blength, const auto value) noexcept
+constexpr T set_bits (const T src, const auto bpos, const auto blength, const std::integral auto value) noexcept
 	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
 {
 	return set_bits(src, std::to_underlying(bpos), std::to_underlying(blength), value);
@@ -134,7 +126,7 @@ protected:
 		return this->storage__;
 	}
 
-	const Type storage () const noexcept
+	Type storage () const noexcept
 	{
 		return this->storage__;
 	}
@@ -142,7 +134,7 @@ protected:
 
 // ---------------------------------------------------
 
-constexpr std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits) noexcept
+consteval std::size_t calc_bit_set_storage_nbits__ (const std::size_t nbits) noexcept
 {
 	if (nbits <= 8)
 		return 8;
@@ -173,65 +165,6 @@ public:
 
 	// --------------------------
 
-	class Reference
-	{
-	private:
-		BitSet__& bitset;
-		const uint32_t pos;
-		const uint32_t length;
-
-	public:
-		Reference () noexcept = delete;
-
-		Reference (BitSet__& bitset_, const std::size_t pos_, const std::size_t length_) noexcept
-			: bitset(bitset_), pos(pos_), length(length_)
-		{
-		}
-
-		Reference (const Reference& other) noexcept
-			: bitset(other.bitset), pos(other.pos), length(other.length)
-		{
-		}
-
-		Reference& operator= (const std::integral auto value) noexcept
-		{
-			this->bitset.set(this->pos, this->length, static_cast<Type>(value));
-			return *this;
-		}
-
-		Reference& operator= (const Reference& other) noexcept
-		{
-			const Type value = other.bitset.extract_underlying(other.pos, other.length);
-			this->bitset.set(this->pos, this->length, value);
-			return *this;
-		}
-
-		template <typename Tother, std::size_t nbits_other>
-		Reference& operator= (const BitSet__<Tother, nbits_other>& other) noexcept
-		{
-			this->bitset.set(this->pos, this->length, other.to_underlying());
-			return *this;
-		}
-
-		Type operator~ () const noexcept
-		{
-			const Type mask = (1 << this->length) - 1;
-			return (~this->to_underlying()) & mask;
-		}
-
-		Type to_underlying () const noexcept
-		{
-			return this->bitset.extract_underlying(this->pos, this->length);
-		}
-
-		operator Type() const noexcept
-		{
-			return this->to_underlying();
-		}
-	};
-
-	// --------------------------
-
 	constexpr std::size_t get_storage_nbits () const noexcept
 	{
 		return sizeof(Type) * 8;
@@ -259,11 +192,6 @@ public:
 		this->storage() = static_cast<Type>(v);
 	}
 
-	constexpr BitSet__ (const Reference& ref) noexcept
-	{
-		this->storage() = ref.to_underlying();
-	}
-
 	// --------------------------
 
 	constexpr BitSet__& operator= (const BitSet__& other) noexcept
@@ -278,12 +206,6 @@ public:
 		return *this;
 	}
 
-	constexpr BitSet__& operator= (const Reference& ref) noexcept
-	{
-		this->storage() = ref.to_underlying();
-		return *this;
-	}
-
 	// --------------------------
 
 	constexpr Type to_underlying () const noexcept
@@ -291,28 +213,33 @@ public:
 		return this->storage();
 	}
 
-	// --------------------------
+	constexpr Type operator* () const noexcept
+	{
+		return this->storage();
+	}
 
-	constexpr bool operator[] (const std::size_t pos) const noexcept
+	// -------------------------
+	
+	constexpr Type operator[] (const std::size_t pos) const noexcept
+	{
+		return (this->storage() >> pos) & 0x01;
+	}
+
+	constexpr Type operator[] (const std::size_t pos) noexcept
 	{
 		return (this->storage() >> pos) & 0x01;
 	}
 
 	template <typename Tenum>
 	requires std::is_enum_v<Tenum>
-	constexpr bool operator[] (const Tenum pos) const noexcept
+	constexpr Type operator[] (const Tenum pos) const noexcept
 	{
 		return (*this)[std::to_underlying(pos)];
 	}
 
-	constexpr Reference operator[] (const std::size_t pos) noexcept
-	{
-		return Reference(*this, pos, 1);
-	}
-
 	template <typename Tenum>
 	requires std::is_enum_v<Tenum>
-	constexpr Reference operator[] (const Tenum pos) noexcept
+	constexpr Type operator[] (const Tenum pos) noexcept
 	{
 		return (*this)[std::to_underlying(pos)];
 	}
@@ -324,9 +251,9 @@ public:
 		return extract_bits(this->storage(), field.bpos, field.blength);
 	}
 
-	constexpr Reference operator[] (const BitField field) noexcept
+	constexpr Type operator[] (const BitField field) noexcept
 	{
-		return Reference(*this, field.bpos, field.blength);
+		return extract_bits(this->storage(), field.bpos, field.blength);
 	}
 
 	// --------------------------
@@ -336,9 +263,9 @@ public:
 		return extract_bits(this->storage(), pos, length);
 	}
 
-	constexpr Reference operator[] (const std::size_t pos, const std::size_t length) noexcept
+	constexpr Type operator[] (const std::size_t pos, const std::size_t length) noexcept
 	{
-		return Reference(*this, pos, length);
+		return extract_bits(this->storage(), pos, length);
 	}
 
 	// --------------------------
@@ -355,8 +282,6 @@ public:
 		return (*this)(std::to_underlying(pos), std::to_underlying(length));
 	}
 
-	// --------------------------
-
 	constexpr BitSet__ operator() (const BitField field) const noexcept
 	{
 		return (*this)(field.bpos, field.blength);
@@ -364,21 +289,64 @@ public:
 
 	// --------------------------
 
-	constexpr BitSet__ extract (const std::size_t pos, const std::size_t length) const noexcept
-	{
-		return BitSet__( extract_bits(this->storage(), pos, length) );
-	}
-
-	constexpr Type extract_underlying (const std::size_t pos, const std::size_t length) const noexcept
+	constexpr Type get (const std::size_t pos, const std::size_t length) const noexcept
 	{
 		return extract_bits(this->storage(), pos, length);
 	}
 
+	template <typename TenumA, typename TenumB>
+	requires std::is_enum_v<TenumA> && std::is_enum_v<TenumB>
+	constexpr Type get (const TenumA pos, const TenumB length) const noexcept
+	{
+		return this->get(std::to_underlying(pos), std::to_underlying(length));
+	}
+
+	constexpr Type get (const BitField field) const noexcept
+	{
+		return this->get(field.bpos, field.blength);
+	}
+
 	// --------------------------
 
-	constexpr void set (const std::size_t pos, const std::size_t length, const auto v) noexcept
+	constexpr Type get (const std::size_t pos) const noexcept
+	{
+		return extract_bits(this->storage(), pos, 1);
+	}
+
+	template <typename Tenum>
+	requires std::is_enum_v<Tenum>
+	constexpr Type get (const Tenum pos) const noexcept
+	{
+		return this->get(std::to_underlying(pos));
+	}
+
+	// --------------------------
+
+	constexpr void set (const std::size_t pos, const std::size_t length, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), pos, length, v);
+	}
+
+	constexpr void set (const BitField field, const std::integral auto v) noexcept
+	{
+		this->storage() = set_bits(this->storage(), field.bpos, field.blength, v);
+	}
+
+	constexpr void set (const Enum auto pos, const Enum auto length, const std::integral auto v) noexcept
+	{
+		this->storage() = set_bits(this->storage(), std::to_underlying(pos), std::to_underlying(length), v);
+	}
+
+	// --------------------------
+
+	constexpr void set (const std::size_t pos, const std::integral auto v) noexcept
+	{
+		this->storage() = set_bits(this->storage(), pos, 1, v);
+	}
+
+	constexpr void set (const Enum auto pos, const std::integral auto v) noexcept
+	{
+		this->storage() = set_bits(this->storage(), std::to_underlying(pos), 1, v);
 	}
 
 	// --------------------------
@@ -396,11 +364,6 @@ public:
 		constexpr BitSet__& operator OP (const std::integral auto v) noexcept \
 		{ \
 			this->storage() OP static_cast<Type>(v); \
-			return *this; \
-		} \
-		constexpr BitSet__& operator OP (const Reference& ref) noexcept \
-		{ \
-			this->storage() OP ref.to_underlying(); \
 			return *this; \
 		}
 	
@@ -432,19 +395,9 @@ public:
 		return BitSet__<ParentType, nbits>(a.to_underlying() OP static_cast<typename ParentType::Type>(v)); \
 	} \
 	template <typename ParentType, std::size_t nbits> \
-	constexpr BitSet__<ParentType, nbits> operator OP (const std::integral auto v, const BitSet__<ParentType, nbits> b) noexcept \
+	constexpr BitSet__<ParentType, nbits> operator OP (const std::integral auto v, const BitSet__<ParentType, nbits> a) noexcept \
 	{ \
-		return BitSet__<ParentType, nbits>(static_cast<typename ParentType::Type>(v) OP b.to_underlying()); \
-	} \
-	template <typename ParentType, std::size_t nbits> \
-	constexpr BitSet__<ParentType, nbits> operator OP (const BitSet__<ParentType, nbits> a, const typename BitSet__<ParentType, nbits>::Reference& ref) noexcept \
-	{ \
-		return BitSet__<ParentType, nbits>(a.to_underlying() OP ref.to_underlying()); \
-	} \
-	template <typename ParentType, std::size_t nbits> \
-	constexpr BitSet__<ParentType, nbits> operator OP (const typename BitSet__<ParentType, nbits>::Reference& ref, const BitSet__<ParentType, nbits> a) noexcept \
-	{ \
-		return BitSet__<ParentType, nbits>(a.to_underlying() OP ref.to_underlying()); \
+		return BitSet__<ParentType, nbits>(static_cast<typename ParentType::Type>(v) OP a.to_underlying()); \
 	}
 
 MYLIB_BUILD_OPERATION( & )
