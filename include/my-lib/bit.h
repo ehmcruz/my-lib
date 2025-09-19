@@ -4,6 +4,7 @@
 #include <concepts>
 #include <type_traits>
 #include <ostream>
+#include <limits>
 
 #include <cstdint>
 
@@ -163,16 +164,41 @@ class BitSet__ : public ParentType
 public:
 	using Type = typename ParentType::Type;
 
-	// --------------------------
-
-	constexpr std::size_t get_storage_nbits () const noexcept
+	static consteval std::size_t get_storage_nbits__ () noexcept
 	{
 		return sizeof(Type) * 8;
 	}
 
-	constexpr std::size_t size () const noexcept
+	static consteval std::size_t size__ () noexcept
 	{
 		return nbits;
+	}
+
+private:
+	static constexpr Type safety_mask = (nbits == get_storage_nbits__()) ?
+		std::numeric_limits<Type>::max() :
+		(static_cast<Type>(1) << nbits) - 1;
+
+	static consteval bool must_apply_safety_mask () noexcept
+	{
+		return (nbits < get_storage_nbits__());
+	}
+
+	void ensure_safety_mask () noexcept
+	{
+		if constexpr (must_apply_safety_mask())
+			this->storage() &= safety_mask;
+	}
+
+public:
+	constexpr std::size_t get_storage_nbits () const noexcept
+	{
+		return get_storage_nbits__();
+	}
+
+	constexpr std::size_t size () const noexcept
+	{
+		return size__();
 	}
 
 	// --------------------------
@@ -185,11 +211,13 @@ public:
 	constexpr BitSet__ (const BitSet__& other) noexcept
 	{
 		this->storage() = other.storage();
+		this->ensure_safety_mask();
 	}
 
 	constexpr BitSet__ (const std::integral auto v) noexcept
 	{
 		this->storage() = static_cast<Type>(v);
+		this->ensure_safety_mask();
 	}
 
 	// --------------------------
@@ -197,12 +225,14 @@ public:
 	constexpr BitSet__& operator= (const BitSet__& other) noexcept
 	{
 		this->storage() = other.storage();
+		this->ensure_safety_mask();
 		return *this;
 	}
 
 	constexpr BitSet__& operator= (const std::integral auto v) noexcept
 	{
 		this->storage() = static_cast<Type>(v);
+		this->ensure_safety_mask();
 		return *this;
 	}
 
@@ -325,16 +355,19 @@ public:
 	constexpr void set (const std::size_t pos, const std::size_t length, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), pos, length, v);
+		this->ensure_safety_mask();
 	}
 
 	constexpr void set (const BitField field, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), field.bpos, field.blength, v);
+		this->ensure_safety_mask();
 	}
 
 	constexpr void set (const Enum auto pos, const Enum auto length, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), std::to_underlying(pos), std::to_underlying(length), v);
+		this->ensure_safety_mask();
 	}
 
 	// --------------------------
@@ -342,11 +375,13 @@ public:
 	constexpr void set (const std::size_t pos, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), pos, 1, v);
+		this->ensure_safety_mask();
 	}
 
 	constexpr void set (const Enum auto pos, const std::integral auto v) noexcept
 	{
 		this->storage() = set_bits(this->storage(), std::to_underlying(pos), 1, v);
+		this->ensure_safety_mask();
 	}
 
 	// --------------------------
@@ -359,11 +394,13 @@ public:
 		constexpr BitSet__& operator OP (const BitSet__ other) noexcept \
 		{ \
 			this->storage() OP other.storage(); \
+			this->ensure_safety_mask(); \
 			return *this; \
 		} \
 		constexpr BitSet__& operator OP (const std::integral auto v) noexcept \
 		{ \
 			this->storage() OP static_cast<Type>(v); \
+			this->ensure_safety_mask(); \
 			return *this; \
 		}
 	
@@ -378,6 +415,23 @@ public:
 	constexpr BitSet__ operator~ () const noexcept
 	{
 		return BitSet__(~this->storage());
+	}
+
+	// --------------------------
+
+	constexpr bool all () const noexcept
+	{
+		return (this->storage() == safety_mask);
+	}
+
+	constexpr bool any () const noexcept
+	{
+		return (this->storage() != 0);
+	}
+
+	constexpr bool none () const noexcept
+	{
+		return (this->storage() == 0);
 	}
 };
 
@@ -453,7 +507,7 @@ template <typename ParentType, std::size_t nbits>
 std::ostream& operator << (std::ostream& out, const BitSet__<ParentType, nbits>& bitset)
 {
 	for (int32_t i = bitset.size() - 1; i >= 0; i--)
-		out << bitset[i];
+		out << static_cast<bool>(bitset[i]);
 	return out;
 }
 
