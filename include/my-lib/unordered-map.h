@@ -1,5 +1,5 @@
-#ifndef __MY_LIB_UTILS_HEADER_H__
-#define __MY_LIB_UTILS_HEADER_H__
+#ifndef __MY_LIB_UNORDERED_MAP_HEADER_H__
+#define __MY_LIB_UNORDERED_MAP_HEADER_H__
 
 #include <unordered_map>
 #include <string>
