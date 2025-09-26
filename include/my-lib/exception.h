@@ -352,6 +352,9 @@ void assert_exception (const bool bool_expr, const std::source_location& locatio
 #define mylib_assert(bool_expr) \
 	mylib_assert_exception((bool_expr), Mylib::AssertException)
 
+#define mylib_throw_assert_msg(...) \
+	throw Mylib::make_assert_exception_msg__(std::source_location::current(), nullptr, __VA_ARGS__)
+
 #define mylib_assert_msg(bool_expr, ...) { \
 		if (!(bool_expr)) [[unlikely]]\
 			throw Mylib::make_assert_exception_msg__(std::source_location::current(), #bool_expr, __VA_ARGS__); \
