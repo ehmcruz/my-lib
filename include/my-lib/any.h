@@ -65,7 +65,7 @@ private:
 
 		if constexpr (std::is_destructible_v<Type>) {
 			this->destroy = [] (Any *self) {
-				reinterpret_cast<Type*>(self)->~Type();
+				reinterpret_cast<Type*>(&self->storage)->~Type();
 			};
 		}
 		else
