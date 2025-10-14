@@ -255,7 +255,7 @@ T any_cast (Any<minimum_storage_size, alignment>& any)
 	if (any.type == nullptr)
 		throw std::bad_any_cast();
 
-	if (*any.type != typeid(T))
+	if (*any.type != typeid(Type))
 		throw std::bad_any_cast();
 
 	Type *obj_ptr = reinterpret_cast<Type*>(&any.storage);
