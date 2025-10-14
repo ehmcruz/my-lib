@@ -39,7 +39,7 @@ int main ()
 
 	const Any data4(data3);
 
-	std::cout << "any4 has value " << any_cast<std::string>(data4) << std::endl;
+	std::cout << "any4 has value " << any_cast<const std::string&>(data4) << std::endl;
 
 	return 0;
 }

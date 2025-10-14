@@ -271,6 +271,9 @@ T any_cast (Any<minimum_storage_size, alignment>& any)
 template <typename T, std::size_t minimum_storage_size, std::size_t alignment>
 T any_cast (const Any<minimum_storage_size, alignment>& any)
 {
+	static_assert(!std::is_lvalue_reference_v<T> || (std::is_lvalue_reference_v<T> && std::is_const_v< std::remove_reference_t<T> >));
+	static_assert(!std::is_rvalue_reference_v<T>);
+
 	return any_cast<T, minimum_storage_size, alignment>
 		           (const_cast<Any<minimum_storage_size, alignment>&>(any));
 }
