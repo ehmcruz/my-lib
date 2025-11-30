@@ -113,6 +113,23 @@ auto make_assert_exception_msg__ (const std::source_location& location, const ch
 
 // ---------------------------------------------------
 
+class InvalidNumberException : public Exception
+{
+public:
+	InvalidNumberException (const std::source_location& location_, const char *assert_str_, const char *extra_msg_)
+		: Exception(location_, assert_str_, extra_msg_)
+	{
+	}
+
+protected:
+	void build_exception_msg (std::ostringstream& str_stream) const override final
+	{
+		str_stream << "Invalid number exception.";
+	}
+};
+
+// ---------------------------------------------------
+
 class ZeroNumberException : public Exception
 {
 public:

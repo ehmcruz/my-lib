@@ -3,6 +3,7 @@
 
 #include <numeric>
 #include <numbers>
+#include <bit>
 
 #include <my-lib/std.h>
 #include <my-lib/exception.h>
@@ -14,18 +15,26 @@ namespace Math
 
 // ---------------------------------------------------
 
-template <typename T>
-constexpr T base2_log_of_integer (const T value)
+template <std::integral T>
+constexpr bool is_power_of_two (const T value) noexcept
 {
-	constexpr uint32_t nbits = sizeof(T) * 8;
+	return (value > 0) & ((value & (value - 1)) == 0);
+}
 
-	for (uint32_t pos = 0; pos < nbits; pos++) {
-		if ((value >> pos) & 0x01)
-			return pos;
-	}
+template <std::integral T>
+constexpr T log2_fast (const T value) noexcept
+{
+	using U = std::make_unsigned_t<T>;
+	return std::bit_width(static_cast<U>(value)) - 1;
+}
 
-	mylib_throw(ZeroNumberException);
-	return 0; // unreachable, but disables compiler warning
+template <std::integral T>
+constexpr T log2_safe (const T value)
+{
+	if (!is_power_of_two(value)) [[unlikely]]
+		mylib_throw(InvalidNumberException);
+
+	return log2_fast(value);
 }
 
 constexpr auto radians_to_degrees (const auto radians) noexcept -> decltype(radians)

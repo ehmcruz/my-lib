@@ -27,46 +27,69 @@ struct BitField
 
 // ---------------------------------------------------
 
-template <typename T>
-constexpr T extract_bits (const T v, const std::size_t bpos, const std::size_t blength) noexcept
+template <std::unsigned_integral T>
+constexpr T make_bit_mask (const std::size_t blength) noexcept
 {
-	const T mask = (1 << blength) - 1;
-
-	return (v >> bpos) & mask;
-}
-
-template <typename T>
-constexpr T extract_bits (const T v, const BitField field) noexcept
-{
-	return extract_bits(v, field.bpos, field.blength);
-}
-
-template <typename T>
-constexpr T extract_bits (const T v, const auto bpos, const auto blength) noexcept
-	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
-{
-	return extract_bits(v, std::to_underlying(bpos), std::to_underlying(blength));
+	return (blength < std::numeric_limits<T>::digits) ?
+		((static_cast<T>(1) << blength) - 1) :
+		std::numeric_limits<T>::max();
 }
 
 // ---------------------------------------------------
 
-template <typename T>
+template <std::unsigned_integral T>
+constexpr T get_bits (const T v, const std::size_t bpos, const std::size_t blength) noexcept
+{
+	const T mask = make_bit_mask<T>(blength);
+	return (v >> bpos) & mask;
+}
+
+template <std::signed_integral T>
+constexpr T get_bits (const T v, const std::size_t bpos, const std::size_t blength) noexcept
+{
+	using U = std::make_unsigned_t<T>;
+	return static_cast<T>(get_bits(static_cast<U>(v), bpos, blength));
+}
+
+template <std::integral T>
+constexpr T get_bits (const T v, const BitField field) noexcept
+{
+	return get_bits(v, field.bpos, field.blength);
+}
+
+template <std::integral T>
+constexpr T get_bits (const T v, const auto bpos, const auto blength) noexcept
+	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
+{
+	return get_bits(v, std::to_underlying(bpos), std::to_underlying(blength));
+}
+
+// ---------------------------------------------------
+
+template <std::unsigned_integral T>
 constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t blength, const std::integral auto value) noexcept
 {
-	const T mask = (1 << blength) - 1;
+	const T mask = make_bit_mask<T>(blength);
 	const T shifted_mask = mask << bpos;
 	const T safe_value = static_cast<T>(value) & mask;
 
 	return (src & ~shifted_mask) | (safe_value << bpos);
 }
 
-template <typename T>
+template <std::signed_integral T>
+constexpr T set_bits (const T src, const std::size_t bpos, const std::size_t blength, const std::integral auto value) noexcept
+{
+	using U = std::make_unsigned_t<T>;
+	return static_cast<T>(set_bits(static_cast<U>(src), bpos, blength, value));
+}
+
+template <std::integral T>
 constexpr T set_bits (const T src, const BitField field, const std::integral auto value) noexcept
 {
 	return set_bits(src, field.bpos, field.blength, value);
 }
 
-template <typename T>
+template <std::integral T>
 constexpr T set_bits (const T src, const auto bpos, const auto blength, const std::integral auto value) noexcept
 	requires std::is_enum_v<decltype(bpos)> && std::is_enum_v<decltype(blength)>
 {
@@ -184,7 +207,7 @@ private:
 		return (nbits < get_storage_nbits__());
 	}
 
-	void ensure_safety_mask () noexcept
+	constexpr void ensure_safety_mask () noexcept
 	{
 		if constexpr (must_apply_safety_mask())
 			this->storage() &= safety_mask;
@@ -278,31 +301,31 @@ public:
 
 	constexpr Type operator[] (const BitField field) const noexcept
 	{
-		return extract_bits(this->storage(), field.bpos, field.blength);
+		return get_bits(this->storage(), field.bpos, field.blength);
 	}
 
 	constexpr Type operator[] (const BitField field) noexcept
 	{
-		return extract_bits(this->storage(), field.bpos, field.blength);
+		return get_bits(this->storage(), field.bpos, field.blength);
 	}
 
 	// --------------------------
 
 	constexpr Type operator[] (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return extract_bits(this->storage(), pos, length);
+		return get_bits(this->storage(), pos, length);
 	}
 
 	constexpr Type operator[] (const std::size_t pos, const std::size_t length) noexcept
 	{
-		return extract_bits(this->storage(), pos, length);
+		return get_bits(this->storage(), pos, length);
 	}
 
 	// --------------------------
 
 	constexpr BitSet__ operator() (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return BitSet__(extract_bits(this->storage(), pos, length));
+		return BitSet__(get_bits(this->storage(), pos, length));
 	}
 
 	template <typename TenumA, typename TenumB>
@@ -321,7 +344,7 @@ public:
 
 	constexpr Type get (const std::size_t pos, const std::size_t length) const noexcept
 	{
-		return extract_bits(this->storage(), pos, length);
+		return get_bits(this->storage(), pos, length);
 	}
 
 	template <typename TenumA, typename TenumB>
@@ -340,7 +363,7 @@ public:
 
 	constexpr Type get (const std::size_t pos) const noexcept
 	{
-		return extract_bits(this->storage(), pos, 1);
+		return get_bits(this->storage(), pos, 1);
 	}
 
 	template <typename Tenum>

@@ -147,7 +147,7 @@ int main ()
 
 	std::cout << "---------------------- k" << std::endl;
 	uint32_t v = 0xFFFFFFFF;
-	std::cout << Mylib::BitSet<32>(Mylib::extract_bits(v, 0, 31)) << std::endl;
+	std::cout << Mylib::BitSet<32>(Mylib::get_bits(v, 0, 31)) << std::endl;
 
 	std::cout << "---------------------- l" << std::endl;
 	bitset = MyBitSet(1) | MyBitSet(2);
@@ -166,6 +166,11 @@ int main ()
 	std::cout << bitset << std::endl;
 	bitset <<= 2;
 	std::cout << bitset << std::endl;
+
+	std::cout << "---------------------- n" << std::endl;
+	bitset = 0;
+	bitset.set(0, 16, 0xFFFF);
+	std::cout << MyBitSet(bitset.get(0, 16)) << std::endl;
 
 	test_bit_field();
 	test_enum();

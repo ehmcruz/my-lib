@@ -245,7 +245,16 @@ int main ()
 
 	std:: cout << "----------------------" << std::endl;
 
-	//std::cout << base2_log_of_integer(0) << std::endl;
+	for (int i = -2; i<= 8; i++) {
+		std::cout << "log2_fast test " << i << " " << log2_fast(i) << std::endl;
+		try {
+			std::cout << "log2_safe test " << i << " " << log2_safe(i) << std::endl;
+		}
+		catch (const Mylib::InvalidNumberException& e) {
+			std::cout << "log2_safe test " << i << " caught exception: " << std::endl << e.what() << std::endl;
+		}
+		std::cout << std::endl;
+	}
 
 	return 0;
 }
