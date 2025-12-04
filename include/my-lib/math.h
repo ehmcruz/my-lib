@@ -25,7 +25,17 @@ template <std::integral T>
 constexpr T log2_fast (const T value) noexcept
 {
 	using U = std::make_unsigned_t<T>;
-	return std::bit_width(static_cast<U>(value)) - 1;
+	return static_cast<T>(std::bit_width(static_cast<U>(value)) - 1);
+}
+
+// If value is a power of two, returns the same value.
+// Otherwise, returns the next power of two.
+
+template <std::integral T>
+constexpr T next_power_of_two_fast (const T value) noexcept
+{
+	using U = std::make_unsigned_t<T>;
+	return static_cast<T>(std::bit_ceil(static_cast<U>(value)));
 }
 
 template <std::integral T>
