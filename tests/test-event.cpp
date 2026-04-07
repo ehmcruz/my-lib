@@ -59,16 +59,6 @@ public:
 	{
 		std::cout << "uhu3 " << b << " event_data " << event_data << std::endl;
 	}
-
-	void callback_with_filter (const int& event_data, const MyFilter& filter)
-	{
-		std::cout << "uhu FILTER " << b << " event_data " << event_data << std::endl;
-	}
-
-	void callback_with_filter_and_param (const int& event_data, const MyFilter& filter, float v)
-	{
-		std::cout << "uhu FILTER " << b << " event_data " << event_data << " v " << v << std::endl;
-	}
 };
 
 void subscribe_lambda (int x)
@@ -78,6 +68,11 @@ void subscribe_lambda (int x)
 	};
 
 	auto d6 = event_handler.subscribe( Mylib::Event::make_callback_lambda<int>(lambda_1) );
+}
+
+void callback_f1 (int& event_data, int n)
+{
+	std::cout << "func_f1 " << " event_data " << event_data << " n " << n << std::endl;
 }
 
 test_t test;
@@ -90,6 +85,8 @@ int main ()
 	event_handler.unsubscribe(d1);
 	
 	auto d3 = event_handler.subscribe( Mylib::Event::make_callback_object<int>(test, &test_t::callback_3) );
+
+	auto d4 = event_handler.subscribe( Mylib::Event::make_callback_function_with_params<int>(&callback_f1, 50) );
 
 	subscribe_lambda(2);
 

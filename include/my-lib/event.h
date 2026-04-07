@@ -6,6 +6,7 @@
 #include <functional>
 #include <type_traits>
 #include <memory>
+#include <utility>
 
 #include <cstdint>
 
@@ -71,6 +72,42 @@ auto make_callback_function (Tfunc callback)
 
 // ---------------------------------------------------
 
+template <typename Tevent, typename Tfunc, typename... Args>
+auto make_callback_function_with_params (Tfunc callback, Args&&... args)
+{
+	//auto params = std::make_tuple(std::forward<Args>(args)...);
+	auto params = std::make_tuple(args...);
+
+	using Tparams = decltype(params);
+
+	class DerivedCallback : public Callback<Tevent>
+	{
+	private:
+		Tfunc callback_function;
+		Tparams callback_params;
+	
+	public:
+		DerivedCallback (Tfunc callback_function_, Tparams&& callback_params_)
+			: callback_function(callback_function_), callback_params(std::move(callback_params_))
+		{
+		}
+
+		void operator() (Tevent& event) override
+		{
+			auto built_params = std::tuple_cat(
+				std::forward_as_tuple(event),
+				this->callback_params
+			);
+			
+			std::apply(this->callback_function, built_params);
+		}
+	};
+
+	return DerivedCallback(callback, std::move(params));
+}
+
+// ---------------------------------------------------
+
 /*
 	Template parameter Tevent must be explicitly set.
 	Object function should be:
@@ -109,7 +146,7 @@ auto make_callback_object (Tobj& obj, Tfunc callback)
 // ---------------------------------------------------
 
 template <typename Tevent, typename Tlambda_>
-auto make_callback_lambda (Tlambda_&& callback)
+auto make_callback_lambda (const Tlambda_& callback)
 {
 	using Tlambda = typename remove_type_qualifiers<Tlambda_>::type;
 
@@ -119,7 +156,7 @@ auto make_callback_lambda (Tlambda_&& callback)
 		Tlambda callback_lambda;
 
 	public:
-		DerivedCallback (Tlambda_ callback_lambda_)
+		DerivedCallback (const Tlambda_& callback_lambda_)
 			: callback_lambda(callback_lambda_)
 		{
 		}
@@ -148,11 +185,11 @@ auto make_callback_lambda (Tlambda_&& callback)
 	Important, the first parameter is the Event Data (Tevent).
 */
 
-template <typename Tevent, typename Tobj, typename Tfunc, typename Tfirst_param, typename... Args>
-auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_param& first_param, Args&&... args)
+template <typename Tevent, typename Tobj, typename Tfunc, typename... Args>
+auto make_callback_object_with_params (Tobj& obj, Tfunc callback, Args&&... args)
 {
 	//auto params = std::make_tuple(first_param, std::forward<Args>(args)...);
-	auto params = std::make_tuple(first_param, args...);
+	auto params = std::make_tuple(args...);
 
 	using Tparams = decltype(params);
 
@@ -164,8 +201,8 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 		Tparams callback_params;
 	
 	public:
-		DerivedCallback (Tobj& obj_, Tfunc callback_function_, const Tparams& callback_params_)
-			: obj(obj_), callback_function(callback_function_), callback_params(callback_params_)
+		DerivedCallback (Tobj& obj_, Tfunc callback_function_, Tparams&& callback_params_)
+			: obj(obj_), callback_function(callback_function_), callback_params(std::move(callback_params_))
 		{
 		}
 
@@ -182,7 +219,7 @@ auto make_callback_object_with_params (Tobj& obj, Tfunc callback, const Tfirst_p
 		}
 	};
 
-	return DerivedCallback(obj, callback, params);
+	return DerivedCallback(obj, callback, std::move(params));
 }
 
 // ---------------------------------------------------
