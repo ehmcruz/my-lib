@@ -278,21 +278,9 @@ public:
 		return (this->storage() >> pos) & 0x01;
 	}
 
-	constexpr Type operator[] (const std::size_t pos) noexcept
-	{
-		return (this->storage() >> pos) & 0x01;
-	}
-
 	template <typename Tenum>
 	requires std::is_enum_v<Tenum>
 	constexpr Type operator[] (const Tenum pos) const noexcept
-	{
-		return (*this)[std::to_underlying(pos)];
-	}
-
-	template <typename Tenum>
-	requires std::is_enum_v<Tenum>
-	constexpr Type operator[] (const Tenum pos) noexcept
 	{
 		return (*this)[std::to_underlying(pos)];
 	}
@@ -304,19 +292,9 @@ public:
 		return get_bits(this->storage(), field.bpos, field.blength);
 	}
 
-	constexpr Type operator[] (const BitField field) noexcept
-	{
-		return get_bits(this->storage(), field.bpos, field.blength);
-	}
-
 	// --------------------------
 
 	constexpr Type operator[] (const std::size_t pos, const std::size_t length) const noexcept
-	{
-		return get_bits(this->storage(), pos, length);
-	}
-
-	constexpr Type operator[] (const std::size_t pos, const std::size_t length) noexcept
 	{
 		return get_bits(this->storage(), pos, length);
 	}
